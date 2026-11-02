@@ -1,0 +1,3 @@
+# Private reference data must never be included in git archive / release ZIPs.
+reference export-ignore
+reference/** export-ignore

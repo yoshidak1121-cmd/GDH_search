@@ -7,15 +7,20 @@
   const url = new URL(options.viewerUrl, location.href);
   if (!/^https?:$/.test(url.protocol) || url.origin !== location.origin) throw new Error('GDHと同じオリジンのビューアURLを指定してください。');
   if (options.exportCsv != null && typeof options.exportCsv !== 'function') throw new Error('exportCsvには関数を指定してください。');
+  let exportCsv = options.exportCsv;
+  if (!exportCsv && options.sourceForm) {
+   if (typeof window.createGdhCsvExportAdapter !== 'function') throw new Error('先にgdh-export.jsを読み込んでください。');
+   exportCsv = window.createGdhCsvExportAdapter({form: options.sourceForm});
+  }
   url.searchParams.set('embedded', '1');
   const frame = document.createElement('iframe');
   frame.title = 'CNC機械情報検索';
   frame.style.cssText = 'display:block;width:100%;height:100%;min-height:850px;border:0;';
   frame.addEventListener('load', function () {
-   if (!options.exportCsv) return;
+   if (!exportCsv) return;
    // Adapt parent-window Blob/Response objects to the viewer's JavaScript realm.
    frame.contentWindow.GDH_CSV_EXPORT_ADAPTER = async function () {
-    const result = await options.exportCsv();
+    const result = await exportCsv();
     let blob, fileName = 'GDH_machine_export.csv';
     if (result instanceof Response) {
      if (!result.ok) throw new Error('GDH CSV export failed: ' + result.status);

@@ -34,7 +34,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
  <section class="intro" aria-label="ページ概要">
  <div><div class="eyebrow">MACHINE INFORMATION SEARCH</div><h1>CNC機械情報ビューア</h1><p>G-DataHubの機械情報CSVを検索・閲覧。表記揺れにも対応します。</p></div>
  <div class="actions">
-  <button id="fetchBtn" class="btn primary" title="GDH接続設定後に利用できます"><svg viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>データ取得</button>
+  <button id="fetchBtn" class="btn primary" title="GDH内の検索フォーム連携後に利用できます"><svg viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>データ取得</button>
   <button id="fileBtn" class="btn"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 6v10H4zM14 4v6h6"/></svg>CSVを開く</button>
   <input id="csvFile" class="sr-only" type="file" accept=".csv,text/csv" aria-label="CSVファイル選択">
  </div>
@@ -65,7 +65,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><span class="detail-sub">33項目をそのまま表示</span></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.1.0 · CSV検索 / GDH埋め込み対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.2.0 · CSV検索 / GDH出力フォーム連携 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -339,7 +339,7 @@ $('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.
 $('fetchBtn').addEventListener('click',async()=>{
  // The GDH host should register a function returning a Blob, Response, or {blob,fileName}.
  const adapter=window.GDH_CSV_EXPORT_ADAPTER;
- if(typeof adapter!=='function'){status('GDH自動取得の接続先が未設定です。CSV出力の正規APIまたはGDH拡張画面の接続アダプターが確認でき次第、このボタンから自動取得できます。現時点では「CSVを開く」をご利用ください。','err');return;}
+ if(typeof adapter!=='function'){status('GDH自動取得の接続先が未設定です。GDH内の追加画面として組み込み、検索フォームと出力アダプターを接続してください。ローカルでは「CSVを開く」をご利用ください。','err');return;}
  setBusy(true);status('<span class="spinner"></span>GDHから機械情報CSVを取得しています…');
  try{
   const data=await adapter();let blob,name='GDH_machine_export.csv';
