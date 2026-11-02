@@ -1,0 +1,349 @@
+(function($) {
+    $(document).ready(function() {
+        $('#imui-to-top').click(function () {
+            $('html,body').animate({scrollTop: 0}, 300, 'swing');
+        });
+    });
+})(jQuery);
+
+            function submit2me(arg) {
+                var menuId = arg.substring(arg.indexOf('?') + 1);
+                document.imui_theme_submit2me.action= menuId;
+                document.imui_theme_submit2me.menuId.value = menuId;
+                document.imui_theme_submit2me.submit();
+            }
+            function submit2iframe(arg){
+                var menuId = arg.substring(arg.indexOf('?') + 1);
+                document.imui_theme_submit2iframe.menuId.value = menuId;
+                document.imui_theme_submit2iframe.submit();
+            }
+            function onClickItem(arg, old){
+                if (old) {
+                    submit2iframe(arg);
+                } else {
+                    submit2me(arg);
+                }
+            }
+(function($) {
+    $.widget("imui.imuiSearchBox", {
+        active: false,
+        _create: function() {
+            var self = this;
+
+            var form = $(this.element).find('form');
+            var trigger = $(this.element).find('li.imui-nav-global-search');
+            self.formArea = form;
+            self._close();
+            trigger.children('a').bind('click', function() {
+                if (self.active) {
+                    self._close();
+                    this.focus();
+                } else {
+                    self._open();
+                    self.formArea.find('.imui-form-global-search-input').focus();
+                }
+                return false;
+            });
+            form.bind('submit', function() {
+                if (self.active) {
+                    self._close();
+                }
+            });
+        },
+        _open: function() {
+            var form = $(this.element).find('form');
+            form.children("input").remove();
+            if (localStorage) {
+                var settings = JSON.parse(localStorage.getItem("imcs_search_settings"));
+                for(var key in settings) {
+                    $("<input />").attr({"type" : "hidden", "name" : key, "value" : settings[key]}).appendTo(form);
+                }
+            }
+            this.active = true;
+            $(this.element.children('li')).addClass('active');
+            this.formArea.show();
+        },
+        _close: function() {
+            this.active = false;
+            $(this.element.children('li')).removeClass('active');
+            this.formArea.hide();
+        }
+    });
+    $(document).ready(function() {
+        $('#imui-user-utility').imuiDropdown({
+            defaultPosition: {
+                collision: 'flip none',
+                my: 'right top',
+                at: 'right bottom'
+            }
+        });
+        setTimeout(function() {
+            if ($('#imui-nav-global-launcher-wrapper').length < 1) {
+                if ($('#imui-nav-help-dropdown').length < 1) {
+                    $('#imui-user-utility').css('margin-right','0');
+                } else {
+                    $('#imui-nav-help-dropdown').css('margin-right','0');
+                    $(window).trigger('resize.imuiPopover');
+                }
+            }
+        },0);
+        $('#imui-user-utility').on('imuidropdownonselect',function() {
+            $('#imui-nav-help-dropdown').imuiDropdown('collapseAll');
+        });
+
+        if($('#imui-nav-help-dropdown').length > 0) {
+            $('#start_help_pc').children().removeAttr('href');
+            $('#imui-nav-help-dropdown').on('imuidropdownonselect',function() {
+                if ($('[data-intro]').length < 1 && !$('#start_help_pc').hasClass('ui-state-disabled')) {
+                    $('#start_help_pc').addClass('ui-state-disabled');
+                    $('#start_help_pc').off('click.siteHelp');
+                } else if ($('[data-intro]').length > 0 && $('#start_help_pc').hasClass('ui-state-disabled')) {
+                    $('#start_help_pc').removeClass('ui-state-disabled');
+                    $('#start_help_pc').on('click.siteHelp',startHelp);
+                }
+                if ($('.imui-popover').length > 0) {
+                    $('#imui-nav-help-dropdown').imuiPopover('removeElement');
+                }
+                $('#imui-user-utility').imuiDropdown('collapseAll');
+            });
+            var startHelp = function(){
+                $('body').imuiSiteTour();
+            };
+            $('#start_help_pc').on('click.siteHelp',startHelp);
+        } else {
+            $('#imui-user-utility').css('margin-right',''); // 標準テーマだけ margin を調整しないとヘルプドロップダウンが非表示の際にレイアウトが崩れるため
+        }
+
+        var parent = $(this).parent()[0];
+        var removeLauncher = function() {
+            $('.imui-box-launcher').remove();
+            $('div[aria-labelledby=ui-dialog-title-imui-launcher-add-dialog]').remove();
+            $('#imui-launcher-add-dialog').remove();
+            $(parent).removeClass('active');
+        };
+
+        $('a', '.imui-nav-global-launcher').bind('click', function(event) {
+            event.preventDefault();
+            if ($('.imui-box-launcher').size() == 0) {
+                var launcher = new Array();
+                launcher.push('<div class="imui-box-launcher">')
+                launcher.push('<div id="imui-list-launcher" class="imui-list-launcher"><ul><li></li></ul></div>');
+                launcher.push('<p class="imui-btn-launcher-back"><a href="javascript: void(0);"><span></span></a></p>');
+                launcher.push('<p class="imui-btn-launcher-add"><a href="javascript: void(0);"><span></span></a></p>');
+                launcher.push('<p class="imui-btn-launcher-settings"><a href="user/mymenu/settings"><span class="im-ui-icon-common-24-settings"></span></a></p>');
+                launcher.push('<p class="imui-btn-launcher-close"><a href="javascript: void(0);"><span></span></a></p>');
+                launcher.push('<div id="imui-launcher-add-dialog"></div>');
+                launcher.push('</div>');
+                $(this).after(launcher.join(''));
+
+                $('.imui-box-launcher').hide().fadeIn(200);
+                $('.imui-box-launcher .imui-btn-launcher-back').hide();
+                $('.imui-box-launcher .imui-btn-launcher-add').hide();
+                $('.imui-box-launcher .imui-btn-launcher-settings').hide();
+                var parent = $(this).parent()[0];
+                $(parent).addClass('active');
+
+                $.ajax({
+                    headers:{'x-jp-co-intra-mart-ajax-request-from-imui-form-util':'true'},
+                    dataType:'text', type:'GET', url:'user/mymenu/js_launcher',
+                    data:{},
+                    success:function(data) {
+                        eval(data.replace(/<\/?script[^>]*>/g, ''));
+                    },
+                    error:function(request, textStatus, errorThrown) {
+                        removeLauncher();
+                        if (imuiTransitionToErrorPage) {
+                            imuiTransitionToErrorPage(request, textStatus, errorThrown);
+                        } else {
+                            imuiShowErrorMessage(request.statusText + '(' + request.status + ')', '');
+                        }
+                    }
+                });
+
+                $('.imui-box-launcher .imui-btn-launcher-back a').mouseover(function() {
+                    $('.imui-btn-launcher-back').addClass('ui-state-hover');
+                    $(this).find('span:first').removeClass('im-ui-icon-launcher-16-move-up-gray').addClass('im-ui-icon-launcher-16-move-up-black');
+                }).mouseout(function() {
+                    $('.imui-btn-launcher-back').removeClass('ui-state-hover');
+                    $(this).find('span:first').removeClass('im-ui-icon-launcher-16-move-up-black').addClass('im-ui-icon-launcher-16-move-up-gray');
+                }).mouseout();
+
+                $('.imui-box-launcher .imui-btn-launcher-add a').mouseover(function() {
+                    $('.imui-btn-launcher-add').addClass('ui-state-hover');
+                }).mouseout(function() {
+                    $('.imui-btn-launcher-add').removeClass('ui-state-hover');
+                }).mouseout();
+
+                $('.imui-box-launcher .imui-btn-launcher-settings a').mouseover(function() {
+                    $('.imui-btn-launcher-settings').addClass('ui-state-hover');
+                }).mouseout(function() {
+                    $('.imui-btn-launcher-settings').removeClass('ui-state-hover');
+                }).mouseout();
+
+                $('.imui-box-launcher .imui-btn-launcher-close a').click(function() {
+                    $('.imui-box-launcher').fadeOut(200, function() {
+                        removeLauncher();
+                    });
+                }).mouseover(function() {
+                    $('.imui-btn-launcher-close').addClass('ui-state-hover');
+                    $(this).find('span:first').removeClass('im-ui-icon-launcher-16-close-gray').addClass('im-ui-icon-launcher-16-close-black');
+                }).mouseout(function() {
+                    $('.imui-btn-launcher-close').removeClass('ui-state-hover');
+                    $(this).find('span:first').removeClass('im-ui-icon-launcher-16-close-black').addClass('im-ui-icon-launcher-16-close-gray');
+                }).mouseout();
+            } else {
+                $('.imui-box-launcher').fadeOut(200, function() {
+                    removeLauncher();
+                });
+            }
+        });
+        if ( $('#imui-user-utility').data('imuiUtilityAttr') === 'limitation_off'){
+            $('#imui-user-utility').find('span').eq(0).css('max-width','none');
+        }
+      // 新テーマ用ここから
+      // button タグの場合
+      var buttons = 'button, input[type="button"], button.ui-button, input.ui-button, button.imui-button, button.imui-small-button, button.imui-medium-button, button.imui-large-button , input[type="button"].imui-button, input[type="button"].imui-small-button, input[type="button"].imui-medium-button, input[type="button"].imui-large-button';
+      $(buttons).on('mouseup.imuiRippleButton.on', createRipple);
+      $(document).on('mouseup.imuiRippleButton.live', buttons, createRipple); // 後から追加されたボタン用
+
+      function createRipple(event,pageX,pageY) {
+        var _this = $(this);
+        // 二回目は無視
+        if(_this.hasClass('imui-ripple-body')) {
+          _this.removeClass('imui-ripple-body');
+          return false;
+        }
+        // 非表示の要素、非活性の要素、非活性に見えるスタイルが付与されている場合は処理を行わない
+        if (_this.is(':hidden') || _this.prop('disabled') || _this.hasClass('ui-state-disabled') || _this.hasClass('imui-disabled-button')) {
+          return false;
+        }
+        event.preventDefault();
+        _this.addClass('imui-ripple-body');
+        var inner = $('<div/>');
+        var zIndex = _this.zIndex();
+        var outer = $('<div class="imui-ripple" style="z-index:' + zIndex + ';"/>');
+        var btnOffset = _this.offset();
+        var yPos = event.pageY- btnOffset.top;
+        var xPos = event.pageX - btnOffset.left;
+        if (event.isTrigger) {
+          yPos = pageY- btnOffset.top;
+          xPos = pageX - btnOffset.left;
+        }
+        inner.addClass('imui-ripple-effect');
+        inner.css({
+          top: yPos - 25, // TODO .imui-ripple-effect 要素の半分
+          left: xPos - 25 // TODO .imui-ripple-effect 要素の半分
+        });
+        outer.width(_this.outerWidth());
+        outer.height(_this.outerHeight());
+        outer.offset({ top: btnOffset.top, left: btnOffset.left });
+        outer.append(inner);
+        outer.appendTo('body');
+        var intervalId = setInterval(function() {
+          if(_this.length < 1 || _this.is(':hidden')) {
+            _this.removeClass('imui-ripple-body');
+            clearInterval(intervalId);
+            outer.remove();
+            return;
+          }
+          outer.offset({ top: _this.offset().top, left: _this.offset().left })
+        }, 30) //繰り返し実行する間隔
+
+        // 下の要素の click イベントを発火します
+        outer.on('click.imuiRippleButton',function(e) {
+          _this.removeClass('imui-ripple-body');
+          $(this).remove();
+          clearInterval(intervalId);
+          _this.click();
+          _this.trigger('mouseup',[e.pageX,e.pageY]); // マウスの位置情報を引数に追加してイベントを呼び出す
+        }).on('mousedown', function(e) {
+            if (e.preventDefault != null) {
+              e.preventDefault();
+            }
+            if (e.stopPropagation != null) {
+              e.stopPropagation();
+            }
+        })
+        // アニメーション終了時に要素を削除します
+        outer.on('animationend',function() {
+          _this.removeClass('imui-ripple-body');
+          $(this).remove();
+          clearInterval(intervalId);
+        });
+      }
+      // ここまで
+    });
+})(jQuery);
+/** 
+ * <iframe src="..." data-imui_hide_header="true"> という iframe が存在する場合
+ *
+ * 1. iframe の高さを画面の高さにします
+ * 2. iframe の中のコンテンツから #imui-header, #imui-footer を隠します。
+ * 3. iframe の中のコンテンツの body の最小幅を 0px にします。
+ */
+(function($) {
+  var HIDE_HEADER_KEY = 'imui_hide_header';
+  function setIFrameHeight() {
+    $('iframe').each(function() {
+      if ($(this).data(HIDE_HEADER_KEY)) {
+        var contentHeight = imuiTheme.content.getHeight();
+        $(this).height(contentHeight);
+      }
+    });
+  }
+
+  $(document).ready(function() {
+    $(window).on('resize', setIFrameHeight);
+    setIFrameHeight();
+
+    try {
+      if (window.frameElement !== null && $(window.frameElement).data(HIDE_HEADER_KEY)) {
+        $('#imui-header').hide();
+        $('#imui-footer').hide();
+        $('body').css('min-width', 0);
+      }
+    } catch(ignore) {
+    }
+  });
+})(jQuery);
+
+var imuiTheme = imuiTheme || {};
+imuiTheme.content = {
+  getHeight: function() {
+    var contentHeight = jQuery(window).height() - jQuery('#imui-header').outerHeight(true) - jQuery('#imui-footer').outerHeight(true);
+    return contentHeight;
+  },
+  getWidth: function() {
+    var contentWidth = jQuery(window).width();
+    return contentWidth;
+  }
+};
+(function($) {
+    $(document).ready(function() {
+        //iframe のコンテンツ読み込みが終了したら、iframe 内の min-width を window の幅にする
+        $($('#IM_MAIN')).load(function () {
+          try {
+            if ($('#IM_MAIN').get(0).contentDocument && $("#IM_MAIN").contents().find('body').css('min-width') > $(window).width()) {
+              $("#IM_MAIN").contents().find('body').css('min-width', $(window).width());
+              $("#IM_MAIN").contents().find('#imui-container').css('min-width', $(window).width());
+            }
+          } catch(ignore) {
+          }
+        });
+
+        fitIframe();
+        $(window).resize(fitIframe);
+    });
+    function fitIframe() {
+        // iframe#IM_MAIN が存在する場合、親の min-height を削除。
+        if ($('#IM_MAIN').length > 0) {
+          $('#imui-container').css('min-height', '0px');
+        }
+        // iframe のデフォルト値 display:inline だと（おそらく）文字のディセンダ分だけ高さがずれてしまうので block に変更します。
+        $('#IM_MAIN').css('display','block');
+
+        var height = $(window).height() - $('#imui-header').outerHeight(true) - $('#imui-footer').outerHeight(true);
+        $('#IM_MAIN').find('iframe:not(".imui-no-resize-iframe")').height(height).width($(window).width());
+        $('#IM_MAIN').height(height).width($(window).width());
+    }
+})(jQuery);

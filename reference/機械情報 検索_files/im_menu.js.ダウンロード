@@ -1,0 +1,84 @@
+function imuiMenuExecMenu(menuItemId) {
+  // メニューアイテム情報の取得
+  var ret = {error:true};
+  jQuery.ajax({
+    headers:{'x-jp-co-intra-mart-ajax-request-from-imui-form-util':'true'},
+    error:function(xmlHttpRequest, textStatus, errorThrown) {
+      if (jQuery.imuiFormUtil && jQuery.imuiFormUtil.transitionToErrorPage) {
+        jQuery.imuiFormUtil.transitionToErrorPage(xmlHttpRequest, textStatus, errorThrown);
+      } else {
+        alert(xmlHttpRequest.statusText + '(' + xmlHttpRequest.status + ')');
+      }
+    },
+    async:false, cache:false, dataType:'json', type:'POST', url:'menu/common/ajax_get_item', data:{
+      menuItemId:menuItemId
+    },
+    success:function(result) {
+      ret = result;
+      if (ret.error) imuiShowErrorMessage(ret.errorMessage, ret.detailMessages);
+    }
+  });
+  if (ret.error) return;
+  imuiMenuPostMenu(ret.data);
+}
+
+function imuiMenuPostMenu(option) {
+  var baseUrl = jQuery('base').attr('href');
+  var isTopWindow = (self === parent || !parent.IM_MAIN);
+  var isSender = location.href.indexOf(baseUrl + 'menu/common/menu_sender/') == 0;
+
+  if (option.usePopup && isTopWindow && !isSender) {
+    var popupUrl = option.external
+      ? option.url
+      : (baseUrl + 'menu/common/menu_sender/' + encodeURIComponent(option.id));
+    var winid = '__im__' + (new Date()).getTime();
+    window.open(popupUrl, winid, 'resizable=yes,scrollbars=yes,status=yes');
+    return;
+  }
+
+  var form = jQuery('<form />');
+  form.css({
+    'display':'none',
+    'height':'0px',
+    'width':'0px',
+    'borderWidth':'0px',
+    'margin':'0px',
+    'padding':'0px'
+  });
+
+  jQuery(document.body).append(form);
+
+  form.children().remove();
+  form.attr('method', option.method);
+  form.attr('data-ajax', 'false');
+
+  if (option.useIframe && isTopWindow) {
+    if (option.external) {
+      form.attr('action', 'menu/common/external_sender');
+      form.attr('method', 'post');
+      option.arguments = {'url':option.url, 'sign':option.sign};
+    } else {
+      form.attr('action', 'menu/common/iframe_sender');
+      option.arguments = {'menuId':option.id};
+    }
+  } else {
+    form.attr('action', option.url);
+  }
+
+  if (!!option.arguments) {
+    for (var key in option.arguments){
+      var node = jQuery('<input type="hidden" />');
+      node.attr('name', key);
+      node.attr('value', option.arguments[key]);
+      form.append(node);
+    }
+  }
+
+  try {
+    // IE 対応。beforeunload でキャンセルすると、`trigger('click')` で未定義のエラーが発生する。
+    jQuery('<input type="submit" />').appendTo(form).trigger('click');
+  } catch(e) {
+    if (console) console.error(e.message);
+  }
+  form.remove();
+}

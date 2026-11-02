@@ -1,0 +1,186 @@
+#mainlist-frame {
+  padding-left:5px;
+}
+
+.cross-main-frame {
+  padding-top:5px;
+}
+
+#mainlist td {
+  vertical-align:middle;
+}
+
+#mainlist th {
+    text-align:center;
+    vertical-align:middle;
+}
+
+.nonbordergrid td {
+  border:0px;
+  padding:0px;
+  vertical-align:middle;
+  white-space: nowrap;
+}
+
+.header-footer {
+  padding:10px;
+}
+
+.edit-icontag-target {
+  display: inline-block;
+  margin-left: 5px;
+   margin-bottom:0px;
+  border: 1px solid #999;
+  padding: 3px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  -webkit-box-shadow: 0px 2px 3px #aaa;
+  -moz-box-shadow: 0px 2px 3px #aaa;
+  box-shadow: 0px 2px 3px #aaa;
+  background: #efefef;
+  cursor: pointer;
+  line-height: 16px;
+  min-height:16px;
+  min-width:16px;
+}
+tr[draggable="true"]{
+  cursor: move;
+  cursor: default\9;  /* CSS Hack For IE */
+}
+#columns .vc-dragged-item > td,
+#conditions .vc-dragged-item > td,
+#searches .vc-dragged-item > td,
+#display-formula-llst .vc-dragged-item > td,
+#gcolumns .vc-dragged-item > td {
+  background:rgba(0,0,32,0.15);
+}
+
+#vc-dragged-label {
+  border:1px solid #666;
+  background: #ffffff;
+  padding:5px;
+  white-space:nowrap;
+  min-width:150px;
+   -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  -webkit-box-shadow: 0px 2px 3px #aaa;
+  -moz-box-shadow: 0px 2px 3px #aaa;
+  box-shadow: 0px 2px 3px #aaa;
+}
+
+.edit-icontag-display {
+    display: inline-block;
+  margin-left: 5px;
+   margin-bottom:0px;
+  background: #efefef;
+}
+
+.view-not-found-message {
+  word-wrap: break-word;
+}
+
+label.sortable-column {
+    cursor: pointer;
+}
+
+span.list-group-close {
+  
+}
+
+span.list-group-open {
+  font-weight:bold;
+}
+
+span.list-program-link {
+  
+}
+
+span.list-normal-data {
+  
+}
+
+span.list-warning-data {
+  color:red;
+  font-weight:bold;
+}
+
+td.list-total {
+  border-top:3px double #666666;
+  font-weight:bold;
+}
+
+/* クロス集計・表示データ */
+td.cross-cell, td.cross-cell-subtotal, td.cross-cell-total {
+  text-align:right;
+}
+
+/* クロス集計・小計/合計データ */
+td.cross-cell-subtotal, td.cross-cell-total {
+  font-weight:bold;
+}
+
+.cross-cell-data {
+  display:block;
+  white-space:nowrap;
+}
+
+.setting-status{
+  display:inline-block;
+  height:24px;
+  margin:0px 10px;
+}
+.setting-status span{
+  margin-right:5px;
+  margin-bottom:-7px !important;
+}
+.setting-status span.setting-status-none{
+  display:inline-block;
+  width:24px;
+  height:24px;
+}
+a.text-effect{
+  display:inline-block;
+  width:24px;
+  height: 24px;
+  margin-right:10px;
+  border-top: 1px solid #aaa;
+  border-right: 1px solid #888;
+  border-bottom: 1px solid #888;
+  border-left: 1px solid #aaa;
+  -webkit-box-shadow: -2px -2px 0px #bbb inset;
+     -moz-box-shadow: -2px -2px 0px #bbb inset;;
+          box-shadow: -2px -2px 0px #bbb inset;
+  background-color: #fff;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+}
+
+a.text-effect-toggle-on {
+  display:inline-block;
+  width:24px;
+  height: 24px;
+  margin-right:10px;
+  border-top: 1px solid #888;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  border-left: 1px solid #888;
+  -webkit-box-shadow: 2px 2px 0px #aaa inset;
+  -moz-box-shadow: 2px 2px 0px #aaa inset;
+  box-shadow: 2px 2px 0px #aaa inset;
+  background-color: #c1d0f0;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+}
+
+a.text-effect:hover,
+a.text-effect:focus,
+a.text-effect:active,
+a.text-effect-toggle-on:hover,
+a.text-effect-toggle-on:focus,
+a.text-effect-toggle-on:active{
+  background-color:#d1d1d1;  
+}

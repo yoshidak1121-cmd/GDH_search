@@ -1,0 +1,12 @@
+function changeUserContext(home, companyCd, departmentCd, departmentSetCd) {
+    (function($) {
+        var form = $('<form/>').attr('id', 'im_user_context_change_company').attr('action', 'user/settings/company_change').attr('method','GET');
+        var c = $('<input/>').attr('type','hidden').attr('name','companyCd').attr('value',companyCd);
+        var d = $('<input/>').attr('type','hidden').attr('name','departmentCd').attr('value',departmentCd);
+        var ds = $('<input/>').attr('type','hidden').attr('name','departmentSetCd').attr('value',departmentSetCd);
+        form.append(c).append(d).append(ds);
+
+        form.appendTo('body');
+        imuiAjaxSubmit('#im_user_context_change_company', 'POST', 'json', home, []);
+    })(jQuery);
+}

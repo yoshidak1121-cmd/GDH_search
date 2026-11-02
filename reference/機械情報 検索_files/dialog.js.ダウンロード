@@ -1,0 +1,33 @@
+/**
+ * @deprecated
+ */
+function showWarn(msg, callback, title) {
+  showDialog(msg, "imui-state-yellow", callback, title);
+}
+
+/**
+ * @deprecated
+ */
+function showAlert(msg, callback, title) {
+  showDialog(msg, "imui-state-red", callback, title);
+}
+
+function showInfo(msg, callback, title) {
+  showDialog(msg, "imui-state-green", callback, title);
+}
+
+function showDialog(msg, icon, callback, title) {
+  if (callback == undefined || callback == null) {
+    callback = function(){};
+  }
+  
+  $(function(){
+    var param = {"iconType": icon, "close": callback};
+    if (title == undefined || title == null) {
+      title = "";
+    }
+    
+    $("<div></div>").appendTo(document.body).attr("title", title)
+         .text(msg).imuiMessageDialog(param);
+  });
+}

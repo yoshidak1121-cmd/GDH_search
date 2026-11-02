@@ -1,0 +1,73 @@
+/**
+ * @fileoverview ウィンドウ操作関数群。<br/>
+ * <br/>
+ * <strong>サンプルコード</strong> </a><br/>
+ * <br/>
+ * <table border="1">
+ *   <tr>
+ *     <th>
+ *       サンプル（.htmlファイル）
+ *     </th>
+ *   </tr>
+ *   <tr>
+ *     <td>
+ *       <font size="-1">
+<pre>
+  ・
+  ・
+  ・
+  &lt;script src=&quot;csjs/im_window.js&quot;&gt;&lt;/script&gt;
+
+  &lt;script language=&quot;javascript&quot;&gt;
+
+    // 名称が &quot;MY_WIN&quot; というウィンドウを新規に立ちあげる
+    openNewWindow(&quot;MY_WIN&quot;, &quot;status=yes,resizable=yes&quot;);
+
+  &lt;/script&gt;
+  ・
+  ・
+  ・
+</pre>
+ *       </font>
+ *     </td>
+ *   </tr>
+ * </table>
+ *
+ * @version 1.0
+ * @since 3.0
+ * @author INTRAMART
+ */
+
+/**
+ * 新しいウィンドウを開きます。<br/>
+ * <br/>
+ * 指定された条件で新しいウィンドウを開きます。<br/>
+ * <br/>
+ * この関数は、window.open() と同等の振る舞いをします。
+ * 引数 status には、window.open() ＡＰＩの第３引数に与える引数と同様の文字列データ
+ * (<font size="1">詳細は、JavaScript のリファレンスを参照して下さい</font>)を渡して下さい。<br/>
+ * この関数は、JavaScript の window.open() と等しい値を返します。<br/>
+ * 指定された参照名で、すでにウィンドウが開かれている場合、新規ウィンドウが開かれない場合があります。<br/>
+ * この関数を利用して開いたウィンドウには、『Please wait...』という画面が表示されます。<br/>
+ *
+ * @param {String} name ウィンドウ参照名称
+ * @param {String} status ウィンドウ・ステータス
+ * @return 新規に開いたウィンドウのハンドル (Window オブジェクト)
+ * @type Window
+ */
+function openNewWindow(name, status){
+	var baseURI;
+	var baseTags = document.getElementsByTagName('base');
+	if(baseTags && baseTags[0] && baseTags[0].href){
+		var href = baseTags[0].href;
+		if(href.substr(href.length-1) == '/'){
+			baseURI = href;
+		}else{
+			baseURI = href + '/';
+		}
+	}else{
+		baseURI = ''; // relative
+	}
+
+	return window.open(baseURI + 'alert/newwindow_home.html', name, status);
+}

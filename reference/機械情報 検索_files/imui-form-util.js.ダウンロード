@@ -1,0 +1,1232 @@
+/**
+ * 指定されたメッセージを表示します。
+ * <br/>
+ * <br/>
+ * @param {String} message 表示するメッセージ
+ * @param {String|String[]} [detail] 表示するメッセージ。8.0.8 から指定できるようになりました。
+ * @param {Boolean} [closable=true] メッセージ表示領域を明示的に閉じることができるかどうかのフラグ。durationが0以下の場合強制的にtrueになります。 (true: クリックで閉じる、false: クリックしても閉じない）
+ * @param {Number} [duration=10000] メッセージ表示領域が自動的に閉じるまでの時間。0 を指定すると自動的に閉じないようになります。 (ms)
+ * @param {Boolean} [escape=false] メッセージをエスケープするかどうかのフラグ。(true: エスケープする、false: エスケープしない）
+ * @example
+ * imuiShowSuccessMessage('成功しました');
+ * @example
+ * // クリックするまで消えないようにする
+ * imuiShowSuccessMessage('成功しました', true, 0);
+ * @example
+ * // メッセージをエスケープする
+ * imuiShowSuccessMessage('&lt;sample.png&gt;を登録しました', true, 10000, true);
+ * @example
+ * // 詳細なメッセージを指定
+ * imuiShowSuccessMessage('成功しました。作成したIDは以下の通りです。', ['IDxxx', 'IDyyy', 'IDzzz']);
+ * @example
+ * // 詳細なメッセージをエスケープする
+ * imuiShowSuccessMessage('&lt;png&gt;を登録しました。', ['&lt;xxx.png&gt;', 'yyy.png', 'zzz.png'], true, 10000, true);
+ * @class
+ */
+function imuiShowSuccessMessage(message, detail, closable, duration, escape) {
+    var options = {};
+    if (detail instanceof Array || typeof(detail) === 'string') {
+      options.detail = detail;
+    } else if (typeof(detail) === 'boolean') {
+      options.closable = detail;
+    }
+    if (typeof(closable) === 'boolean') {
+      options.closable = closable;
+    } else if (typeof(closable) === 'number') {
+      options.duration = closable;
+    }
+    if (typeof(duration) === 'number') {
+      options.duration = duration;
+    } else if (typeof(duration) === 'boolean') {
+      options.escape = duration;
+    }
+    if (typeof(escape) === 'boolean') options.escape = escape;
+    jQuery.imuiFormUtil.showSuccessMessage(message, options);
+    /**
+     * 成功メッセージを閉じます。<br>
+     * im_ui 8.0.13 以降のバージョンで利用できます。
+     * @memberOf imuiShowSuccessMessage#
+     * @example
+     * &lt;script&gt;
+     *   $(function(){
+     *     $(&#039;#success&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowSuccessMessage(&#039;title&#039;,&#039;detail&#039;); // 成功メッセージを表示
+     *     })
+     *     $(&#039;#close&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowSuccessMessage.close(); // 成功メッセージを閉じる
+     *     })
+     *   })
+     * &lt;/script&gt;
+     * &lt;button id=&quot;success&quot;&gt;show success&lt;/button&gt;
+     * &lt;button id=&quot;close&quot;&gt;close message&lt;/button&gt;
+     * 
+     */
+    imuiShowSuccessMessage.close = function(){
+        var messagebox = $('#imui-messagebox');
+        if (messagebox.is(':visible')) {
+            messagebox.hide();
+        }
+    }
+}
+
+/**
+ * 指定されたエラーメッセージを表示します。
+ * <br/>
+ * <br/>
+ * detail には String、または String の配列を指定します。
+ * <br/>
+ * @param {String} message 表示するメッセージ
+ * @param {String|String[]} [detail] 表示するメッセージ
+ * @param {Boolean} [closable=true] メッセージ表示領域を明示的に閉じることができるかどうかのフラグ。durationが0以下の場合強制的にtrueになります。 (true: クリックで閉じる、false: クリックしても閉じない）
+ * @param {Number} [duration=10000] メッセージ表示領域が自動的に閉じるまでの時間。0 を指定すると自動的に閉じないようになります。 (ms)
+ * @param {Boolean} [escape=false] メッセージをエスケープするかどうかのフラグ。(true: エスケープする、false: エスケープしない）
+ * @example
+ * imuiShowErrorMessage('失敗しました');
+ * @example
+ * // 詳細なメッセージを指定
+ * imuiShowErrorMessage('失敗しました', ['管理者にお問い合わせください', '連絡先：xxx@xxx.xxx.xxx']);
+ * @example
+ * // クリックするまで消えないようにする
+ * imuiShowErrorMessage('失敗しました', [], true, 0);
+ * @example
+ * // メッセージをエスケープする
+ * imuiShowErrorMessage('&lt;sample.png&gt;の登録に失敗しました', [], true, 10000, true);
+ * @class
+ */
+function imuiShowErrorMessage(message, detail, closable, duration, escape) {
+    var options = {};
+    if (typeof(closable) === 'boolean') options.closable = closable;
+    if (typeof(duration) === 'number') options.duration = duration;
+    if (typeof(escape) === 'boolean') options.escape = escape;
+    jQuery.imuiFormUtil.showErrorMessage(message, detail, options);
+    /**
+     * エラーメッセージを閉じます。<br>
+     * im_ui 8.0.13 以降のバージョンで利用できます。
+     * @memberOf imuiShowErrorMessage#
+     * @example
+     * &lt;script&gt;
+     *   $(function(){
+     *     $(&#039;#error&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowErrorMessage(&#039;title&#039;,&#039;detail&#039;); // エラーメッセージを表示
+     *     })
+     *     $(&#039;#close&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowErrorMessage.close(); // エラーメッセージを閉じる
+     *     })
+     *   })
+     * &lt;/script&gt;
+     * &lt;button id=&quot;error&quot;&gt;show error&lt;/button&gt;
+     * &lt;button id=&quot;close&quot;&gt;close message&lt;/button&gt;
+     * 
+     */
+    imuiShowErrorMessage.close = function(){
+        var messagebox = $('#imui-messagebox');
+        if (messagebox.is(':visible')) {
+            messagebox.hide();
+        }
+    }
+}
+
+/**
+ * 指定された警告メッセージを表示します。
+ * <br/>
+ * <br/>
+ * detail には String、または String の配列を指定します。
+ * <br/>
+ * @param {String} message 表示するメッセージ
+ * @param {String|String[]} [detail] 表示するメッセージ
+ * @param {Boolean} [closable=true] メッセージ表示領域を明示的に閉じることができるかどうかのフラグ。durationが0以下の場合強制的にtrueになります。 (true: クリックで閉じる、false: クリックしても閉じない）
+ * @param {Number} [duration=10000] メッセージ表示領域が自動的に閉じるまでの時間。0 を指定すると自動的に閉じないようになります。 (ms)
+ * @param {Boolean} [escape=false] メッセージをエスケープするかどうかのフラグ。(true: エスケープする、false: エスケープしない）
+ * @example
+ * imuiShowWarningMessage('失敗しました');
+ * @example
+ * // 詳細なメッセージを指定
+ * imuiShowWarningMessage('失敗しました', ['管理者にお問い合わせください', '連絡先：xxx@xxx.xxx.xxx']);
+ * @example
+ * // クリックするまで消えないようにする
+ * imuiShowWarningMessage('失敗しました', [], true, 0);
+ * @example
+ * // メッセージをエスケープする
+ * imuiShowWarningMessage('&lt;sample.png&gt;の登録に失敗しました', [], true, 10000, true);
+ * @class
+ */
+function imuiShowWarningMessage(message, detail, closable, duration, escape) {
+    var options = {};
+    if (typeof(closable) === 'boolean') options.closable = closable;
+    if (typeof(duration) === 'number') options.duration = duration;
+    if (typeof(escape) === 'boolean') options.escape = escape;
+    jQuery.imuiFormUtil.showWarningMessage(message, detail, options);
+    /**
+     * 警告メッセージを閉じます。<br>
+     * im_ui 8.0.13 以降のバージョンで利用できます。
+     * @memberOf imuiShowWarningMessage#
+     * @example
+     * &lt;script&gt;
+     *   $(function(){
+     *     $(&#039;#warning&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowWarningMessage(&#039;title&#039;,&#039;detail&#039;); // 警告メッセージを表示
+     *     })
+     *     $(&#039;#close&#039;).on(&#039;click&#039;,function(){
+     *       imuiShowWarningMessage.close(); // 警告メッセージを閉じる
+     *     })
+     *   })
+     * &lt;/script&gt;
+     * &lt;button id=&quot;warning&quot;&gt;show warning&lt;/button&gt;
+     * &lt;button id=&quot;close&quot;&gt;close message&lt;/button&gt;
+     * 
+     */
+    imuiShowWarningMessage.close = function(){
+        var messagebox = $('#imui-messagebox');
+        if (messagebox.is(':visible')) {
+            messagebox.hide();
+        }
+    }
+}
+
+/**
+ * 指定されたパラメータに従ってデータを Ajax で送信し、送信が成功したら指定された url に対して submit を行います。
+ * <br/>
+ * <br/>
+ * keys に値を指定すると form の中の input タグを検索し、値を action に指定された URL に送信します。
+ * <br/>
+ * 別の form の値を送信したい場合、action に 送信したい form のセレクタを返すように実装した function を指定してください。
+ * <br/>
+ * <br/>
+ * Ajax での送信先で以下のようなレスポンスを返すことで、成功・失敗・警告のメッセージを表示できます。
+ * <br/>
+ * <table class="table table-bordered">
+ * <tr><th>属性名</th><th>説明</th><th>型</th><th>必須</th><th>国際化</th></tr>
+ * <tr><td>error</td><td>処理が失敗した場合 true、成功した場合 false を指定します。</td><td>boolean</td><td>o</td><td>-</td></tr>
+ * <tr><td>warning</td><td>警告メッセージを表示したい場合は true を指定します。<br/> error: false の場合は画面遷移をした後に警告メッセージを表示し、error: true の場合は画面遷移せずに警告メッセージを表示します。<br/> 省略時は false の動作をします。</td><td>boolean</td><td>-</td><td>-</td></tr>
+ * <tr><td>successMessage</td><td>処理成功時のメッセージ。error: false の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>errorMessage</td><td>処理失敗時のメッセージ。error: true の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>warningMessage</td><td>警告時のメッセージ。error の値に関係なく warning: true の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>detailMessages</td><td>処理失敗時の詳細なメッセージ。error: true または warning: true の場合表示されます。</td><td>String/String[]</td><td>-</td><td>-</td></tr>
+ * <tr><td>parameter</td><td>処理成功後に遷移するページへ引き渡すパラメータです。</br>オブジェクトの value にオブジェクト、オブジェクトを含む配列を指定することはできません。</td><td>Object</td><td>-</td><td>-</td></tr>
+ * </table>
+ * <br/>
+ * errorプロパティとwarningプロパティの組み合わせは以下のようになります。
+ * <br/>
+ * <table class="table table-bordered">
+ * <tr><td colspan=2 rowspan=2 width="20%">返却するwarningとerrorプロパティの組み合わせにより表示されるメッセージの種類</td><th colspan=2 style="text-align: center;">warning</th></tr>
+ * <tr><td style="vertical-align:middle;text-align: center;">true</td><td style="vertical-align:middle;text-align: center;">false</td></tr>
+ * <tr><th rowspan=2 style="vertical-align:middle;text-align: center;">error</th><td style="text-align: center;">true</td><td>警告メッセージ（画面遷移しない）</td><td>エラーメッセージ</td></tr>
+ * <tr><td style="text-align: center;">false</td><td>警告メッセージ（画面遷移する）</td><td>成功メッセージ</td></tr>
+ * </table>
+ * <br/>
+ * {@link imuiAjaxSend} との違いは、送信が成功した後の画面遷移をするかどうかです。<br/>
+ * この関数では、送信が成功（errorにfalseを指定）したら指定された url に対して submit を行います。<br/>
+ * {@link imuiAjaxSend} は、送信が成功しても画面遷移は行いません。
+ * <br/>
+ * <br/>
+ *
+ * @param {HTMLForm} form validate から渡されるフォーム
+ * @param {String} method データを送信するメソッド (GET/POST)
+ * @param {String} dataType データを受信する際のデータフォーマット (json/xml) (jsonp, html, scriptには対応していません)
+ * @param {String/function(data)} action データ送信に成功した際の遷移先。String を指定した場合 URL とみなし、form の action 属性に値を設定した上でサブミットを行います。Function を指定した場合、Function はサブミットしたい form のセレクタを返すように実装してください。セレクタが存在する場合サブミットを行います。存在しない場合は何も行いません。
+ * @param {String[]} [keys=[]] データ送信に成功した際の遷移先に送信する要素のname
+ * @param {function(jqXHR, settings)} [beforeSend=$.noop] データ送信の前に呼ばれるCallback関数
+ * @param {function(jqXHR, textStatus)} [complete=$.noop] データ送信が完了したときに呼ばれるCallback関数
+ * @param {Boolean} [closable=true] メッセージ表示領域を明示的に閉じることができるかどうかのフラグ。durationが0以下の場合強制的にtrueになります。 (true: クリックで閉じる、false: クリックしても閉じない）
+ * @param {Number} [duration=10000] メッセージ表示領域が自動的に閉じるまでの時間。0 を指定すると自動的に閉じないようになります。 (ms)
+ * @param {Boolean} [escape=false] メッセージをエスケープするかどうかのフラグ。(true: エスケープする、false: エスケープしない）
+ * @param {function(dataReceived, textStatus, jqXHR)} [successcallback=$.noop] データ送信が成功したときに呼ばれるCallback関数。8.0.8 から指定できるようになりました。
+ * @param {function(jqXHR, textStatus, errorThrown)} [errorcallback=$.noop] データ送信が失敗したときに呼ばれるCallback関数。8.0.8 から指定できるようになりました。
+ * @param {Boolean} [suppressmessage=false] メッセージ表示を抑制するフラグ。8.0.8 から指定できるようになりました。(true: 表示を抑制する、false: 表示を抑制しない)
+ *
+ * @example
+ * &lt;script&gt;
+ * //
+ * // 使用例
+ * //
+ * // ボタンをクリックすると somewhere/ajax へデータを Ajax で送信し、成功したときに next/page へ遷移する例です。
+ *
+ * // Presantation Page
+ * // ボタンをクリックすると、somewhere/ajax へ Ajax でデータを送信する。
+ * // 成功した場合 next/page へ遷移する
+ * $(document).ready(function() {
+ *     $('#button').click(function() {
+ *         imuiAjaxSubmit('#form', 'POST', 'json', 'next/page');
+ *     });
+ * });
+ * &lt;/script&gt;
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="text" name="text2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * // サーバ側 (Ajax での送信先: somewhere/ajax)
+ * function init(request) {
+ *     Debug.console(request);
+ *
+ *     var response = Web.getHTTPResponse();
+ *     response.setContentType('application/json; charset=utf-8');
+ *
+ *     // var resultObject = SomeAPI.doSomething();
+ *     var resultObject = { error: false };
+ *     if (resultObject.error) {
+ *         // 処理が失敗した場合
+ *         response.sendMessageBodyString(ImJson.toJSONString({
+ *             error: resultObject.error,
+ *             errorMessage: resultObject.message,
+ *             detailMessages: ['管理者にお問い合わせください', '連絡先：admin@xxx.xxx.xxx']
+ *         }));
+ *     }
+ *
+ *     // 処理が成功した場合
+ *     response.sendMessageBodyString(ImJson.toJSONString({
+ *         error: false,
+ *         errorMessage: '',
+ *         successMessage: '登録しました',
+ *         parameter: {
+ *             param1: 'value1',
+ *             param2: 'value2',
+ *             array1: ['array1','array2','array3']
+ *         }
+ *     }));
+ * }
+ *
+ * // サーバ側 (遷移先: next/page.js)
+ * function init(request) {
+ *     Debug.console(request); // { param1: 'value1', param2: 'value2', array1: ['array1','array2','array3'] }
+ * }
+ *
+ * @example
+ * //
+ * // keys の使い方
+ * //
+ * // #form 内の input タグの name 属性を keys に指定することで次画面へ送信できます。
+ * // この例では、input type="hidden" name="text1" と input type="hidden" name="text2" の name と value を送信します。
+ *
+ * // クライアント側
+ * // ボタンをクリックすると、somewhere/ajax へ Ajax でデータを送信する。
+ * // 成功した場合 next/page へ遷移する
+ * $(document).ready(function() {
+ *     $('#button').click(function() {
+ *         imuiAjaxSubmit('#form', 'POST', 'json', 'next/page', ['text1','text2']);
+ *     });
+ * });
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="hidden" name="text1" value="v1" /&gt;
+ *     &lt;input type="hidden" name="text2" value="v2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * // サーバ側 (遷移先: next/page.js)
+ * function init(request) {
+ *     Debug.console(request); // { text1: 'v1', text2: 'v2', param1: 'value1', param2: 'value2', array1: ['array1','array2','array3'] }
+ * }
+ *
+ * @example
+ * //
+ * // beforeSend, complete の使い方
+ * //
+ * // この例では、beforeSend と complete の両方を使って Ajax の通信中に通信中であることを示す画像を表示します。
+ * imuiAjaxSubmit('#form', 'POST', 'json', 'next/page', [],
+ *     function() {
+ *         $(document.body).imuiIndicator(); // imuiIndicator を表示
+ *     },
+ *     function() {
+ *         $(document.body).imuiIndicator('destroy'); // imuiIndicator を非表示
+ *     }
+ * );
+ *
+ * @example
+ * //
+ * // beforeSend を使用せずに complete だけを指定する場合
+ * //
+ * // この例では、Ajax の処理が完了したら alert を実行します。
+ * imuiAjaxSubmit('#form', 'POST', 'json', 'next/page', [],
+ *     $.noop, // 空の function を指定します。
+ *     function() {
+ *         alert('処理完了');
+ *     }
+ * );
+ *
+ * @example
+ * //
+ * // メッセージをクリックするまで消えないようにする場合
+ * //
+ * // duration に 0 を指定することで自動的に非表示になりません。
+ * imuiAjaxSubmit('#form', 'POST', 'json', 'next/page', [], $.noop, $.noop, true, 0);
+ *
+ * @example
+ * //
+ * // 組み合わせた例
+ * //
+ * // バリデーションチェック、確認ダイアログを組み合わせた例です。
+ *
+ * // サーバサイドバリデーションの定義ファイル (validator.js)
+ * // input name="text1" に対して必須チェックを定義します。
+ * var init = {
+ *     text1: {
+ *         caption: 'CAP.SAMPLE.REQUIRED',
+ *         required: true
+ *     }
+ * }
+ *
+ * // Presentation Page
+ * &lt;imart type="head"&gt;
+ *   &lt;script src="ui/libs/jquery-validation-1.9.0/jquery.validate.js"&gt;&lt;/script&gt;
+ *   &lt;script src="ui/js/imui-form-util.js"&gt;&lt;/script&gt;
+ * &lt;/imart&gt;
+ *
+ * &lt;!-- 上記サーバサイドバリデーションの定義ファイルを読み込みます。 --&gt;
+ * &lt;imart type="imuiValidationRule" rule="validator#init" rulesName="rules" messagesName="messages"/&gt;
+ *
+ * &lt;script&gt;
+ * $(document).ready(function() {
+ *     // 登録/更新ボタンクリック
+ *     $('#button').click(function() {
+ *         // バリデーションチェック
+ *         if (imuiValidate('#form', rules, messages)) {
+ *             // 確認ダイアログ表示
+ *             imuiConfirm(
+ *                 '&lt;imart type="string" value=message/&gt;', // メッセージ
+ *                 '&lt;imart type="string" value=title/&gt;', // タイトル
+ *                 function() { // OKクリック時のコールバック関数
+ *                      // Ajaxでのデータ送信と次画面への遷移
+ *                     imuiAjaxSubmit('#form', 'POST', 'json', 'next/page',['text1'],
+ *                         function() {
+ *                             $(document.body).imuiIndicator(); // imuiIndicator を表示
+ *                         },
+ *                         function() {
+ *                             $(document.body).imuiIndicator('destroy'); // imuiIndicator を非表示
+ *                         }
+ *                     );
+ *                 }
+ *             );
+ *         }
+ *     });
+ * });
+ * &lt;/script&gt;
+ *
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="text" name="text2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * // サーバ側 (Ajax での送信先: somewhere/ajax)
+ * function init(request) {
+ *     Debug.console(request);
+ *
+ *     var response = Web.getHTTPResponse();
+ *     response.setContentType('application/json; charset=utf-8');
+ *
+ *     // var resultObject = SomeAPI.doSomething();
+ *     var resultObject = { error: false };
+ *     if (resultObject.error) {
+ *         // 処理が失敗した場合
+ *         response.sendMessageBodyString(ImJson.toJSONString({
+ *             error: resultObject.error,
+ *             errorMessage: resultObject.message,
+ *             detailMessages: ['管理者にお問い合わせください', '連絡先：admin@xxx.xxx.xxx']
+ *         }));
+ *     }
+ *
+ *     // 処理が成功した場合
+ *     response.sendMessageBodyString(ImJson.toJSONString({
+ *         error: false,
+ *         errorMessage: '',
+ *         successMessage: '登録しました',
+ *         parameter: {
+ *             param1: 'value1',
+ *             param2: 'value2',
+ *             array1: ['array1','array2','array3']
+ *         }
+ *     }));
+ * }
+ *
+ * // サーバ側 (遷移先: next/page.js)
+ * var text1;
+ * function init(request) {
+ *     Debug.console(request); // { param1: 'value1', param2: 'value2', array1: ['array1','array2','array3'] }
+ *     text1 = request.text1;
+ * }
+ *
+ * // サーバ側 (遷移先: next/page.html)
+ * &lt;div class="imui-title"&gt;
+ *     &lt;h1&gt;imuiFormUtil Sample&lt;/h1&gt;
+ * &lt;/div&gt;
+ * &lt;label&gt;text1 : &lt;/label&gt;&lt;span&gt;&lt;imart type="string" value=text1/&gt;&lt;/span&gt;
+ */
+function imuiAjaxSubmit(form, method, dataType, action, keys, beforeSend, complete, closable, duration, escape, successCallback, errorCallback, suppressMessage) {
+    if (form == undefined || form == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'form'));
+    }
+    if (method == undefined || method == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'method'));
+    }
+    if (dataType == undefined || dataType == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'dataType'));
+    }
+    if (action == undefined || action == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'action'));
+    }
+
+    if (!(keys instanceof Array)) {
+        if (typeof(keys) == 'function') {
+            if (typeof(beforeSend) == 'function') {
+                complete = beforeSend;
+            }
+            beforeSend = keys;
+        }
+    }
+    var options = {};
+    if (typeof(closable) === 'boolean') options.closable = closable;
+    if (typeof(duration) === 'number') options.duration = duration;
+    if (typeof(escape) === 'boolean') options.escape = escape;
+    if (typeof(suppressMessage) === 'boolean') options.suppressMessage = suppressMessage;
+
+    jQuery(form).imuiFormUtil('destroy');
+    jQuery(form).imuiFormUtil({
+        method: method,
+        dataType: dataType,
+        successUrl: action,
+        keys: keys,
+        beforeSend: beforeSend,
+        complete: complete,
+        successCallback: successCallback,
+        errorCallback: errorCallback,
+        messageOptions: options
+    }).imuiFormUtil('ajaxSubmit');
+}
+
+/**
+ * 指定されたパラメータに従ってデータを Ajax で送信します。
+ * <br/>
+ * <br/>
+ * Ajax での送信先で以下のようなレスポンスを返すことで、成功・失敗・警告のメッセージを表示できます。
+ * <br/>
+ * <table class="table table-bordered">
+ * <tr><th>属性名</th><th>説明</th><th>型</th><th>必須</th><th>国際化</th></tr>
+ * <tr><td>error</td><td>処理が失敗した場合 true、成功した場合 false を指定します。</td><td>boolean</td><td>o</td><td>-</td></tr>
+ * <tr><td>warning</td><td>警告メッセージを表示したい場合は true を指定します。<br/>  省略時は false の動作をします。</td><td>boolean</td><td>-</td><td>-</td></tr>
+ * <tr><td>successMessage</td><td>処理成功時のメッセージ。error: false の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>errorMessage</td><td>処理失敗時のメッセージ。error: true の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>warningMessage</td><td>警告時のメッセージ。error の値に関係なく warning: true の場合表示されます。</td><td>String</td><td>-</td><td>-</td></tr>
+ * <tr><td>detailMessages</td><td>処理失敗時の詳細なメッセージ。error: true または warning: true の場合表示されます。</td><td>String/String[]</td><td>-</td><td>-</td></tr>
+ * </table>
+ * <br/>
+ * errorプロパティとwarningプロパティの組み合わせは以下のようになります。
+ * <br/>
+ * <table class="table table-bordered">
+ * <tr><td colspan=2 rowspan=2 width="20%">返却するwarningとerrorプロパティの組み合わせにより表示されるメッセージの種類</td><th colspan=2 style="text-align: center;">warning</th></tr>
+ * <tr><td style="vertical-align:middle;text-align: center;">true</td><td style="vertical-align:middle;text-align: center;">false</td></tr>
+ * <tr><th rowspan=2 style="vertical-align:middle;text-align: center;">error</th><td style="text-align: center;">true</td><td>警告メッセージ</td><td>エラーメッセージ</td></tr>
+ * <tr><td style="text-align: center;">false</td><td>警告メッセージ</td><td>成功メッセージ</td></tr>
+ * </table>
+ * <br/>
+ * <br/>
+ * {@link imuiAjaxSubmit} との違いは、送信が成功した後の画面遷移をするかどうかです。<br/>
+ * この関数では送信が成功しても画面遷移は行いません。<br/>
+ * {@link imuiAjaxSubmit} は、送信が成功したら指定された url に対して submit を行います。
+ * <br/>
+ * <br/>
+ * @param {HTMLForm} form validate から渡されるフォーム
+ * @param {String} method データを送信するメソッド (GET/POST)
+ * @param {String} dataType データを受信する際のデータフォーマット (json/xml) (jsonp, html, scriptには対応していません)
+ * @param {function(jqXHR, settings)} [beforeSend] データ送信の前に呼ばれるCallback関数
+ * @param {function(jqXHR, textStatus)} [complete] データ送信が完了したときに呼ばれるCallback関数
+ * @param {Boolean} [closable=true] メッセージ表示領域を明示的に閉じることができるかどうかのフラグ。durationが0以下の場合強制的にtrueになります。 (true: クリックで閉じる、false: クリックしても閉じない）
+ * @param {Number} [duration=10000] メッセージ表示領域が自動的に閉じるまでの時間。0 を指定すると自動的に閉じないようになります。 (ms)
+ * @param {Boolean} [escape=false] メッセージをエスケープするかどうかのフラグ。(true: エスケープする、false: エスケープしない）
+ * @param {function(dataReceived, textStatus, jqXHR)} [successcallback=$.noop] データ送信が成功したときに呼ばれるCallback関数。8.0.8 から指定できるようになりました。
+ * @param {function(jqXHR, textStatus, errorThrown)} [errorcallback=$.noop] データ送信が失敗したときに呼ばれるCallback関数。8.0.8 から指定できるようになりました。
+ * @param {Boolean} [suppressmessage=false] メッセージ表示を抑制するフラグ。8.0.8 から指定できるようになりました。(true: 表示を抑制する、false: 表示を抑制しない)
+ * @param {Boolean} [transitionToErrorPage=false] エラー画面へ遷移するかどうかを制御するフラグ。8.0.8 から指定できるようになりました。(true: エラー画面へ遷移する、false: エラー画面へ遷移しない)
+ *
+ * @example
+ * //
+ * // 使用例
+ * //
+ * // ボタンをクリックすると somewhere/ajax へデータを Ajax で送信します。
+ *
+ * // Presentation Page
+ * // ボタンをクリックすると、somewhere/ajax へ Ajax でデータを送信する。
+ * // 成功した場合 next/page へ遷移する
+ * $(document).ready(function() {
+ *     $('#button').click(function() {
+ *         imuiAjaxSend('#form', 'POST', 'json');
+ *     });
+ * });
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="text" name="text2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * // サーバ側 (Ajax での送信先: somewhere/ajax)
+ * function init(request) {
+ *     Debug.console(request);
+ *
+ *     var response = Web.getHTTPResponse();
+ *     response.setContentType('application/json; charset=utf-8');
+ *
+ *     // var resultObject = SomeAPI.doSomething();
+ *     var resultObject = { error: false };
+ *     if (resultObject.error) {
+ *         // 処理が失敗した場合
+ *         response.sendMessageBodyString(ImJson.toJSONString({
+ *             error: resultObject.error,
+ *             errorMessage: resultObject.message,
+ *             detailMessages: ['管理者にお問い合わせください', '連絡先：admin@xxx.xxx.xxx']
+ *         }));
+ *     }
+ *
+ *     // 処理が成功した場合
+ *     response.sendMessageBodyString(ImJson.toJSONString({
+ *         error: false,
+ *         errorMessage: '',
+ *         successMessage: '登録しました'
+ *     }));
+ * }
+ *
+ * @example
+ * //
+ * // beforeSend, complete の使い方
+ * //
+ * // この例では、beforeSend と complete の両方を使って Ajax の通信中に通信中であることを示す画像を表示します。
+ * imuiAjaxSend('#form', 'POST', 'json',
+ *     function() {
+ *         $(document.body).imuiIndicator(); // imuiIndicator を表示
+ *     },
+ *     function() {
+ *         $(document.body).imuiIndicator('destroy'); // imuiIndicator を非表示
+ *     }
+ * );
+ *
+ * @example
+ * //
+ * // beforeSend を使用せずに complete だけを指定する場合
+ * //
+ * // この例では、Ajax の処理が完了したら alert を実行します。
+ * imuiAjaxSend('#form', 'POST', 'json',
+ *     $.noop, // 空の function を指定します。
+ *     function() {
+ *         alert('処理完了');
+ *     }
+ * );
+ *
+ * @example
+ * //
+ * // メッセージをクリックするまで消えないようにする場合
+ * //
+ * // duration に 0 を指定することで自動的に非表示になりません。
+ * imuiAjaxSend('#form', 'POST', 'json', $.noop, $.noop, true, 0);
+ *
+ * @example
+ * //
+ * // 組み合わせた例
+ * //
+ * // バリデーションチェック、確認ダイアログを組み合わせた例です。
+ *
+ * // サーバサイドバリデーションの定義ファイル (validator.js)
+ * // input name="text1" に対して必須チェックを定義します。
+ * var init = {
+ *     text1: {
+ *         caption: 'CAP.SAMPLE.REQUIRED',
+ *         required: true
+ *     }
+ * }
+ *
+ * // Presentation Page
+ * &lt;imart type="head"&gt;
+ *   &lt;script src="ui/libs/jquery-validation-1.9.0/jquery.validate.js"&gt;&lt;/script&gt;
+ *   &lt;script src="ui/js/imui-form-util.js"&gt;&lt;/script&gt;
+ * &lt;/imart&gt;
+ *
+ * // 上記サーバサイドバリデーションの定義ファイルを読み込みます。
+ * &lt;imart type="imuiValidationRule" rule="validator#init" rulesName="rules" messagesName="messages"/&gt;
+ *
+ * &lt;script&gt;
+ * $(document).ready(function() {
+ *     // 登録/更新ボタンクリック
+ *     $('#button').click(function() {
+ *         // バリデーションチェック
+ *         if (imuiValidate('#form', rules, messages)) {
+ *             // 確認ダイアログ表示
+ *             imuiConfirm(
+ *                 '&lt;imart type="string" value=message/&gt;', // メッセージ
+ *                 '&lt;imart type="string" value=title/&gt;', // タイトル
+ *                 function() { // OKクリック時のコールバック関数
+ *                     imuiAjaxSend('#form', 'POST', 'json',
+ *                         function() {
+ *                             $(document.body).imuiIndicator(); // imuiIndicator を表示
+ *                         },
+ *                         function() {
+ *                             $(document.body).imuiIndicator('destroy'); // imuiIndicator を非表示
+ *                         }
+ *                     ); // Ajaxでのデータ送信
+ *                 }
+ *             );
+ *         }
+ *     });
+ * });
+ * &lt;/script&gt;
+ *
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="text" name="text2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * // サーバ側 (Ajax での送信先: somewhere/ajax)
+ * function init(request) {
+ *     Debug.console(request);
+ *
+ *     var response = Web.getHTTPResponse();
+ *     response.setContentType('application/json; charset=utf-8');
+ *
+ *     // var resultObject = SomeAPI.doSomething();
+ *     var resultObject = { error: false };
+ *     if (resultObject.error) {
+ *         // 処理が失敗した場合
+ *         response.sendMessageBodyString(ImJson.toJSONString({
+ *             error: resultObject.error,
+ *             errorMessage: resultObject.message,
+ *             detailMessages: ['管理者にお問い合わせください', '連絡先：admin@xxx.xxx.xxx']
+ *         }));
+ *     }
+ *
+ *     // 処理が成功した場合
+ *     response.sendMessageBodyString(ImJson.toJSONString({
+ *         error: false,
+ *         errorMessage: '',
+ *         successMessage: '登録しました'
+ *     }));
+ * }
+ *
+ */
+function imuiAjaxSend(form, method, dataType, beforeSend, complete, closable, duration, escape, successCallback, errorCallback, suppressMessage, transitionToErrorPage) {
+    if (form == undefined || form == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'form'));
+    }
+    if (method == undefined || method == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'method'));
+    }
+    if (dataType == undefined || dataType == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'dataType'));
+    }
+
+    var options = {};
+    if (typeof(closable) === 'boolean') options.closable = closable;
+    if (typeof(duration) === 'number') options.duration = duration;
+    if (typeof(escape) === 'boolean') options.escape = escape;
+    if (typeof(suppressMessage) === 'boolean') options.suppressMessage = suppressMessage;
+
+    jQuery(form).imuiFormUtil({
+        headers: transitionToErrorPage ? { 'x-jp-co-intra-mart-ajax-request-from-imui-form-util': 'true' } : {},
+        method: method,
+        dataType: dataType,
+        beforeSend: beforeSend,
+        complete: complete,
+        successCallback: successCallback,
+        errorCallback: transitionToErrorPage ? function(jqXHR, textStatus, errorThrown){
+          if (typeof(errorCallback) == 'function') errorCallback(jqXHR, textStatus, errorThrown);
+          imuiTransitionToErrorPage(jqXHR, textStatus, errorThrown);
+        } : errorCallback,
+        messageOptions: options
+    }).imuiFormUtil('ajaxSend');
+}
+
+/**
+ * 指定されたルールに従って、バリデーションを行います。
+ * <br/>
+ * <br/>
+ * バリデーションの対象は、後述の rules で指定された input, select, textarea タグです。
+ * <br/>
+ * ただし、submit, reset, image の各要素、disabled 属性が指定されている要素と、後述の ignore で指定された要素は対象外です。
+ * <br/>
+ * バリデーションに失敗した場合、指定されたメッセージが表示されます。
+ * <br/>
+ * バリデーションに成功した場合trueを、失敗した場合falseを返します。
+ * <br/>
+ * <br/>
+ * 標準では、バリデーションエラーが発生したとき各要素の下にエラーメッセージが表示されます。
+ * <br/>
+ * エラーメッセージを表示する場所を変更したい場合、errorPlacement に関数を指定し、その関数の中でエラーメッセージを表示するように実装します。
+ * <br/>
+ * <br/>
+ * errorPlacement に渡される引数の error はエラーメッセージが含まれる label, element はバリデーションエラーが発生した要素そのものです。
+ * <br/>
+ * <br/>
+ * この関数は内部で <a href="http://docs.jquery.com/Plugins/Validation">jQuery Validation Plugin</a>を利用しているため、
+ * &lt;script src="ui/libs/jquery-validation-1.9.0/jquery.validate.js"&gt;&lt;/script&gt; を記述する必要があります。
+ * <br/>
+ * <br/>
+ * バリデーションメッセージは強制的にエスケープされます。バリデーションメッセージにHTMLタグを書いて制御することはできません。
+ * &lt;span style="color: blue"&gt;項目名&lt;/span&gt; のように指定しても、「項目名」は青い文字で表示されません。
+ * <br/>
+ *
+ * @param {String} form バリデーション対象のフォームのセレクタ
+ * @param {Object} rules バリデーションルール。ルールの詳細は<a href="https://www.intra-mart.jp/document/library/iap/public/development/script_programming_guide/texts/application/error_handling/index.html#server-side">サーバサイドのエラー処理</a>を参照してください。
+ * @param {Object} messages バリデーション失敗時のメッセージ
+ * @param {String} [ignore=:hidden] バリデーション対象外とする要素のセレクタ
+ * @param {function(error, element)} [errorPlacement] バリデーションエラーが発生した際のメッセージを表示する関数
+ * @returns {boolean} バリデーションに成功した場合trueを、失敗した場合falseを返します。
+ * @see <a href="http://docs.jquery.com/Plugins/Validation">jQuery Validation Plugin</a>
+ *
+ * @example
+ * // imuiValidate の利用例
+ *
+ * // サーバサイドバリデーションの定義ファイル (validator.js)
+ * // input name="text1" に対して必須チェックを定義します。
+ * var init = {
+ *     text1: {
+ *         caption: 'CAP.SAMPLE.REQUIRED',
+ *         required: true
+ *     }
+ * }
+ *
+ * // Presentation Page
+ * &lt;imart type="head"&gt;
+ *   &lt;script src="ui/libs/jquery-validation-1.9.0/jquery.validate.js"&gt;&lt;/script&gt;
+ *   &lt;script src="ui/js/imui-form-util.js"&gt;&lt;/script&gt;
+ * &lt;/imart&gt;
+ *
+ * &lt;!-- 上記サーバサイドバリデーションの定義ファイルを読み込みます。 --&gt;
+ * &lt;imart type="imuiValidationRule" rule="validator#init" rulesName="rules" messagesName="messages"/&gt;
+ *
+ * &lt;script&gt;
+ * $(document).ready(function() {
+ *     // 登録/更新ボタンクリック
+ *     $('#button').click(function() {
+ *         // バリデーションチェック
+ *         if (imuiValidate('#form', rules, messages)) {
+ *             // 確認ダイアログ表示
+ *             imuiConfirm(
+ *                 '&lt;imart type="string" value=message/&gt;', // メッセージ
+ *                 '&lt;imart type="string" value=title/&gt;', // タイトル
+ *                 function() { // OKクリック時のコールバック関数
+ *                     imuiAjaxSend('#form', 'POST', 'json',
+ *                         function() {
+ *                             $(document.body).imuiIndicator(); // imuiIndicator を表示
+ *                         },
+ *                         function() {
+ *                             $(document.body).imuiIndicator('destroy'); // imuiIndicator を非表示
+ *                         }
+ *                     ); // Ajaxでのデータ送信
+ *                 }
+ *             );
+ *         }
+ *     });
+ * });
+ * &lt;/script&gt;
+ *
+ * &lt;form id="form" action="somewhere/ajax"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="text" name="text2" /&gt;
+ *     &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ * @example
+ * // errorPlacement の標準の実装は以下の通り
+ * // バリデーションに失敗時のメッセージを表示する場所を決定する関数
+ * errorPlacement: function(error, element) {
+ *     // imuiCombobox
+ *     if ($(element).parent().hasClass('imui-combobox')) {
+ *         error.insertAfter($(element).parent());
+ *     // imuiRealCombobox
+ *     } else if ($(element).parent().hasClass('imui-realcombobox')) {
+ *         error.insertAfter($(element).parent());
+ *     // radio
+ *     } else if ($(element).attr('type') == 'radio') {
+ *         error.insertAfter($(element).siblings(':last'));
+ *     // checkbox
+ *     } else if ($(element).attr('type') == 'checkbox') {
+ *         error.insertAfter($(element).siblings(':last'));
+ *     } else {
+ *         // そうでない場合は、デフォルトと同じ動作。
+ *         error.insertAfter(element);
+ *     }
+ * }
+ *
+ * @example
+ * // エラーメッセージを要素の上に表示したい場合、errorPlacement を以下のように指定します。
+ * imuiValidate('#form', rules, messages,
+ *     function(error, element) {
+ *         error.insertBefore(element);
+ *     }
+ * );
+ *
+ * @example
+ * //他の要素の操作でバリデーション対象の値が変わる場合、イベントを発生させることでバリデーションを実行できます。
+ * //input 要素の focusin, focusout, keyup, input イベントにバリデーションの実行がバインドされます。
+ * //input[type=radio], input[type=checkbox], select, option の場合は click イベントにバインドされます。
+ * function select() {
+ *     //日付を選択せずに「Submit」ボタンを押すと、バリデーションエラーが発生します。
+ *     //カレンダーから日付を選択したときに次の文を実行しないと、バリデーションエラーのエラーメッセージが表示されたままになります。
+ *     $('#sample-textbox').trigger('input');
+ * }
+ * &lt;form id="form"&gt;
+ *   &lt;input type="text" name="text1" id="sample-textbox" /&gt;
+ *   &lt;imart type="imuiCalendar" floatable="true" altField="#sample-textbox" onSelect="select"/&gt;
+ *   &lt;input type="button" id="button" value="Submit" /&gt;
+ * &lt;/form&gt;
+ *
+ */
+function imuiValidate(form, rules, messages, ignore, errorPlacement) {
+    if (form == undefined || form == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'form'));
+    }
+    if (rules == undefined || rules == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'rules'));
+    }
+    if (messages == undefined || messages == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'messages'));
+    }
+
+    if (typeof(ignore) == 'function') errorPlacement = ignore;
+    return jQuery(form).imuiFormUtil({
+        rules: rules,
+        messages: messages,
+        ignore: ignore,
+        errorPlacement: errorPlacement
+    }).imuiFormUtil('valid');
+}
+
+/**
+ * 指定された関数をバリデーションルールとして登録します。
+ * <br/>
+ * <br/>
+ * 詳細は <a href="http://docs.jquery.com/Plugins/Validation/Validator/addMethod#namemethodmessage">jQuery Validation Plugin</a>を参照してください。
+ * <br/>
+ * @param {String} name バリデーションのメソッド名
+ * @param {function} method バリデーションルール
+ * @param {String|function} [message] デフォルトメッセージ
+ * @see <a href="http://docs.jquery.com/Plugins/Validation/Validator/addMethod#namemethodmessage">jQuery Validation Plugin#addMethod</a>
+ *
+ * @example
+ * // サーバサイドバリデーションの定義ファイル (validator.js)
+ * // input name="text1" に対して必須チェックを定義します。
+ * var init = {
+ *     text1: {
+ *         caption: 'CAP.SAMPLE.REQUIRED', // あらかじめプロパティファイルに CAP.SAMPLE.REQUIRED を指定してください。
+ *         required: true
+ *     }
+ * };
+ *
+ * // Presentation Page
+ * //
+ * &lt;imart type="head"&gt;
+ *   &lt;script src="ui/libs/jquery-validation-1.9.0/jquery.validate.js"&gt;&lt;/script&gt;
+ *   &lt;script src="ui/js/imui-form-util.js"&gt;&lt;/script&gt;
+ *
+ *   &lt;!--サーバサイドバリデーションの定義ファイルを読み込みます。--&gt;
+ *   &lt;imart type="imuiValidationRule" rule="validator#init" rulesName="rules" messagesName="messages"/&gt;
+ *
+ *   &lt;script&gt;
+ *   // sample で始まる文字列かどうかをチェックするバリデーションルールを定義する
+ *   var customValidationRule = function(value, element, param) {
+ *       // 未入力は有効。必須としない。
+ *       if (value === '') return true;
+ *
+ *       // sample で始まる文字列かどうかをチェックする
+ *       if (value) {
+ *           if ((new RegExp("^sample.*$")).test(value)) {
+ *               return true;
+ *           }
+ *       }
+ *       return false;
+ *   }
+ *
+ *   // beginSample という名前で上記の関数を追加します。デフォルトのメッセージを 'must begin with sample' とします。
+ *   imuiAddValidationRule('beginSample', customValidationRule, 'This item must begin with sample');
+ *
+ *   // サーバ側で beginSample を定義せず、クライアント側だけで beginSample を定義する場合は rules にバリデーションルールを追加します。
+ *   rules.text1.beginSample = true;
+ *   messages.beginSample = '{0}は sample で始まる必要があります。'; // メッセージを指定しない場合デフォルトのメッセージが表示されます。
+ *
+ *   $(document).ready(function() {
+ *       // imuiValidate の利用例
+ *       $('#button').click(function() {
+ *           // バリデーションチェック
+ *           if (imuiValidate('#form', rules, messages)) {
+ *               // 確認ダイアログ表示
+ *               imuiConfirm(
+ *                   'メッセージ', // メッセージ
+ *                   'タイトル' // タイトル
+ *               );
+ *           }
+ *       });
+ *   });
+ *   &lt;/script&gt;
+ * &lt;/imart&gt;
+ *
+ * &lt;form id="form"&gt;
+ *     &lt;input type="text" name="text1" /&gt;
+ *     &lt;input type="button" id="button" value="validate" /&gt;
+ * &lt;/form&gt;
+ */
+function imuiAddValidationRule(name, method, message) {
+    if (name == undefined || name == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'name'));
+    }
+    if (method == undefined || method == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'method'));
+    }
+    jQuery.validator.addMethod(name, method, message);
+}
+
+/**
+ * 確認ダイアログを表示します。
+ * <br/>
+ * <br/>
+ * OKボタンとCancelボタンが表示されます。
+ * <br/>
+ * コールバック関数の指定の有無にかかわらず、どちらのボタンを押してもダイアログは閉じます。
+ * <br/>
+ * コールバック関数の内部でダイアログを閉じる実装は不要です。
+ * <br/>
+ * <div class="accordion" id="exclamation-accordion-confirm">
+ *   <div class="accordion-group">
+ *     <div class="accordion-heading">
+ *       <div class="accordion-toggle" data-toggle="collapse" data-parent="#exclamation-accordion-confirm" href="#exclamation-collapse-confirm" shape="rect">
+ *         <i class="icon-exclamation-sign mr-5"></i><span>注意事項</span>
+ *       </div>
+ *     </div>
+ *     <div id="exclamation-collapse-confirm" class="accordion-body collapse in">
+ *       <div class="accordion-inner">
+ *         <div class="alert alert-error">
+ *         <ul>
+ * <li>closeOnEscape="true" かつ modal="true" を指定したダイアログの中でこのコンポーネントを開いた後、オーバーレイ（黒い部分）をクリックしエスケープキーを押すとこのコンポーネントではなく1つ目のダイアログが閉じます。これを回避するには closeOnEscape="false" を指定してください。</li>
+ *          </ul>
+ *         </div>
+ *       </div>
+ *     </div>
+ *   </div>
+ * </div>
+ * @param {String} message 確認メッセージ
+ * @param {String} [title] ダイアログのタイトル
+ * @param {Function} [ok=$.noop] OKボタンクリック時のコールバック関数
+ * @param {Function} [cancel=$.noop] Cancelボタンクリック、×ボタンクリック、エスケープキー押下時のコールバック関数
+ * @param {Boolean} [escape=true] メッセージをエスケープする・しないのフラグ ( true: エスケープする、false: エスケープしない )
+ * @param {Boolean} [focusOnCancel=false] デフォルトでフォーカスが当たるボタンを指定フラグ ( true: Cancelボタン、false: OKボタン )
+ * @example
+ * imuiConfirm('登録してもよろしいですか？', '登録確認', function() {
+ *     imuiAjaxSend('#form', 'POST', 'json');
+ * });
+ *
+ * @example
+ * // cancel だけ指定したい場合
+ * imuiConfirm('登録してもよろしいですか？', '登録確認',
+ *     $.noop, // 空の関数を指定します。
+ *     function() {
+ *         alert('キャンセルしました');
+ *     }
+ * );
+ *
+ * @example
+ * imuiConfirm('登録してもよろしいですか？&lt;br/&gt;対象ID : xxx', '登録確認',
+ *     function() {
+ *         imuiAjaxSend('#form', 'POST', 'json');
+ *     },
+ *     $.noop, // キャンセルクリック時のコールバック関数
+ *     false
+ * );
+ * 
+ * @example
+ * //キャンセルボタンにフォーカスを当てたい場合
+ * imuiConfirm('登録してもよろしいですか？&lt;br/&gt;対象ID : xxx', '登録確認',
+ *     function() {
+ *         imuiAjaxSend('#form', 'POST', 'json');
+ *     },
+ *     $.noop, // キャンセルクリック時のコールバック関数
+ *     false,
+ *     true //キャンセルボタンにフォーカスを当てる(true)
+ * );
+ */
+function imuiConfirm(message, title, ok, cancel, escape, focusOnCancel) {
+    if (message == undefined || message == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'message'));
+    }
+    jQuery.imuiFormUtil.confirm(message, title, ok, cancel, escape, focusOnCancel);
+}
+
+/**
+ * 警告ダイアログを表示します。
+ * <br/>
+ * <br/>
+ * OKボタンが表示されます。
+ * <br/>
+ * <div class="accordion" id="exclamation-accordion-alert">
+ *   <div class="accordion-group">
+ *     <div class="accordion-heading">
+ *       <div class="accordion-toggle" data-toggle="collapse" data-parent="#exclamation-accordion-alert" href="#exclamation-collapse-alert" shape="rect">
+ *         <i class="icon-exclamation-sign mr-5"></i><span>注意事項</span>
+ *       </div>
+ *     </div>
+ *     <div id="exclamation-collapse-alert" class="accordion-body collapse in">
+ *       <div class="accordion-inner">
+ *         <div class="alert alert-error">
+ *         <ul>
+ * <li>closeOnEscape="true" かつ modal="true" を指定したダイアログの中でこのコンポーネントを開いた後、オーバーレイ（黒い部分）をクリックしエスケープキーを押すとこのコンポーネントではなく1つ目のダイアログが閉じます。これを回避するには closeOnEscape="false" を指定してください。</li>
+ *          </ul>
+ *         </div>
+ *       </div>
+ *     </div>
+ *   </div>
+ * </div>
+ * @param {String} message 確認メッセージ
+ * @param {String} [title] ダイアログのタイトル
+ * @param {Boolean} [escape=true] メッセージをエスケープする・しないのフラグ ( true: エスケープする、false: エスケープしない )
+ *
+ * @example
+ * imuiAlert('エラーが発生しました', 'エラー');
+ *
+ * @example
+ * // メッセージをエスケープしない場合
+ * imuiAlert('エラーが発生しました。&lt;br/&gt;管理者にご連絡ください。', 'エラー', false);
+ */
+function imuiAlert(message, title, escape) {
+    if (message == undefined || message == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'message'));
+    }
+    jQuery.imuiFormUtil.alert(message, title, escape);
+}
+
+/**
+ * バリデーションの結果をリセットします。
+ * <br/>
+ * <br/>
+ * バリデーションを実行すると、実行時以降自動的にバリデーションチェックが行われます。
+ * <br/>
+ * 画面遷移を行わずAjaxでデータをサーバに送信するという画面の場合、送信後にこの関数を呼び出すことでバリデーションの実行をリセットします。
+ * <br/>
+ * リセットするとバリデーションの自動実行が停止され、かつバリデーションエラーが非表示になります。
+ * <br/>
+ * また、バリデーションルール、メッセージが削除されます。
+ * <br/>
+ * @param {String} form リセット対象のフォームのセレクタ
+ *
+ * @example
+ * // #form はバリデーション対象のフォームのセレクタを指定してください。
+ * imuiResetForm('#form');
+ */
+function imuiResetForm(form) {
+    if (form == undefined || form == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'form'));
+    }
+    if (jQuery(form).data('imuiFormUtil') == null) {
+        return jQuery(form).imuiFormUtil().imuiFormUtil('resetForm');
+    } else {
+        return jQuery(form).imuiFormUtil('resetForm');
+    }
+}
+
+/**
+ * Ajax通信でサーバエラーが発生したにエラー画面へ遷移させるためのコールバック関数です。
+ * <br/>
+ * <br/>
+ * サーバ側で例外が発生するとエラー画面が呼び出されます。
+ * <br/>
+ * <br/>
+ * Ajax のリクエストの場合、エラー画面のレスポンスは Ajax 内で閉じるため画面にエラーが表示されません。
+ * <br/>
+ * Ajax のリクエストでもエラー画面に遷移させたい場合、この関数を jQuery.ajax() の error プロパティにセットしてください。
+ * <br/>
+ * また、同時に headers プロパティに 'x-jp-co-intra-mart-ajax-request-from-imui-form-util': 'true' もセットしてください。
+ *
+ * @param {Object} jqXHR jQuery XHR オブジェクト
+ * @param {String} textStatus ステータス
+ * @param {String} errorThrown 送信されたエラー
+ *
+ * @example
+ * $.ajax(
+ *     {
+ *          ...,
+ *          headers: { 'x-jp-co-intra-mart-ajax-request-from-imui-form-util': 'true'},
+ *          error: imuiTransitionToErrorPage,
+ *          ...
+ *     }
+ * )
+ *
+ * @example
+ * // 独自のエラー処理を行いつつエラー画面へ遷移したい場合
+ * //
+ * // 上記サンプルでは、エラー画面へ遷移するだけで他の処理は行えません。
+ * // 独自の処理を追加したい場合は以下のように実装できます。
+ * $.ajax(
+ *     {
+ *         ...,
+ *         headers: { 'x-jp-co-intra-mart-ajax-request-from-imui-form-util': 'true' },
+ *         error: function(XMLHttpRequest, textStatus, errorThrown) {
+ *             //
+ *             // 独自の処理を実行
+ *             //
+ *
+ *             imuiTransitionToErrorPage(jqXHR, textStatus, errorThrown);
+ *         },
+ *         ...
+ *     }
+ * )
+ *
+ */
+function imuiTransitionToErrorPage(jqXHR, textStatus, errorThrown) {
+    return jQuery.imuiFormUtil.transitionToErrorPage(jqXHR, textStatus, errorThrown);
+}
+
+/**
+ * 2度押し防止機能を提供します。
+ * <br/>
+ * <br/>
+ * 指定されたformからサブミット要素を検索し、サブミットを実行するとサブミット要素を無効 ( disabled ) にします。
+ * <br/>
+ * 指定された時間が経過すると、サブミット要素を有効 ( disabled=false ) にします。
+ * <br/>
+ * <div class="accordion" id="exclamation-accordion-alert">
+ *   <div class="accordion-group">
+ *     <div class="accordion-heading">
+ *       <div class="accordion-toggle" data-toggle="collapse" data-parent="#exclamation-accordion-alert" href="#exclamation-collapse-alert" shape="rect">
+ *         <i class="icon-exclamation-sign mr-5"></i><span>注意事項</span>
+ *       </div>
+ *     </div>
+ *     <div id="exclamation-collapse-alert" class="accordion-body collapse in">
+ *       <div class="accordion-inner">
+ *         <div class="alert alert-error">
+ *           <ul>
+ *             <li>imuiDisableOnSubmitはimuiAjaxSubmit利用時には動作しないためフォームサブミットで利用してください</li>
+ *           </ul>
+ *         </div>
+ *       </div>
+ *     </div>
+ *   </div>
+ * </div>
+ * @param {String} form 2度押し防止対象のフォームのセレクタ
+ * @param {Number} [timeout=3000] 再度サブミットができるまでの時間。1 より小さい値を指定しても 3000 を指定したことになります。 (ms)
+ * @example
+ * imuiDisableOnSubmit('#form');
+ * @example
+ * // 有効にするまでの時間を指定する場合
+ * imuiDisableOnSubmit('#form', 100); // 100ms
+ * @example
+ * // 組み合わせた例
+ * &lt;script&gt;
+ *   (function($) {
+ *     $(document).ready(function() {
+ *       imuiDisableOnSubmit(&#039;#form&#039;);
+ *       $(&#039;#submit-button&#039;).click(function(e) {
+ *         // コンファームの結果により submit させるため、一度イベントを中断します
+ *         e.preventDefault();
+ *         // コンファームを表示させます
+ *         imuiConfirm(&#039;登録しても良いですか?&#039;, &#039;確認&#039;, function() {
+ *           $(&#039;#form&#039;).submit();
+ *         });
+ *       });
+ *     });
+ *   })(jQuery);
+ * &lt;/script&gt;
+ * &lt;form id=&quot;form&quot;&gt;
+ *   &lt;!-- 汎用ボタンではdisabledの対象にならないためsubmitボタンを配置します --&gt;
+ *   &lt;input id=&quot;submit-button&quot; type=&quot;submit&quot; value=&quot;登録&quot; /&gt;
+ * &lt;/form&gt;
+ */
+function imuiDisableOnSubmit(form, timeout) {
+    if (form == undefined || form == null) {
+        throw new Error(jQuery.imui.util.format(jQuery.imuiFormUtilErrorMessage.required, 'form'));
+    }
+    jQuery(form).imuiDisableOnSubmit(timeout);
+}

@@ -1,0 +1,689 @@
+/*
+ * jQuery File Upload jQuery UI Plugin 1.1.1
+ * https://github.com/blueimp/jQuery-File-Upload
+ *
+ * Copyright 2012, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * http://www.opensource.org/licenses/MIT
+ */
+
+/*jslint nomen: true */
+/*global define, window */
+
+(function (factory) {
+    'use strict';
+    if (typeof define === 'function' && define.amd) {
+        // Register as an anonymous AMD module:
+        define(['jquery', './jquery.fileupload-jui.js'], factory);
+    } else {
+        // Browser globals:
+        factory(
+            window.jQuery,
+            window.tmpl,
+            window.loadImage
+        );
+    }
+}(function ($, tmpl, loadImage) {
+    'use strict';
+    var parentWidget = ($.blueimpIP || $.blueimp).fileupload;
+    $.widget('imui.fileupload', $.blueimpJUI.fileupload, {
+        options: {
+
+            /** ファイル名テキスト配列 */
+            fileNameInputArray: [],
+
+            /** ファイル名編集可能フラグ */
+            fileNameEditable: false,
+
+            /** ファイル名入力テキストwidth */
+            fileNameInputWidth: '150',
+
+            cancel: null,
+
+            failure: null,
+
+            // The add callback is invoked as soon as files are added to the fileupload
+            // widget (via file input selection, drag & drop or add API call).
+            // See the basic file upload widget for more information:
+            add: function (e, data) {
+                var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+                    thisFileupload = e.data.fileupload,
+                    options = $('#' + $(data.fileInput).attr('id')).data('options'),
+                    filesContainer = options.filesContainer,
+                    files = data.files,
+                    i;
+                data.filesContainer = filesContainer;
+
+                for(i = 0; i < files.length; i++){
+                    if (files[i].type && that._isEmptyFile(files[i])) {
+                        files.splice(i, 1);
+                        i--;
+                        continue;
+                    }
+                }
+                $(this).fileupload('resize', data).done(data, function () {
+                    var fileNameInputNum = $('.upload-file-name', thisFileupload.widget()).size();
+                    that._adjustMaxNumberOfFiles(-files.length, e, data);
+                    data.isAdjusted = true;
+                    data.files.valid = data.isValidated = that._validate(files, options);
+                    if (data && data.files && data.files.valid === false && !options.exceedMaxNumberOfFiles) {
+                        that._adjustMaxNumberOfFiles(files.length, e, data);
+                    }
+                    data.context = that._renderUpload(files, options)
+                        .appendTo(filesContainer)
+                        .data('data', data);
+                    that._renderPreviews(files, data.context);
+                    that._forceReflow(data.context);
+                    that._exTransition(data.context).done(
+                        function () {
+                            var node = $('.template-upload', filesContainer);
+                            for(i = 0; i < options.fileNameInputArray.length; i++){
+                              $('.upload-file-name', thisFileupload.widget()).eq(i + fileNameInputNum).text('');
+                              $('.upload-file-name', thisFileupload.widget()).eq(i + fileNameInputNum).append(options.fileNameInputArray.shift());
+                            }
+                            if (node.hasClass('fade')) {
+                                node.fadeIn();
+                            }
+                            node.show();
+                            if ((that._trigger('added', e, data) !== false) &&
+                                    (options.autoUpload || data.autoUpload) &&
+                                    data.autoUpload !== false && data.isValidated) {
+                                data.submit();
+                            }
+                            node.parents("form").find(".imui-fileupload-add").focus();
+                        }
+                    );
+                });
+            },
+            send: function (e, data) {
+                var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+                    options = $('#' + $(data.fileInput).attr('id')).data('options');
+                if (!data.isValidated) {
+                    if (!data.isAdjusted) {
+                        that._adjustMaxNumberOfFiles(-data.files.length);
+                    }
+                    if (!that._validate(data.files, options)) {
+                        return false;
+                    }
+                }
+                if (data.context && data.dataType &&
+                        data.dataType.substr(0, 6) === 'iframe') {
+                    // Iframe Transport does not support progress events.
+                    // In lack of an indeterminate progress bar, we set
+                    // the progress to 100%, showing the full animated bar:
+                    data.context
+                        .find('.progress').addClass(
+                            !$.support.transition && 'progress-animated'
+                        )
+                        .find('.bar').css(
+                            'width',
+                            parseInt(100, 10) + '%'
+                        );
+                }
+                return that._trigger('sent', e, data);
+            },
+            // Callback for successful uploads:
+            done: function (e, data) {
+                var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+                    options = $('#' + $(data.fileInput).attr('id')).data('options'),
+                    template,
+                    preview,
+                    inputId = $(data.context).parents('.imui-fileupload-area').find('input[type=file]').attr('id');
+                if (data.context) {
+                    data.context.each(function (index) {
+                        var file = ($.isArray(data.result) &&
+                                data.result[index]) || {error: 'emptyResult'},
+                            downloadArea = $('.template-download', $(this).parent());
+                        if (file.error) {
+                            that._adjustMaxNumberOfFiles(1, e, data);
+                        }
+                        that._transition($(this)).done(
+                            function () {
+                                var node = $(this);
+                                template = that._renderDownload([file], inputId)
+                                    .replaceAll(node);
+                                that._forceReflow(template);
+
+                                var fileData = template.find(".download-file-name");
+                                var fileNameInput = $('<input type="text" readonly="readonly" class="imui-text-readonly" />').css('width', options.fileNameInputWidth + 'px').val(fileData.text());
+                                fileNameInput.keypress(function(e) {
+                                    return e.keyCode != 13;
+                                });
+                                fileData.html(fileNameInput);
+
+                                that._transition(template).done(
+                                    function () {
+                                        $('.template-download', options.dropZone).show();
+                                        data.context = $(this);
+                                        that._trigger('completed', e, data);
+                                    }
+                                );
+                            }
+                        );
+                    });
+                } else {
+                    template = that._renderDownload(data.result, inputId)
+                        .appendTo(options.filesContainer);
+
+                    that._forceReflow(template);
+                    that._transition(template).done(
+                        function () {
+                            data.context = $(this);
+                            that._trigger('completed', e, data);
+                        }
+                    );
+                }
+            },
+
+            drop: function (e) {
+                var that = e.data.fileupload,
+                    options = that.options,
+                    dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer,
+                    data = {
+                        files: $.each(
+                            $.makeArray(dataTransfer && dataTransfer.files),
+                            that._normalizeFile
+                        ),
+                        fileInput: $(e.target).find('input[type=file]'),
+                        form: $(e.target)
+                    },
+                    uplodedFlag = false,
+                    i;
+                    that.element.find('input.imui-fileupload-input').each(function(){
+                        if ($(this).data('options').dropZone.is(e.originalEvent.target)) {
+                            options = $(this).data('options');
+                        }
+                    });
+                if (typeof options.maxNumberOfFiles === 'number' && data.files.length > options.maxNumberOfFiles) {
+                    return false;
+                }
+                if(uplodedFlag){
+                  return false;
+                }
+                if (that._onAdd(e, data) === false) {
+                    return false;
+                }
+                e.preventDefault();
+            },
+
+            dragover: function (e) {
+                var that = e.data.fileupload,
+                    options = that.options,
+                    dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer,
+                    items = $.each(
+                        $.makeArray(dataTransfer && dataTransfer.items),
+                        that._normalizeFile
+                    );
+                    that.element.find('input.imui-fileupload-input').each(function(){
+                        if ($(this).data('options').dropZone.is(e.originalEvent.target)) {
+                            options = $(this).data('options');
+                        }
+                    });
+                if (options == null) return false;
+                if(typeof options.maxNumberOfFiles === 'number' && items.length > options.maxNumberOfFiles){
+                    dataTransfer.dropEffect = dataTransfer.effectAllowed = 'none';
+                    return false;
+                }
+                if (dataTransfer) {
+                    dataTransfer.dropEffect = 'copy';
+                }
+                e.preventDefault();
+            },
+            // Callback for failed (abort or error) uploads:
+            fail: function (e, data) {
+                var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+                    template,
+                    inputId = $(data.context).parents('.imui-fileupload-area').find('input[type=file]').attr('id'),
+                    options = $('#' + inputId).data('options');
+                that._adjustMaxNumberOfFiles(data.files.length, e, data);
+                if (data.context) {
+                    data.context.each(function (index) {
+                        if (data.errorThrown !== 'abort') {
+                            var file = data.files[index];
+                            file.error = file.error || data.errorThrown ||
+                                true;
+                            
+                            if (data.xhr != null && data.xhr().status == '413') {
+                                file.error = 'http413';
+                            }
+                            that._transition($(this)).done(
+                                function () {
+                                    var node = $(this);
+                                    template = that._renderDownload([file], inputId)
+                                        .replaceAll(node);
+                                    that._forceReflow(template);
+                                    that._transition(template).done(
+                                        function () {
+                                            data.context = $(this);
+                                            that._trigger('failed', e, data);
+                                        }
+                                    );
+                                }
+                            );
+                        } else {
+                            that._transition($(this)).done(
+                                function () {
+                                    $(this).remove();
+                                    that._trigger('failed', e, data);
+                                }
+                            );
+                        }
+                    });
+                } else if (data.errorThrown !== 'abort') {
+                    that._adjustMaxNumberOfFiles(-data.files.length, e, data);
+                    data.context = that._renderUpload(data.files, options)
+                        .appendTo(options.filesContainer)
+                        .data('data', data);
+                    that._forceReflow(data.context);
+                    that._transition(data.context).done(
+                        function () {
+                            data.context = $(this);
+                            that._trigger('failed', e, data);
+                        }
+                    );
+                } else {
+                    that._trigger('failed', e, data);
+                }
+            },
+            // Callback for file deletion:
+            destroy: function (e, data) {
+                var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+                    inputId = $(data.context).parents('.imui-fileupload-area').find('input[type=file]').attr('id'),
+                    options = $('#' + inputId, this.element).data('options');
+                var deferred;
+                if (that.deferred) {
+                    deferred = that.deferred;
+                } else {
+                    deferred = that.deferred = $.Deferred();
+                    that.fileNames = [];
+                    that.physicalFileNames = [];
+                }
+                deferred.done(function() {
+                    data.fileInput = $(e.originalEvent.target).parents('.imui-fileupload-area').find('input[type=file]');
+                    if (data.url) {
+                        $.ajax(data).always(function(response, textStatus, jqXHR) {
+                            that._adjustMaxNumberOfFiles(1, e, data);
+                            that._transition(data.context).done(
+                                function () {
+                                    $(this).remove();
+                                    data.response = response;
+                                    data.textStatus = textStatus;
+                                    data.jqXHR = jqXHR;
+                                    that._trigger('destroyed', e, data);
+                                }
+                            );
+                        });
+                    } else {
+                        // クライアントだけで削除処理を行う
+                        that._adjustMaxNumberOfFiles(1, e, data);
+                        that._transition(data.context).done(
+                            function () {
+                                $(this).remove();
+                                that._trigger('destroyed', e, data);
+                            }
+                        );
+                    }
+                }).always(function() {
+                    that.deferred = null;
+                });
+                if (options.beforeRemove && typeof options.beforeRemove === 'function') {
+                    that.fileNames.push(data.context.find('.imui-fileupload-file').attr('title'));
+                    that.physicalFileNames.push(data.context.find('.download-file-name').data('physical_file_name'));
+                    data.fileNames = that.fileNames;
+                    data.physicalFileNames = that.physicalFileNames;
+                    options.beforeRemove(e, data, deferred);
+                } else {
+                    deferred.resolve();
+                }
+            }
+        },
+
+        _isEmptyFile: function (file) {
+            if (!file.type && !file.fileSize){
+                return true;
+            }
+            return false;
+        },
+
+        _onAdd: function (e, data) {
+            var that = this,
+                thisFileupload = e.data.fileupload,
+                result = true,
+                options = $('#' + $(data.fileInput).attr('id'), this.element).data('options'),
+                limit = options.limitMultiFileUploads,
+                paramName = this._getParamName(options),
+                paramNameSet,
+                paramNameSlice,
+                fileSet,
+                i;
+            if (!(options.singleFileUploads || limit) ||
+                    !this._isXHRUpload(options)) {
+                fileSet = [data.files];
+                paramNameSet = [paramName];
+            } else if (!options.singleFileUploads && limit) {
+                fileSet = [];
+                paramNameSet = [];
+                for (i = 0; i < data.files.length; i += limit) {
+                    fileSet.push(data.files.slice(i, i + limit));
+                    paramNameSlice = paramName.slice(i, i + limit);
+                    if (!paramNameSlice.length) {
+                        paramNameSlice = paramName;
+                    }
+                    paramNameSet.push(paramNameSlice);
+                }
+            } else {
+                paramNameSet = paramName;
+            }
+            data.originalFiles = data.files;
+            $.each(fileSet || data.files, function (index, element) {
+                var newData = $.extend({}, data);
+                newData.files = fileSet ? element : [element];
+                newData.paramName = paramNameSet[index];
+                var fileNameInput = $('<input type="text" />').css('width', options.fileNameInputWidth + 'px').val(newData.files[0].name);
+                if(!options.fileNameEditable){
+                    fileNameInput.attr("readonly", "readonly");
+                    fileNameInput.addClass("imui-text-readonly");
+                }
+                fileNameInput.keypress(function(e) {
+                    return e.keyCode != 13;
+                });
+                options.fileNameInputArray.push(fileNameInput);
+                newData.submit = function () {
+                    $('input[name="uploadFileName"]', thisFileupload.widget()).val(fileNameInput.val());
+                    if (fileSet) {
+                        if (newData.files instanceof Array) {
+                            newData.files[0].uploadFileName = fileNameInput.val();
+                        } else {
+                            newData.files.uploadFileName = fileNameInput.val();
+                        }
+                    } else {
+                        newData.files[0].uploadFileName = fileNameInput.val();
+                    }
+                    that.options.inputId = $(data.fileInput).attr('id');
+                    newData.jqXHR = this.jqXHR =
+                        (that._trigger('submit', e, this) !== false) &&
+                        that._onSend(e, this);
+                    return this.jqXHR;
+                };
+                return (result = that._trigger('add', e, newData));
+            });
+            return result;
+        },
+
+        _exTransition: function (node) {
+            var that = this,
+                deferred = $.Deferred();
+            deferred.resolveWith(node);
+
+            return deferred;
+        },
+
+        _create: function () {
+            $.blueimpJUI.fileupload.prototype._create.call(this);
+            this._refreshOptionsList.push(
+                'inputId'
+            );
+            var userAgent = window.navigator.userAgent.toLowerCase();
+            var appVersion = window.navigator.appVersion.toLowerCase();
+            if (userAgent.indexOf("msie") != -1) {
+              if (appVersion.indexOf("msie 10.") === -1) {
+                var addFileButton = this.element.find("input.imui-fileupload-input").css({
+                  'filter':   'alpha(opacity=0); BORDER-LEFT: transparent 200px solid;',
+                  'position': 'absolute',
+                  'right':    '0',
+                  'top':      '0',
+                  'border-bottom': 'transparent 100px solid',
+                  'width': '100%',
+                  'height': '100%',
+                  'font-size': '40px'
+                });
+                addFileButton.parent().css({
+                  'overflow':       'hidden',
+                  'vertical-align': 'top'
+                });
+              }
+            } else if (userAgent.indexOf("firefox") != -1) {
+                this.element.find("input.imui-fileupload-input").css({
+                  'height': '100%'
+                });
+            } else if (userAgent.indexOf("safari") != -1) {
+                this.element.find("input.imui-fileupload-input").css({
+                    'font-size': '23px'
+                  });
+            }
+            this.options.failed = this._onFailed;
+            this.element.find("input.imui-fileupload-input").keypress(function(e) {
+                return e.keyCode != 13;
+            });
+        },
+        _init: function() {
+            var inputId = this.options.inputId;
+            this.element.find('#' + inputId).data('options', $.extend({}, this.options));
+        },
+        _onFailed: function (e, data) {
+            var that = $(this).data('fileupload') ? $(this).data('fileupload') : $(this).data('imui-fileupload'),
+            options = $('#' + $(data.fileInput).attr('id')).data('options');
+            if(options.failure != null){
+                if(data.errorThrown !== 'abort') {
+                    options.failure(e, data);
+                }
+            }
+            if(options.cancel != null){
+                if (data.errorThrown === 'abort') {
+                    options.cancel(e, data);
+                }
+            }
+        },
+        _adjustMaxNumberOfFiles: function (operand, e, data) {
+            var options = $('#' + $(data.fileInput).attr('id')).data('options'),
+                fileUploadArea = data.filesContainer ? data.filesContainer.parents('.imui-fileupload-area') : $(data.context).parents('.imui-fileupload-area');
+            if (this.hasError(data)) {
+                return;
+            }
+            if (typeof options.maxNumberOfFiles === 'number') {
+                if (options.initialMaxNumberOfFiles == undefined) {
+                    options.initialMaxNumberOfFiles = options.maxNumberOfFiles;
+                }
+                options.maxNumberOfFiles += operand;
+                // 0 以下になったら 0 に戻します。ファイルの数は 0 を含めた自然数のはず。
+                // 負の値になったら、exceedmaxnumberoffiles を true にし、_hasError でエラーメッセージを表示させます。
+                if (options.maxNumberOfFiles < 0) {
+                    options.maxNumberOfFiles = 0;
+                    options.exceedMaxNumberOfFiles = true;
+                } else {
+                    options.exceedMaxNumberOfFiles = false;
+                }
+                // 初期値と比較します。超えたら初期値に戻す。
+                if (options.initialMaxNumberOfFiles < options.maxNumberOfFiles) {
+                    options.maxNumberOfFiles = options.initialMaxNumberOfFiles;
+                }
+                if (options.maxNumberOfFiles < 1) {
+                    this._disableFileInputButton(fileUploadArea);
+                } else {
+                    this._enableFileInputButton(fileUploadArea);
+                }
+            }
+        },
+        // maxNumberOfFiles のチェックロジックを変更
+        // this.options.maxNumberOfFiles < 0 -> this.options.exceedmaxnumberoffiles
+       _hasError: function (file, options) {
+            if (file.error) {
+                return file.error;
+            }
+            // Files are accepted if either the file type or the file name
+            // matches against the acceptFileTypes regular expression, as
+            // only browsers with support for the File API report the type:
+            if (!(options.acceptFileTypes.test(file.type) ||
+                    options.acceptFileTypes.test(file.name))) {
+                return 'acceptFileTypes';
+            }
+            // The number of added files is subtracted from
+            // maxNumberOfFiles before validation, so we check if
+            // maxNumberOfFiles is below 0 (instead of below 1):
+            // if (this.options.maxNumberOfFiles < 0) {
+            if (options.exceedMaxNumberOfFiles) {
+                return 'maxNumberOfFiles';
+            }
+            if (options.maxFileSize &&
+                    file.size > options.maxFileSize) {
+                return 'maxFileSize';
+            }
+            if (typeof file.size === 'number' &&
+                    file.size < options.minFileSize) {
+                return 'minFileSize';
+            }
+            return null;
+        },
+        // utility
+        hasError: function(data) {
+            if (data && data.context && data.context.find('.imui-error-message').length > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        _initButtonBarEventHandlers: function () {
+            var fileUploadButtonBar = $('#'+this.options.inputId).parent().parent(),
+                filesList,
+                ns = this.options.namespace;
+            fileUploadButtonBar.find('.start')
+                .on('click', function (e) {
+                    e.preventDefault();
+                    filesList = $(this).parent().parent().find('input[type=file]').data('options').filesContainer;
+                    filesList.find('.start button').click();
+                });
+            fileUploadButtonBar.find('.cancel')
+                .on('click', function (e) {
+                    e.preventDefault();
+                    filesList = $(this).parent().parent().find('input[type=file]').data('options').filesContainer;
+                    filesList.find('.cancel button').click();
+                });
+            fileUploadButtonBar.find('.delete')
+                .on('click', function (e) {
+                    e.preventDefault();
+                    filesList = $(this).parent().parent().find('input[type=file]').data('options').filesContainer;
+                    filesList.find('.delete input:checked')
+                        .siblings('button').click();
+                    fileUploadButtonBar.find('.toggle')
+                        .prop('checked', false);
+                });
+            fileUploadButtonBar.find('.toggle')
+                .on('change', function (e) {
+                    filesList = $(this).parent().parent().find('input[type=file]').data('options').filesContainer;
+                    filesList.find('.delete input').prop(
+                        'checked',
+                        $(this).is(':checked')
+                    );
+                });
+        },
+        _initEventHandlers: function () {
+            parentWidget.prototype._initEventHandlers.call(this);
+            var eventData = {fileupload: this};
+            this.element.find('.imui-table-fileupload')
+                .on(
+                    'click',
+                    '.start button',
+                    eventData,
+                    this._startHandler
+                )
+                .on(
+                    'click',
+                    '.cancel button',
+                    eventData,
+                    this._cancelHandler
+                )
+                .on(
+                    'click',
+                    '.delete button',
+                    eventData,
+                    this._deleteHandler
+                );
+            this._initButtonBarEventHandlers();
+        },
+
+        _destroyEventHandlers: function () {
+            var options = this.options;
+            this._destroyButtonBarEventHandlers();
+            this.element.find('.imui-table-fileupload')
+                .off('click', '.start button')
+                .off('click', '.cancel button')
+                .off('click', '.delete button');
+            parentWidget.prototype._destroyEventHandlers.call(this);
+        },
+        _renderTemplate: function (func, files, options) {
+            if (!func) {
+                return $();
+            }
+            var result = func({
+                files: files,
+                formatFileSize: this._formatFileSize,
+                options: options ? options : this.options
+            });
+            if (result instanceof $) {
+                return result;
+            }
+            return $(this.options.templatesContainer).html(result).children();
+        },
+        _renderUpload: function (files, options) {
+            var node = this._renderTemplate(
+                options ? options.uploadTemplate : this.options.uploadTemplate,
+                files,
+                options
+            );
+            var showIconText = $(window).width() > 480;
+            node.find('.progress').empty().progressbar();
+            node.find('.start button').button({
+                icons: {primary: 'ui-icon-circle-arrow-e'},
+                text: showIconText
+            });
+            node.find('.cancel button').button({
+                icons: {primary: 'ui-icon-cancel'},
+                text: showIconText
+            });
+            return node;
+        },
+        _renderDownload: function (files, inputId) {
+            var t = tmpl($('#'+inputId, this.element).data('options').downloadTemplateId);
+            var node = this._renderTemplate(
+                t,
+                files
+            ).find('a[download]').each(this._enableDragToDesktop).end();
+            var showIconText = $(window).width() > 480;
+            node.find('.delete button').button({
+                icons: {primary: 'ui-icon-trash'},
+                text: showIconText
+            });
+            return node.hide();
+        },
+        _validate: function (files, options) {
+            var that = this,
+                valid = !!files.length;
+            $.each(files, function (index, file) {
+                file.error = that._hasError(file, options);
+                if (file.error) {
+                    valid = false;
+                }
+            });
+            return valid;
+        },
+        _enableFileInputButton: function (fileUploadArea) {
+            var context = fileUploadArea ? fileUploadArea : this.element;
+            context.find('.fileinput-button input')
+                .prop('disabled', false)
+                .parent().removeClass('disabled');
+        },
+        _disableFileInputButton: function (fileUploadArea) {
+            var context = fileUploadArea ? fileUploadArea : this.element;
+            context.find('.fileinput-button input')
+                .prop('disabled', true)
+                .parent().addClass('disabled');
+        },
+        _getParamName: function(options) {
+            var array = [];
+            array.push($('#'+options.inputId).attr('name'));
+            return array;
+        }
+    });
+}));
