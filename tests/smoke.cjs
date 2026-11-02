@@ -20,6 +20,37 @@ if (search('M800W', 'fuzzy').total !== 3) throw Error('Fuzzy model lookup failed
 if (search('X1001').total !== 1) throw Error('Identifier exact lookup failed');
 if (search('X1004').total !== 0) throw Error('Identifier misidentified as same machine');
 console.log('PASS: 33-column CSV, normalization, fuzzy model search, strict IDs');
+function booleanSearch(query, join='AND', column='all', mode='standard', page=1, pageSize=20) {
+ return send({type:'search',query,join,column,mode,sort:'original',page,pageSize});
+}
+function expectIds(query, expected, join='AND', column='all', mode='standard') {
+ const page=booleanSearch(query,join,column,mode).find(m=>m.type==='page');
+ if(!page || page.entries.map(e=>e.values[0]).join(',')!==expected) throw Error('Boolean lookup failed: '+query);
+}
+expectIds('M800V X1001','X1001');
+expectIds('X1001 X1003','X1001,X1003','OR');
+expectIds('X1001 or X1003','X1001,X1003');
+expectIds('M800V and X1001','X1001');
+expectIds('X1001 OR X1002 AND M800W','X1001');
+expectIds('(X1001 OR X1002) AND M800W','');
+expectIds('(M800V OR M800W) AND X1002','X1002');
+expectIds('"Test Manufacturer" AND X1003','X1003');
+expectIds('X1001 OR X1004','X1001','AND','all','fuzzy');
+expectIds('X1001 OR X1003','X1001,X1003','AND','0');
+expectIds('X1001 OR X1003','X1001,X1003','AND','all-columns');
+expectIds('M800V AND X1003','X1003','AND','all','fuzzy');
+expectIds('M800V AND X1004','','AND','all','fuzzy');
+const first=booleanSearch('X1001 OR X1003','AND','all','standard',1,1).find(m=>m.type==='page');
+if(first.total!==2 || first.entries[0].values[0]!=='X1001')throw Error('Boolean page 1');
+const second=send({type:'page-request',page:2,pageSize:1}).find(m=>m.type==='page');
+if(second.entries[0].values[0]!=='X1003')throw Error('Boolean page 2');
+for(const query of ['AND X1001','X1001 OR','(X1001 OR X1002','X1001)','"unfinished','()']) {
+ if(!booleanSearch(query).some(m=>m.type==='error'))throw Error('Invalid expression accepted: '+query);
+ const retained=send({type:'page-request',page:2,pageSize:1}).find(m=>m.type==='page');
+ if(retained.total!==2 || retained.entries[0].values[0]!=='X1003')throw Error('Invalid query changed results');
+}
+console.log('PASS: AND/OR, precedence, parentheses, phrases, column scopes, fuzzy IDs, paging, invalid expressions');
+
 
 // Reject malformed CSV and retain the last successfully loaded dataset.
 function loadText(text) {
