@@ -1,0 +1,10 @@
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.zip
+.DS_Store
+node_modules/
+dist/
+
+!tests/synthetic.csv

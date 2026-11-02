@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CNC機械情報ビューア | G-DataHub</title>
+<style>
+:root{color-scheme:light;--ink:#14243c;--muted:#67768c;--blue:#1768dc;--blue2:#0e4da9;--line:#dce5ef;--surface:#fff;--soft:#f4f7fb;--green:#16865e;--radius:13px}
+*{box-sizing:border-box}body{margin:0;background:#f2f5fa;color:var(--ink);font-family:"Meiryo","Yu Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #9ec6ff;outline-offset:2px}
+.app{min-height:100vh}.topbar{height:64px;background:#fff;box-shadow:0 1px 0 #dfe8f2;display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:18px}
+.brand{display:flex;gap:11px;align-items:center;font-size:18px;font-weight:790;white-space:nowrap;letter-spacing:.15px}.brandmark{width:34px;height:34px;background:linear-gradient(135deg,#1d79f0,#1055b1);color:#fff;display:grid;place-items:center;border-radius:9px;font-size:17px;box-shadow:0 4px 10px #1e6cdb28}.brand-sub{font-size:11px;color:#8693a6;font-weight:600;letter-spacing:.6px}.nav{display:flex;align-items:center;gap:26px;margin-left:34px;color:#76859b}.nav-active{padding:22px 0 19px;border-bottom:3px solid var(--blue);color:var(--blue);font-weight:700}.top-right{margin-left:auto;display:flex;align-items:center;gap:9px;white-space:nowrap;font-size:12px;color:var(--muted)}.pill{padding:7px 11px;background:#f1f5fa;border:1px solid var(--line);border-radius:30px}
+main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:23px}.eyebrow{font-size:11px;color:#1768dc;font-weight:780;letter-spacing:1.3px;margin-bottom:7px}.intro h1{font-size:26px;line-height:1.4;margin:0;font-weight:790;letter-spacing:-.3px}.intro p{margin:6px 0 0;color:var(--muted);font-size:13px}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.btn{border:1px solid #d8e3f0;background:#fff;border-radius:8px;color:#24405f;padding:11px 15px;font-weight:700;display:inline-flex;gap:7px;align-items:center;justify-content:center;white-space:nowrap;transition:background .15s}.btn:hover:not(:disabled){background:#f0f6ff}.btn.primary{color:#fff;background:linear-gradient(135deg,#1976eb,#0b5fce);border-color:#0861cc;box-shadow:0 3px 9px #1b71df25}.btn.primary:hover:not(:disabled){background:#0856bc}.btn.ghost{background:transparent}.btn.sm{padding:7px 11px}.btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.metrics{display:grid;grid-template-columns:1.05fr 1fr 1fr 1.8fr;gap:13px;margin-bottom:17px}.metric{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;box-shadow:0 2px 7px #293c5405;min-width:0}.metric-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:9px}.metric-value{font-size:23px;font-weight:770;letter-spacing:.2px}.metric-value span{font-size:12px;color:var(--muted);margin-left:5px;font-weight:500}.metric-file{font-size:12px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:1px 0 6px}.metric-sub{color:#7c899e;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 2px 7px #293c5405}.searchpanel{padding:21px 22px 18px;margin-bottom:15px}.section-label{color:#24354f;font-size:12px;font-weight:740;margin-bottom:9px}.searchrow{display:grid;grid-template-columns:minmax(240px,2.4fr) minmax(140px,.9fr) minmax(130px,.85fr) auto;gap:13px;align-items:end}.field{min-width:0}.searchinput{height:43px;position:relative}.searchinput svg{width:18px;height:18px;position:absolute;left:14px;top:13px;fill:none;stroke:#7187a3;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.searchinput input{width:100%;height:100%;padding:10px 15px 10px 42px;border:1px solid #cfdaea;background:#fcfdff;border-radius:8px;font-size:14px;color:#14243c;outline-color:#1768dc}.searchrow select{width:100%;height:43px;border:1px solid #cfdaea;border-radius:8px;padding:0 11px;background:#fcfdff;color:#24354f}.mode{display:flex;height:43px;align-items:center;gap:7px;border:1px solid #d5e0ed;border-radius:8px;padding:4px;background:#f8fafd}.mode label{display:flex;justify-content:center;align-items:center;flex:1;gap:5px;height:34px;white-space:nowrap;border-radius:5px;color:#59677e;cursor:pointer}.mode label:has(input:checked){color:#0c57c0;font-weight:760;background:#e8f1ff}.mode input{accent-color:#1972e3}.searchBtns{display:flex;gap:8px}.searchBtns .btn{height:43px}.hintrow{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:15px}.muted{color:var(--muted)}.scope-tags{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid #d9e5f3;background:#f7faff;border-radius:30px;font-size:11px;padding:5px 10px;color:#476484;cursor:pointer}.chip:hover{background:#eaf2fe}
+.statusline{display:none;padding:11px 14px;margin-bottom:15px;border-radius:9px;border:1px solid #c8dffb;background:#eff6ff;color:#23598d;line-height:1.6}.statusline.show{display:block}.statusline.err{border-color:#f0c5c5;background:#fff5f4;color:#aa3333}.statusline.ok{border-color:#c0e4d3;background:#f1faf5;color:#16714f}.spinner{display:inline-block;vertical-align:middle;width:13px;height:13px;border:2px solid #b2cee9;border-top-color:#1263cd;border-radius:50%;animation:spin .7s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
+.resultshead{display:flex;justify-content:space-between;align-items:center;padding:16px 19px;gap:14px;border-bottom:1px solid var(--line)}.resultshead h2{font-size:16px;font-weight:780;margin:0;display:flex;align-items:center;gap:9px}.count{color:#0f68e0;font-size:20px}.results-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.results-tools select{height:33px;border-radius:7px;border:1px solid #d6dfeb;color:#4d5f78;background:white;padding:0 9px;font-size:12px}.results-tools label{color:var(--muted);font-size:12px}
+.content{display:grid;grid-template-columns:minmax(0,1fr) 345px;gap:14px;align-items:start}.tablewrap{overflow:auto;min-height:365px;max-height:590px}.data-table{width:100%;min-width:960px;border-collapse:collapse;font-size:12px;table-layout:fixed}.data-table th{background:#f3f7fc;position:sticky;top:0;z-index:1;text-align:left;color:#536781;font-weight:760;padding:12px 11px;border-bottom:1px solid #dce6f1;white-space:nowrap}.data-table td{padding:12px 11px;border-bottom:1px solid #edf1f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.data-table tbody tr{cursor:pointer}.data-table tbody tr:hover{background:#f3f8ff}.data-table tbody tr.selected{background:#eaf3ff}.data-table th:nth-child(1){width:64px}.data-table th:nth-child(2){width:135px}.data-table th:nth-child(3){width:136px}.data-table th:nth-child(4){width:132px}.data-table th:nth-child(5){width:156px}.data-table th:nth-child(6){width:177px}.data-table th:nth-child(7){width:94px}.data-table th:nth-child(8){width:125px}.score{font-size:11px;font-weight:760;border-radius:30px;padding:4px 7px;background:#dcf8e9;color:#07804c;white-space:nowrap}.score.low{background:#edf2f9;color:#5c7090}mark{background:#fff1a1;color:#3d3515;padding:1px 2px;border-radius:3px}.tablebottom{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:8px;color:#78869a;font-size:11px;flex-wrap:wrap;border-top:1px solid var(--line)}.paging{display:flex;gap:6px;align-items:center}.paging button{height:29px;min-width:29px;background:white;border:1px solid #dae4f0;border-radius:6px;color:#496786}.paging button:hover:not(:disabled){background:#eaf2ff}.empty{padding:74px 18px;text-align:center;color:#8191a6}.empty-icon{font-size:37px;line-height:1.4;margin-bottom:10px;opacity:.56}.empty strong{display:block;color:#526781;font-size:14px;margin-bottom:7px}
+.detail{overflow:hidden;min-height:470px;position:sticky;top:12px}.detail-head{padding:16px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.detail-head h2{font-size:14px;font-weight:790;margin:0}.detail-sub{font-size:10px;color:#7b899b}.detail-body{padding:17px}.detail-placeholder{text-align:center;padding:76px 10px;color:#8795a8;line-height:1.8}.detail-placeholder div{font-size:35px;opacity:.5}.detailtop{padding:10px 13px;border:1px solid #dce7f3;border-radius:9px;background:#f5f9ff;margin-bottom:12px}.detailtop .tag{font-size:11px;background:#e3f6ee;border-radius:20px;color:#14825b;font-weight:700;padding:4px 8px;display:inline-block}.detailtop strong{display:block;font-size:13px;margin:7px 0 4px}.detailtop small{font-size:10px;color:#7e8ea2}.detailrows{max-height:390px;overflow:auto}.detailrow{display:grid;grid-template-columns:126px minmax(0,1fr);gap:12px;align-items:start;border-bottom:1px solid #edf0f5;padding:9px 0;line-height:1.55;overflow-wrap:anywhere}.detailrow dt{color:#63748b;font-size:11px}.detailrow dd{margin:0;font-size:12px;font-weight:600}.footer{margin-top:16px;color:#8794a7;font-size:11px;display:flex;justify-content:space-between;gap:16px}.offline{display:inline-flex;align-items:center;gap:6px}.offline:before{content:"";width:7px;height:7px;border-radius:50%;background:#21a66b}.sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+@media(max-width:1200px){.content{grid-template-columns:minmax(0,1fr)}.detail{position:static;min-height:200px}.detailrows{max-height:300px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.searchrow{grid-template-columns:2fr 1fr}.searchBtns{justify-content:flex-start}}
+@media(max-width:680px){.topbar{height:58px;padding:0 15px}.nav{display:none}main{padding:21px 12px}.intro{flex-direction:column;align-items:start}.intro h1{font-size:23px}.actions{width:100%}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:13px}.metric-value{font-size:19px}.searchpanel{padding:15px}.searchrow{grid-template-columns:1fr}.searchBtns{width:100%}.searchBtns .btn{flex:1}.footer{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+ <div class="brand"><div class="brandmark">C</div><div><div>CNC Machine Viewer</div><div class="brand-sub">GLOBAL SERVICE · G-DATAHUB</div></div></div>
+ <nav class="nav" aria-label="メインメニュー"><span class="nav-active">機械情報検索</span><span>CSVデータ参照</span></nav>
+ <div class="top-right"><span class="pill">ローカル処理 / サーバー送信なし</span></div>
+</header>
+<main>
+ <section class="intro" aria-label="ページ概要">
+ <div><div class="eyebrow">MACHINE INFORMATION SEARCH</div><h1>CNC機械情報ビューア</h1><p>G-DataHubの機械情報CSVを検索・閲覧。表記揺れにも対応します。</p></div>
+ <div class="actions">
+  <button id="fetchBtn" class="btn primary" title="GDH接続設定後に利用できます"><svg viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>データ取得</button>
+  <button id="fileBtn" class="btn"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 6v10H4zM14 4v6h6"/></svg>CSVを開く</button>
+  <input id="csvFile" class="sr-only" type="file" accept=".csv,text/csv" aria-label="CSVファイル選択">
+ </div>
+ </section>
+ <section class="metrics" aria-label="データ概要">
+  <div class="metric"><div class="metric-label">取込レコード数</div><div class="metric-value" id="totalCount">—<span>件</span></div></div>
+  <div class="metric"><div class="metric-label">検索結果</div><div class="metric-value" id="matchedCount">—<span>件</span></div></div>
+  <div class="metric"><div class="metric-label">データ取得日時</div><div class="metric-value" id="loadTime" style="font-size:16px;margin-top:5px">未取得</div></div>
+  <div class="metric"><div class="metric-label">検索元ファイル</div><div class="metric-file" id="filename">未読み込み</div><div class="metric-sub" id="fileMeta">GDH接続設定、またはCSVの選択が必要です</div></div>
+ </section>
+ <section class="panel searchpanel" aria-label="検索条件">
+  <div class="searchrow">
+   <div class="field"><div class="section-label">キーワード</div><div class="searchinput"><svg viewBox="0 0 24 24"><circle cx="10.7" cy="10.7" r="6.2"/><path d="m15.6 15.6 5.2 5.2"/></svg><input id="keyword" autocomplete="off" placeholder="例：M800V、機械シリアル、メーカー、エンドユーザー" aria-label="検索キーワード"></div></div>
+   <div class="field"><div class="section-label">検索対象</div><select id="columnSelect" aria-label="検索対象列"><option value="all">主要項目（横断検索）</option><option value="all-columns">全33項目（横断検索）</option></select></div>
+   <div class="field"><div class="section-label">検索方式</div><div class="mode"><label><input type="radio" name="searchMode" value="standard">通常</label><label><input type="radio" name="searchMode" value="fuzzy" checked>あいまい</label></div></div>
+   <div class="searchBtns"><button id="searchBtn" class="btn primary"><svg viewBox="0 0 24 24"><circle cx="10.7" cy="10.7" r="6.2"/><path d="m15.6 15.6 5.2 5.2"/></svg>検索</button><button id="resetBtn" class="btn">クリア</button></div>
+  </div>
+  <div class="hintrow"><span class="muted" style="font-size:11px">全角・半角 / 大文字・小文字 / 空白・記号 / かな・カナの揺れを吸収。シリアル番号・IDは厳格判定です。</span><div class="scope-tags" aria-label="検索対象ショートカット"><button class="chip" data-field="NCシリアル番号">NCシリアル</button><button class="chip" data-field="工作機械モデル番号">機械モデル</button><button class="chip" data-field="機械メーカー">メーカー</button><button class="chip" data-field="エンドユーザー">エンドユーザー</button></div></div>
+ </section>
+ <div id="status" class="statusline" role="status" aria-live="polite"></div>
+ <div class="content">
+  <section class="panel resultspanel">
+   <div class="resultshead"><h2>検索結果 <span id="resultTitle" class="count">—</span></h2><div class="results-tools"><label for="sortOrder">並び順</label><select id="sortOrder"><option value="relevance">一致度順</option><option value="original">CSV順</option><option value="nc">NCシリアル番号順</option></select><label for="pageSize">表示数</label><select id="pageSize"><option>20</option><option>50</option><option>100</option></select></div></div>
+   <div class="tablewrap" id="tableWrap"><table class="data-table"><thead><tr><th>一致度</th><th>NCシリアル番号</th><th>NCシステム型名</th><th>機械シリアル番号</th><th>工作機械モデル番号</th><th>機械メーカー</th><th>エンドユーザー</th><th>サービス拠点</th></tr></thead><tbody id="resultsBody"><tr><td colspan="8"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr></tbody></table></div>
+   <div class="tablebottom"><span id="pageInfo">0件</span><div class="paging"><button id="firstPage" aria-label="先頭ページ">«</button><button id="prevPage" aria-label="前ページ">‹</button><span id="pageIndicator" style="padding:0 9px">— / —</span><button id="nextPage" aria-label="次ページ">›</button><button id="lastPage" aria-label="最終ページ">»</button></div></div>
+  </section>
+  <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><span class="detail-sub">33項目をそのまま表示</span></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
+ </div>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.0.0 · ローカルCSV版 · GDH自動取得には接続設定が必要</div></footer>
+</main>
+</div>
+<script id="worker-source" type="text/plain">
+'use strict';
+let headings = [], rows = [], corpus = [], preferred = [], resultIndexes = [], lastQuery = '', lastColumn = 'all', lastMode = 'fuzzy';
+let rowScores = new Map(), currentSort = 'relevance';
+const identifierRE = /シリアル|(?:^|\b)ID\b|番号|製番|serial/i;
+const isIdentifier = header => !/モデル|型名|シリーズ|期間/.test(header) && identifierRE.test(header);
+const preferredRE = /NCシリアル|NCシステム|工作機械シリアル|工作機械モデル|機械メーカー|サービス拠点|契約番号|契約タイプ|契約者名|販売会社|機械代理店$|輸出国|輸入国|エンドユーザー$/;
+const cap = s => String(s ?? '').trim();
+function normalized(s, strict=false){
+ let x = cap(s).normalize('NFKC').toLowerCase();
+ if(strict) return x;
+ x = x.replace(/[\u3041-\u3096]/g,ch=>String.fromCodePoint(ch.codePointAt(0)+0x60));
+ return x.replace(/[\s_\-‐‑‒–—―()（）\[\]{}.,．・]/g,'');
+}
+function parseCSV(src){
+ const out=[]; let row=[],field='',quoted=false,closed=false;
+ // Character-by-character preserves embedded commas and line breaks inside quoted values.
+ for(let i=0;i<src.length;i++){
+  const c=src[i];
+  if(quoted){ if(c==='"'){if(src[i+1]==='"'){field+='"';i++;}else {quoted=false;closed=true;}}else field+=c; }
+  else if(c==='"' && field===''){ quoted=true; }
+  else if(c===','){row.push(field);field='';closed=false;}
+  else if(c==='\n' || c==='\r'){if(c==='\r' && src[i+1]==='\n')i++;row.push(field);out.push(row);row=[];field='';closed=false;}
+  else {if(closed || c==='"')throw new Error('CSVの引用符の形式が不正です。');field+=c;}
+ }
+ if(quoted)throw new Error('CSVの引用符が閉じられていません。');
+ if(row.length || field !== ''){row.push(field);out.push(row);}
+ return out;
+}
+function levenshteinBounded(a,b,threshold){
+ if(Math.abs(a.length-b.length)>threshold)return threshold+1;
+ if(a===b)return 0;
+ let prev=Array(b.length+1);for(let j=0;j<=b.length;j++)prev[j]=j;
+ for(let i=1;i<=a.length;i++){
+  const curr=[i];let min=i;
+  for(let j=1;j<=b.length;j++){
+   const val=Math.min(prev[j]+1,curr[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+   curr[j]=val;if(val<min)min=val;
+  }
+  if(min>threshold)return threshold+1;
+  prev=curr;
+ }
+ return prev[b.length];
+}
+function directScore(value,term,strict){
+ const raw=cap(value).normalize('NFKC').toLowerCase();
+ const norm=normalized(value,strict);
+ if(!norm)return 0;
+ if(raw===term || norm===term)return 100;
+ if(norm.startsWith(term))return 89;
+ if(norm.includes(term))return 77;
+ return 0;
+}
+function fieldIndices(selected){
+ if(selected==='all')return preferred;
+ if(selected==='all-columns')return headings.map((_,i)=>i);
+ const index=Number(selected);return Number.isInteger(index) && index>=0 && index<headings.length?[index]:preferred;
+}
+function getScore(row, terms, selected, mode, isFuzzyFallback=false){
+ let overall=0;const indexes=fieldIndices(selected);
+ for(const term of terms){
+  let best=0;
+  for(const i of indexes){
+   const strict=isIdentifier(headings[i]);
+   const s=directScore(row[i],normalized(term,strict),strict);
+   if(s>best)best=s;
+   if(best===100)break;
+  }
+  if(best===0 && isFuzzyFallback && mode==='fuzzy' && term.length>=4 && !/^\d+$/.test(term)){
+   const q=normalized(term), limit=q.length>=9?2:1;
+   for(const i of indexes){
+    if(isIdentifier(headings[i]))continue;
+    const value=normalized(row[i]);if(!value||value.length>85)continue;
+    // Compare the whole value and individual segments; never approximate identifiers.
+    const segments=[value];
+    if(value.length>q.length+limit+3){
+      const words=cap(row[i]).normalize('NFKC').split(/[\s/、,;:()（）]+/).map(v=>normalized(v));
+      segments.push(...words.filter(x=>x.length>=3 && x.length<=q.length+limit));
+    }
+    for(const v of segments){if(Math.abs(q.length-v.length)>limit)continue;
+      const distance=levenshteinBounded(q,v,limit);
+      if(distance<=limit)best=Math.max(best,62-(distance-1)*10);
+    }
+   }
+  }
+  if(best===0)return 0;
+  overall+=best;
+ }
+ return Math.round(overall/terms.length);
+}
+function outputPage(page,pageSize){
+ const maxPage=Math.max(1,Math.ceil(resultIndexes.length/pageSize));
+ const target=Math.min(Math.max(1,page),maxPage);
+ const start=(target-1)*pageSize;
+ const arr=resultIndexes.slice(start,start+pageSize).map(index=>({index,values:rows[index],score:rowScores.get(index)??null}));
+ postMessage({type:'page',page:target,total:resultIndexes.length,totalPages:maxPage,entries:arr,start,pageSize,headings});
+}
+function runSearch(query,selected,mode,sort,page,pageSize){
+ if(!rows.length){postMessage({type:'error',message:'検索元CSVが読み込まれていません。'});return;}
+ const terms=query.trim().split(/\s+/).filter(Boolean);
+ const indexList=fieldIndices(selected);
+ let result=[];rowScores=new Map();
+ // Two pass search: precise + normalized candidates first, optional fuzzy candidates second.
+ if(terms.length===0){result=rows.map((_,i)=>i);}
+ else{
+  const needle=terms.map(x=>normalized(x));
+  const needStrict=terms.map(x=>normalized(x,true));
+  const fullSearch=selected==='all-columns';
+  for(let i=0;i<rows.length;i++){
+   const hay= selected==='all'? corpus[i] : fullSearch ? null : normalized(rows[i][indexList[0]],isIdentifier(headings[indexList[0]]));
+   let possible = true;
+   if(hay!=null)possible = needle.every((t,j)=>hay.includes(t)||hay.includes(needStrict[j]));
+   if(!possible)continue;
+   const score=getScore(rows[i],terms,selected,mode,false);
+   if(score>0){result.push(i);rowScores.set(i,score);}
+  }
+  // Fuzzy fallback only if the query returned relatively few exact matches.
+  if(mode==='fuzzy' && terms.length===1 && needle[0].length>=4 && result.length<80 && !/^\d+$/.test(needle[0])){
+   const q=needle[0],part=q.length>=4?q.slice(0,2):q;
+   const alt=q.length>=4?q.slice(-2):q;
+   for(let i=0;i<rows.length;i++){
+    if(rowScores.has(i))continue;
+    const hay=selected==='all'?corpus[i] : selected==='all-columns'?null:normalized(rows[i][indexList[0]]);
+    if(hay!=null && !hay.includes(part) && !hay.includes(alt))continue;
+    const score=getScore(rows[i],terms,selected,mode,true);
+    if(score>0){result.push(i);rowScores.set(i,score);}
+   }
+  }
+ }
+ if(sort==='nc')result.sort((a,b)=>cap(rows[a][headings.indexOf('NCシリアル番号')]).localeCompare(cap(rows[b][headings.indexOf('NCシリアル番号')])));
+ else if(sort==='relevance' && terms.length>0)result.sort((a,b)=>(rowScores.get(b)??0)-(rowScores.get(a)??0)||a-b);
+ // CSV order remains stable when no sorting is needed.
+ resultIndexes=result;currentSort=sort;lastQuery=query;lastColumn=selected;lastMode=mode;
+ outputPage(page,pageSize);
+}
+function handleLoad(file){
+ const previous={headings,rows,corpus,preferred,resultIndexes,rowScores};
+ try{
+  postMessage({type:'progress',message:'CSVファイルを読み込み、検索用データを準備しています…'});
+  const buffer=new FileReaderSync().readAsArrayBuffer(file);
+  let source;
+  try{source=new TextDecoder('utf-8',{fatal:true}).decode(buffer);}catch(e){source=new TextDecoder('shift_jis').decode(buffer);}
+  if(source.charCodeAt(0)===0xfeff)source=source.slice(1);
+  const parsed=parseCSV(source);if(parsed.length<2)throw new Error('CSVにヘッダーとデータ行がありません。');
+  const hdr=parsed.shift().map(h=>cap(h));
+  if(hdr.length<2||hdr.some(h=>h===''))throw new Error('CSVヘッダーを読み取れません。');
+  if(new Set(hdr).size!==hdr.length)throw new Error('CSVヘッダーに重複した列名があります。');
+  const problem=parsed.findIndex(r=>r.length!==hdr.length);
+  if(problem>=0)throw new Error(`CSVの列数が一致しません（データ行 ${problem+2}）。`);
+  if(parsed.some(row=>row.every(x=>!cap(x))))throw new Error('CSVに空行が含まれています。');
+  const main=hdr.map((h,i)=>preferredRE.test(h)?i:-1).filter(i=>i>=0);
+  if(!main.length)throw new Error('主要項目が判別できません。ヘッダー定義を確認してください。');
+  const idx=parsed.map(r=>main.map(i=>normalized(r[i],isIdentifier(hdr[i]))).join('\u0001'));
+  headings=hdr;rows=parsed;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();
+  postMessage({type:'loaded',count:rows.length,headings,preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
+  runSearch('','all','fuzzy','original',1,20);
+ }catch(err){({headings,rows,corpus,preferred,resultIndexes,rowScores}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
+}
+onmessage=event=>{
+ const m=event.data;
+ try{
+  if(m.type==='load')handleLoad(m.file);
+  else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20);
+  else if(m.type==='page-request')outputPage(m.page||1,m.pageSize||20);
+  else if(m.type==='row-request' && rows[m.index])postMessage({type:'row',index:m.index,values:rows[m.index],headings,score:rowScores.get(m.index)??null});
+ }catch(err){postMessage({type:'error',message:err?.message||String(err)});}
+};
+</script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const workerBlob=new Blob([$('worker-source').textContent],{type:'text/javascript'});
+const workerURL=URL.createObjectURL(workerBlob);const worker=new Worker(workerURL);
+let current={loaded:false,page:1,pageSize:20,total:0,totalPages:1,selected:null,headings:[],lastEntries:[],query:'', busy:false};
+const primaryFields=['NCシリアル番号','NCシステム型名','工作機械シリアル番号','工作機械モデル番号','機械メーカー','エンドユーザー','サービス拠点'];
+const formatNum=n=>Number(n).toLocaleString('ja-JP');
+function escapeHTML(t){return String(t??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function highlight(value,query){const s=String(value??'').trim();const terms=query.trim().split(/\s+/).filter(x=>x.length>=2);if(!terms.length)return escapeHTML(s||'—');
+ const escaped=escapeHTML(s);for(const term of terms){const i=escaped.toLowerCase().indexOf(escapeHTML(term).toLowerCase());if(i>=0)return escaped.slice(0,i)+'<mark>'+escaped.slice(i,i+escapeHTML(term).length)+'</mark>'+escaped.slice(i+escapeHTML(term).length);}
+ return escaped||'—';
+}
+function status(message,style=''){const el=$('status');el.className='statusline show '+style;el.innerHTML=message;}
+function clearStatus(){const el=$('status');el.className='statusline';el.textContent='';}
+function setBusy(value){current.busy=value;$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value;}
+function requestSearch(page=1){if(!current.loaded || current.busy)return;current.page=page;current.query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query:current.query,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
+function requestPage(page){if(!current.loaded || current.busy)return;current.page=page;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
+function loadFile(file){if(!file){setBusy(false);return;}if(!/\.csv$/i.test(file.name||'')){setBusy(false);status('CSV形式のファイルを指定してください。','err');return;}
+ setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
+function updateSelect(headings){const s=$('columnSelect'),v=s.value;s.innerHTML='<option value="all">主要項目（横断検索）</option><option value="all-columns">全項目（横断検索）</option>';
+ headings.forEach((h,i)=>{const op=document.createElement('option');op.value=String(i);op.textContent=h||`列${i+1}`;s.appendChild(op);});
+ s.value=Array.from(s.options).some(o=>o.value===v)?v:'all';}
+function detailPlaceholder(){ $('detailBody').innerHTML='<div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div>';}
+function showDetail(record){const h=record.headings,v=record.values;
+ const modelIndex=h.indexOf('工作機械モデル番号'), ncIndex=h.indexOf('NCシリアル番号');
+ const title=modelIndex>=0?v[modelIndex]:v[ncIndex]||'機械情報';
+ const rows=h.map((label,i)=>`<div class="detailrow"><dt>${escapeHTML(label)}</dt><dd>${escapeHTML(String(v[i]||'').trim()||'—')}</dd></div>`).join('');
+ $('detailBody').innerHTML=`<div class="detailtop"><span class="tag">${record.score==null?'原本データ':record.score+'% 一致'}</span><strong>${escapeHTML(title||'機械情報')}</strong><small>表示内容は元CSVの値です。類似一致は同一機械を意味しません。</small></div><div class="detailrows">${rows}</div>`;
+ document.querySelectorAll('#resultsBody tr[data-index]').forEach(tr=>tr.classList.toggle('selected',Number(tr.dataset.index)===record.index));
+}
+function renderPage(m){clearStatus();current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
+ $('matchedCount').innerHTML=`${formatNum(m.total)}<span>件</span>`;$('resultTitle').textContent=`${formatNum(m.total)}件`;
+ const tbody=$('resultsBody');
+ if(!m.entries.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">⌕</div><strong>一致する機械情報がありません</strong>キーワードまたは検索対象を変更してください。</div></td></tr>';}
+ else{
+  const indexes=primaryFields.map(h=>m.headings.indexOf(h));
+  tbody.innerHTML=m.entries.map(ent=>`<tr data-index="${ent.index}" tabindex="0" aria-label="レコード詳細を表示"><td>${ent.score==null?'<span class="score low">—</span>':`<span class="score ${ent.score<75?'low':''}">${ent.score}%</span>`}</td>${indexes.map(i=>`<td title="${escapeHTML(i<0?'':ent.values[i])}">${highlight(i<0?'':ent.values[i],current.query)}</td>`).join('')}</tr>`).join('');
+  tbody.querySelectorAll('tr[data-index]').forEach(tr=>{const select=()=>worker.postMessage({type:'row-request',index:Number(tr.dataset.index)});tr.addEventListener('click',select);tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select();}});});
+ }
+ const start=m.total?(m.page-1)*m.pageSize+1:0,end=Math.min(m.page*m.pageSize,m.total);
+ $('pageInfo').textContent=`${formatNum(start)}–${formatNum(end)} / ${formatNum(m.total)} 件`;$('pageIndicator').textContent=`${m.page} / ${m.totalPages}`;
+ $('firstPage').disabled=$('prevPage').disabled=m.page<=1;
+ $('nextPage').disabled=$('lastPage').disabled=m.page>=m.totalPages;
+ $('tableWrap').scrollTop=0;detailPlaceholder();
+}
+worker.onmessage=event=>{
+ const m=event.data;
+ if(m.type==='progress')status('<span class="spinner"></span>'+escapeHTML(m.message));
+ else if(m.type==='loaded'){
+   current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);$('columnSelect').value='all';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
+   $('totalCount').innerHTML=`${formatNum(m.count)}<span>件</span>`;
+   $('loadTime').textContent=new Date(m.loadedAt).toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+   $('filename').textContent=m.fileName;$('fileMeta').textContent=`${m.headings.length}項目 ・ ${(m.fileSize/1024/1024).toFixed(1)} MB ・ UTF-8/CP932対応`;
+   status(`${formatNum(m.count)}件のCSV読込が完了しました。検索できます。`,'ok');setTimeout(()=>{if($('status').classList.contains('ok'))clearStatus()},7000);
+ }
+ else if(m.type==='page')renderPage(m);
+ else if(m.type==='row')showDetail(m);
+ else if(m.type==='error'){setBusy(false);status(escapeHTML(m.message),'err');}
+};
+worker.onerror=()=>{setBusy(false);status('検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。','err');};
+$('fileBtn').addEventListener('click',()=>$('csvFile').click());
+$('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
+$('fetchBtn').addEventListener('click',async()=>{
+ // The GDH host should register a function returning a Blob, Response, or {blob,fileName}.
+ const adapter=window.GDH_CSV_EXPORT_ADAPTER;
+ if(typeof adapter!=='function'){status('GDH自動取得の接続先が未設定です。CSV出力の正規APIまたはGDH拡張画面の接続アダプターが確認でき次第、このボタンから自動取得できます。現時点では「CSVを開く」をご利用ください。','err');return;}
+ setBusy(true);status('<span class="spinner"></span>GDHから機械情報CSVを取得しています…');
+ try{
+  const data=await adapter();let blob,name='GDH_machine_export.csv';
+  if(data instanceof Response){if(!data.ok)throw new Error(`CSV出力エラー（HTTP ${data.status}）`);blob=await data.blob();}
+  else if(data instanceof Blob)blob=data;
+  else if(data && data.blob instanceof Blob){blob=data.blob;name=data.fileName||name;}
+  else throw new Error('GDH連携アダプターがCSV Blobを返していません。');
+  if(!blob.size)throw new Error('空のCSVファイルが返されました。');
+  const file=new File([blob],name,{type:'text/csv'});
+  // Download the same bytes as the search source, rather than reading browser Downloads.
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),20000);
+  loadFile(file);
+ }catch(e){setBusy(false);status('GDH CSV取得に失敗しました：'+escapeHTML(e.message||String(e)),'err');}
+});
+$('searchBtn').addEventListener('click',()=>requestSearch());
+$('keyword').addEventListener('keydown',e=>{if(e.key==='Enter')requestSearch();});
+$('resetBtn').addEventListener('click',()=>{$('keyword').value='';$('columnSelect').value='all';document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;requestSearch();});
+$('sortOrder').addEventListener('change',()=>requestSearch());
+$('pageSize').addEventListener('change',()=>{current.pageSize=Number($('pageSize').value);requestPage(1);});
+document.querySelectorAll('.chip[data-field]').forEach(btn=>btn.addEventListener('click',()=>{const s=$('columnSelect');const op=Array.from(s.options).find(o=>o.textContent===btn.dataset.field);if(op){s.value=op.value;requestSearch();}else status('CSVを読み込んだ後で利用できます。');}));
+$('firstPage').addEventListener('click',()=>requestPage(1));$('prevPage').addEventListener('click',()=>requestPage(current.page-1));$('nextPage').addEventListener('click',()=>requestPage(current.page+1));$('lastPage').addEventListener('click',()=>requestPage(current.totalPages));
+['firstPage','prevPage','nextPage','lastPage'].forEach(id=>$(id).disabled=true);
+</script>
+</body>
+</html>
