@@ -14,13 +14,16 @@
   });
   window.addEventListener('message',event=>{
    const m=event.data;
-   if(event.source!==window.parent||event.origin!==hostOrigin||m?.channel!==channel||m.type!=='GDH_SEARCH_RESULT')return;
+   if(event.source!==window.parent||event.origin!==hostOrigin||m?.channel!==channel)return;
+   if(m.type==='GDH_SEARCH_LANGUAGE'&&['ja','en'].includes(m.language)){window.setUiLanguage?.(m.language);return;}
+   if(m.type!=='GDH_SEARCH_RESULT')return;
    const request=pending.get(m.requestId);if(!request)return;
    clearTimeout(request.timer);pending.delete(m.requestId);
    if(m.error)request.reject(Error(String(m.error)));
    else if(m.buffer instanceof ArrayBuffer)request.resolve({blob:new Blob([m.buffer],{type:'text/csv'}),fileName:m.fileName||'GDH_machine_export.csv'});
    else request.reject(Error('GDHからCSVデータを受け取れませんでした。'));
   });
+  window.addEventListener('gdh-language-changed',event=>{if(['ja','en'].includes(event.detail))window.parent.postMessage({type:'GDH_SEARCH_LANGUAGE',channel,language:event.detail},hostOrigin);});
   window.addEventListener('keydown',event=>{if(event.key==='Escape')window.parent.postMessage({type:'GDH_SEARCH_CLOSE',channel},hostOrigin);});
  }
 }

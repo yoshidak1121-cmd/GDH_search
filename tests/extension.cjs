@@ -34,6 +34,8 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   const downloadPromise=page.waitForEvent('download');await frame.locator('#fetchBtn').click();
   const download=await downloadPromise;assert.equal(download.suggestedFilename(),'synthetic.csv');assert.deepEqual(fs.readFileSync(await download.path()),fixture);
   await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  await frame.locator('#languageSelect').selectOption('en');await frame.locator('#resultTitle').filter({hasText:'3 records'}).waitFor();await page.getByRole('button',{name:'Close search',exact:true}).waitFor();assert.match(await frame.locator('#fetchBtn').textContent(),/Under development/);
+  await frame.locator('#languageSelect').selectOption('ja');await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.getByRole('button',{name:'拡張検索を閉じる',exact:true}).waitFor();
   assert.deepEqual(posts[0].fields.getAll('keyword'),['first','second']);assert.equal(posts[0].fields.get('iszip'),'false');assert.equal(posts[0].method,'POST');
   const serial=frame.locator('.facet-card[data-field="NCシリアル番号"]');
   await serial.getByRole('searchbox').fill('X1001');await serial.getByRole('button',{name:'入力語をOR条件に追加'}).click();await serial.getByRole('searchbox').fill('X1003');await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'2件'}).waitFor();
