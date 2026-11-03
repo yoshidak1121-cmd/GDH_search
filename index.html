@@ -39,6 +39,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
 main,.embedded main{padding-top:10px}.intro{margin-bottom:8px}.intro h1,.embedded .intro h1{font-size:19px}.intro p{margin-top:3px;font-size:11px}.actions .btn{padding:7px 12px}.metrics{display:flex;gap:0;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:9px}.metric{border:0;border-radius:0;box-shadow:none;padding:6px 12px;display:flex;gap:8px;align-items:center;min-width:0}.metric-label{margin:0;white-space:nowrap;font-size:10px}.metric-value{font-size:14px;white-space:nowrap}.metrics #loadTime{font-size:12px!important;margin-top:0!important}.metric-file{font-size:11px;margin:0}.metric-sub{display:none}.metric:last-child{flex:1}.searchpanel{padding:12px 18px;margin-bottom:9px}.search-heading{margin-bottom:5px;align-items:center}.search-heading h2{font-size:15px}.search-heading p{display:none}.search-top-actions{display:flex;align-items:center;gap:12px}.search-top-actions .searchBtns .btn{height:34px;padding:6px 14px}.fixed-search{max-width:none}.fixed-search .facet-card{padding:3px 0;grid-template-columns:135px minmax(0,1fr);column-gap:16px}.fixed-search .facet-title{padding-top:6px;display:flex;align-items:flex-start;gap:8px;grid-row:1 / span 4}.fixed-search .facet-title label{font-size:12px;white-space:nowrap}.fixed-search .filter-count{display:inline;margin:2px 0 0;font-size:10px;white-space:nowrap}.fixed-search .facet-card input:not([type=checkbox]),.fixed-search .facet-card select{height:31px;min-height:31px;padding:4px 8px;font-size:12px}.fixed-search .contract-options{min-height:31px}.contract-options label{padding:4px 8px;font-size:11px}.fixed-search .facet-options{top:34px}.fixed-search .facet-values{margin:3px 0}.search-bottom{max-width:none;margin-top:5px;padding-top:5px}.search-bottom-info{flex-direction:row;align-items:center;gap:12px}.advanced-toggle{font-size:11px}.search-bottom #searchSummary{font-size:11px}.resultshead{padding:10px 14px}.search-bottom .searchBtns:empty{display:none}
 @media(max-width:850px){.metric-label{display:none}.metric:last-child{max-width:48%}.search-top-actions{gap:6px}.search-top-actions .searchBtns{width:auto}.search-top-actions .searchBtns .btn{font-size:12px;padding:6px 10px}}
 @media(max-width:600px){.intro p{display:none}.intro{margin-bottom:7px}.metrics{flex-wrap:wrap}.metric{padding:4px 8px}.metric:last-child{max-width:100%}.searchpanel{padding:9px 10px}.search-heading{align-items:center;gap:6px}.search-heading h2{font-size:14px}.search-top-actions #facetCount{display:none}.fixed-search .facet-card{grid-template-columns:96px minmax(0,1fr);column-gap:8px;padding:4px 0}.fixed-search .facet-title{display:block}.fixed-search .filter-count{display:none}.search-bottom-info{flex-wrap:wrap;gap:5px 10px}.search-top-actions .searchBtns{gap:5px}}
+.duplicate-only-control{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #e4c478;border-radius:5px;color:#815000;background:#fff8e8;font-size:11px;cursor:pointer}.duplicate-only-control[hidden]{display:none}.duplicate-only-control input{accent-color:#b77917}
 </style>
 </head>
 <body>
@@ -66,7 +67,7 @@ main,.embedded main{padding-top:10px}.intro{margin-bottom:8px}.intro h1,.embedde
  <section class="panel searchpanel" aria-label="検索条件">
   <div class="search-heading"><div><h2>機械を検索</h2><p>入力した条件をすべて満たす機械を探します。同じ項目に複数指定すると「いずれか（OR）」です。</p></div><div class="search-top-actions"><span id="facetCount" class="facet-count">条件なし</span><div class="searchBtns"><button id="resetBtn" class="btn" type="button">条件をクリア</button><button id="searchBtn" class="btn primary" type="button" disabled>この条件で検索</button></div></div></div>
   <div id="facetFields" class="facet-grid fixed-search"><p class="search-await">「データ取得」または「CSVを開く」で検索データを読み込んでください。検索候補はCSVから毎回作成します。</p></div>
-  <div class="search-bottom"><div class="search-bottom-info"><label class="advanced-toggle"><input id="advancedToggle" type="checkbox"> 詳細条件</label><span id="searchSummary" role="status">条件なし：すべての機械を表示</span></div></div>
+  <div class="search-bottom"><div class="search-bottom-info"><label class="advanced-toggle"><input id="advancedToggle" type="checkbox"> 詳細条件</label><label id="duplicatesOnlyControl" class="duplicate-only-control" hidden><input id="duplicatesOnly" type="checkbox"> 重複ありのみ表示</label><span id="searchSummary" role="status">条件なし：すべての機械を表示</span></div></div>
   <div hidden><input id="keyword"><select id="columnSelect"><option value="all">主要項目</option></select><select id="queryJoin"><option value="AND">AND</option><option value="OR">OR</option></select><input type="radio" name="searchMode" value="standard" checked><input type="radio" name="searchMode" value="fuzzy"></div>
  </section>
  <div id="status" class="statusline" role="status" aria-live="polite"></div>
@@ -78,7 +79,7 @@ main,.embedded main{padding-top:10px}.intro{margin-bottom:8px}.intro h1,.embedde
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.6.2 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.6.3 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -287,16 +288,16 @@ function matchesFilters(row,filters){
   });
  });
 }
-function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[]){
+function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[],duplicatesOnly=false){
  if(!rows.length){postMessage({type:'error',message:'検索元CSVが読み込まれていません。'});return;}
  // Parse before changing results: invalid expressions preserve the last successful search.
  const plan=parseQuery(query,join), terms=plan.terms,compiled=compileFilters(filters);
  const indexList=fieldIndices(selected);
  let result=[];const scores=new Map();
- if(!plan.root){result=rows.map((_,i)=>i).filter(i=>matchesFilters(rows[i],compiled));}
+ if(!plan.root){result=rows.map((_,i)=>i).filter(i=>(!duplicatesOnly||duplicateMeta(i).duplicate)&&matchesFilters(rows[i],compiled));}
  else{
   for(let i=0;i<rows.length;i++){
-   if(!matchesFilters(rows[i],compiled))continue;
+   if((duplicatesOnly&&!duplicateMeta(i).duplicate)||!matchesFilters(rows[i],compiled))continue;
    const hay=selected==='all'?corpus[i]:selected==='all-columns'?null:normalized(rows[i][indexList[0]],isIdentifier(headings[indexList[0]]));
    if(hay!=null && !evaluateQuery(plan.root,t=>(hay.includes(t.norm)||hay.includes(t.strict))?100:0))continue;
    const score=evaluateQuery(plan.root,t=>getScore(rows[i],[t.value],selected,mode,false));
@@ -305,7 +306,7 @@ function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[])
   // Retain the bounded fuzzy fallback and exclude identifier fields from edit distance.
   if(mode==='fuzzy' && result.length<80 && terms.some(t=>t.norm.length>=4&&!/^\d+$/.test(t.norm))){
    for(let i=0;i<rows.length;i++){
-    if(scores.has(i)||!matchesFilters(rows[i],compiled))continue;
+    if(scores.has(i)||(duplicatesOnly&&!duplicateMeta(i).duplicate)||!matchesFilters(rows[i],compiled))continue;
     const hay=selected==='all'?corpus[i]:selected==='all-columns'?null:normalized(rows[i][indexList[0]],isIdentifier(headings[indexList[0]]));
     const score=evaluateQuery(plan.root,t=>{
      const eligible=t.norm.length>=4&&!/^\d+$/.test(t.norm);
@@ -351,7 +352,7 @@ onmessage=event=>{
  const m=event.data;
  try{
   if(m.type==='load')handleLoad(m.file);
-  else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND',m.filters||[]);
+  else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND',m.filters||[],m.duplicatesOnly===true);
   else if(m.type==='candidates')candidateOptions(m.column,m.query||'',m.requestId);
   else if(m.type==='page-request')outputPage(m.page||1,m.pageSize||20);
   else if(m.type==='row-request' && rows[m.index])postMessage({type:'row',index:m.index,values:rows[m.index],headings,score:rowScores.get(m.index)??null,...duplicateMeta(m.index)});
@@ -376,7 +377,7 @@ function highlight(value,query){const s=String(value??'').trim();const terms=(qu
 function status(message,style=''){const el=$('status');el.className='statusline show '+style;el.innerHTML=message;}
 function clearStatus(){const el=$('status');el.className='statusline';el.textContent='';}
 function setBusy(value){current.busy=value;$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value||!current.loaded;}
-function requestSearch(page=1){if(!current.loaded || current.busy)return;const pending=pendingChoice();if(pending){status(escapeHTML(pending.label)+'は候補から選択してください。','err');pending.input.focus();return;}const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
+function requestSearch(page=1){if(!current.loaded || current.busy)return;const pending=pendingChoice();if(pending){status(escapeHTML(pending.label)+'は候補から選択してください。','err');pending.input.focus();return;}const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,duplicatesOnly:$('duplicatesOnly').checked,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
 function requestPage(page){if(!current.loaded || current.busy)return;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
 function loadFile(file){if(!file){setBusy(false);return;}if(!/\.csv$/i.test(file.name||'')){setBusy(false);status('CSV形式のファイルを指定してください。','err');return;}
  setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
@@ -439,8 +440,9 @@ function collectFilters(){
  return Array.from(facetStates.values(),f=>({column:f.index,values:[...f.values],queries:[...f.queries,...(['text','name'].includes(f.kind)&&f.input.value.trim()?[f.input.value.trim()]:[])],match:f.match?.value||'contains',blank:f.blank.checked}));
 }
 function activeFilterCount(){return collectFilters().filter(f=>f.values.length||f.queries.length||f.blank).length;}
-function filterDescription(){const count=activeFilterCount();return count?count+'項目の条件をANDで組み合わせ':'条件なし：すべての機械';}
-function updateFacetCount(){const n=activeFilterCount();$('facetCount').textContent=n?n+'項目を指定':'条件なし';$('searchSummary').textContent=n?'条件を変更しました。「この条件で検索」で反映します。':'条件なし：すべての機械を表示';}
+function filterDescription(){const count=activeFilterCount(),dup=$('duplicatesOnly').checked;return (count?count+'項目の条件をANDで組み合わせ':dup?'':'条件なし：すべての機械')+(dup?(count?'・':'')+'重複ありのみ':'');}
+function updateFacetCount(){const n=activeFilterCount(),dup=$('duplicatesOnly').checked;$('facetCount').textContent=(n?n+'項目を指定':dup?'':'条件なし')+(dup?(n?'・':'')+'重複のみ':'');$('searchSummary').textContent=n||dup?'条件を変更しました。「この条件で検索」で反映します。':'条件なし：すべての機械を表示';}
+
 function pendingChoice(){return Array.from(facetStates.values()).find(f=>f.kind==='suggest'&&f.input.value.trim());}
 function requestCandidates(f){f.requestId=++facetSequence;worker.postMessage({type:'candidates',column:f.index,query:f.input?.value||'',requestId:f.requestId});}
 function hideOptions(f){if(f.kind==='checkbox')return;if(f.input)f.input.removeAttribute('aria-activedescendant');if(f.options){f.options.hidden=true;f.input?.setAttribute('aria-expanded','false');}f.active=-1;}
@@ -500,12 +502,14 @@ function initFacets(definitions){
  for(const config of searchFields){const d=(definitions||[]).find(d=>[config.name,...config.aliases].some(name=>key(name)===key(d.name)));
   if(d){const def={...d,...config};facetDefinitions.push(def);addFacet(def);}
   else{const section=document.createElement('section');section.className='facet-card missing-field';section.dataset.field=config.name;section.innerHTML='<strong>'+escapeHTML(config.label)+'</strong><p>このCSVに対応する列がありません。</p>';$('facetFields').appendChild(section);}
- }$('advancedToggle').checked=false;$('facetFields').classList.remove('show-advanced');updateFacetCount();
+ }$('advancedToggle').checked=false;$('duplicatesOnly').checked=false;updateAdvancedControls();updateFacetCount();
 }
-function clearFacetValues(){for(const f of facetStates.values()){clearTimeout(f.timer);f.values.clear();f.queries.clear();f.blank.checked=false;if(f.input)f.input.value='';if(f.match)f.match.value='contains';renderFacetValues(f);if(f.kind!=='text')requestCandidates(f);hideOptions(f);}updateFacetCount();}
+function clearFacetValues(){$('duplicatesOnly').checked=false;updateAdvancedControls();for(const f of facetStates.values()){clearTimeout(f.timer);f.values.clear();f.queries.clear();f.blank.checked=false;if(f.input)f.input.value='';if(f.match)f.match.value='contains';renderFacetValues(f);if(f.kind!=='text')requestCandidates(f);hideOptions(f);}updateFacetCount();}
 document.addEventListener('pointerdown',event=>{for(const f of facetStates.values())if(f.kind!=='checkbox'&&!f.card.contains(event.target))hideOptions(f);});
 
-$('advancedToggle').onchange=()=>$('facetFields').classList.toggle('show-advanced',$('advancedToggle').checked);
+function updateAdvancedControls(){$('facetFields').classList.toggle('show-advanced',$('advancedToggle').checked);$('duplicatesOnlyControl').hidden=!$('advancedToggle').checked&&!$('duplicatesOnly').checked;}
+$('advancedToggle').onchange=updateAdvancedControls;
+$('duplicatesOnly').onchange=()=>{updateAdvancedControls();updateFacetCount();};
 $('closeDetail').onclick=detailPlaceholder;
 $('fileBtn').addEventListener('click',()=>$('csvFile').click());
 $('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});

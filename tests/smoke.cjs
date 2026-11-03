@@ -156,3 +156,17 @@ if(!send({type:'row-request',index:0}).find(m=>m.type==='row').duplicate)throw E
 loadText(headers.join(',')+'\n'+multiRecords[2].map(csvCell).join(','));
 if(send({type:'row-request',index:0}).find(m=>m.type==='row').duplicate)throw Error('Reload retained duplicate state');
 console.log('PASS: comma-separated candidates/exact serial/name/OR-AND, per-row counts, duplicate badges metadata, raw values, NC identity, failed/successful reload');
+
+loadText(headers.join(',')+'\n'+multiRecords.map(r=>r.map(csvCell).join(',')).join('\n'));
+function duplicatesOnly(filters=[],query='',mode='standard'){
+ return send({type:'search',query,mode,filters,duplicatesOnly:true,sort:'original',page:1,pageSize:20}).find(m=>m.type==='page');
+}
+if(duplicatesOnly().entries.map(e=>e.index).join(',')!=='0,1,3')throw Error('Duplicate-only base filter');
+if(duplicatesOnly([f('機械メーカー',['Beta'])]).entries.map(e=>e.index).join(',')!=='0,1')throw Error('Duplicate-only AND field filter');
+if(duplicatesOnly([f('機械メーカー',['Gamma'])]).total!==0)throw Error('Non-duplicate passed field filter');
+if(duplicatesOnly([],'Gamma').total!==0||duplicatesOnly([],'Gammx','fuzzy').total!==0)throw Error('Keyword/fuzzy bypassed duplicate-only');
+const duplicateFirst=send({type:'search',query:'',duplicatesOnly:true,sort:'original',page:1,pageSize:1}).find(m=>m.type==='page');
+const duplicateSecond=send({type:'page-request',page:2,pageSize:1}).find(m=>m.type==='page');
+if(duplicateFirst.total!==3||!duplicateSecond.entries[0].duplicate||duplicateSecond.entries[0].index!==1)throw Error('Duplicate-only paging');
+if(send({type:'search',query:'',duplicatesOnly:false}).find(m=>m.type==='page').total!==4)throw Error('Duplicate-only clearing');
+console.log('PASS: duplicate-only AND filtering, keyword/fuzzy exclusion, paging and clearing');

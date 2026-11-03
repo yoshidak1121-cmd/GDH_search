@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.6.2
+# CNC機械情報ビューア / GDH拡張検索 v1.6.3
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -40,6 +40,8 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 結果一覧は各値を区切って表示します。長いリストは先頭3値と残り件数を表示し、行の詳細ですべて確認できます。詳細では分割した各値と「元のCSV値」の両方を表示します。元データは変更しません。
 
+「詳細条件」の「重複ありのみ表示」をチェックして検索すると、重複対象の行だけに絞り込みます。7項目の条件ともANDで組み合わせます。チェックが有効な間は詳細条件を閉じても表示を残し、条件クリア・CSV再読込で解除します。
+
 ## エンドユーザーの表記揺れ
 
 自由入力の「表記揺れを吸収」ではNFKC、大小文字、空白・区切り記号、かな／カナを揃え、㈱・(株)・株式会社、および㈲・(有)・有限会社を同じ表記に揃えて部分一致で検索します。法人格・工場・支店名を勝手に削除しません。
@@ -50,7 +52,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ## 導入
 
-[GitHub Releases](https://github.com/yoshidak1121-cmd/GDH_search/releases) の `GDH_Search_Extension_v1.6.2.zip` を展開し、Chrome / Edgeの拡張機能管理画面で読み込んでください。詳細は `EXTENSION_INSTALL.md` を参照してください。
+[GitHub Releases](https://github.com/yoshidak1121-cmd/GDH_search/releases) の `GDH_Search_Extension_v1.6.3.zip` を展開し、Chrome / Edgeの拡張機能管理画面で読み込んでください。詳細は `EXTENSION_INSTALL.md` を参照してください。
 
 単独利用は `index.html` をEdge / Chromeで開き、「CSVを開く」から読み込みます。開発サーバーやnpmは不要です。
 
