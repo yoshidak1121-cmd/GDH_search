@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.7.0
+# CNC機械情報ビューア / GDH拡張検索 v1.7.1
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -60,7 +60,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ## 導入
 
-[GitHub Releases](https://github.com/yoshidak1121-cmd/GDH_search/releases) の `GDH_Search_Extension_v1.7.0.zip` を展開し、Chrome / Edgeの拡張機能管理画面で読み込んでください。詳細は `EXTENSION_INSTALL.md` を参照してください。
+[GitHub Releases](https://github.com/yoshidak1121-cmd/GDH_search/releases) の `GDH_Search_Extension_v1.7.1.zip` を展開し、Chrome / Edgeの拡張機能管理画面で読み込んでください。詳細は `EXTENSION_INSTALL.md` を参照してください。
 
 単独利用は `index.html` をEdge / Chromeで開き、「CSVを開く」から読み込みます。開発サーバーやnpmは不要です。
 
@@ -75,3 +75,5 @@ GDHからの自動取得は、提供された画面HTMLで確認した既存CSV�
 CSVはWorker内で処理し、外部サービス、localStorage、IndexedDBへ保存しません。ダウンロードしたCSVは通常の保存先に残ります。referenceの実CSV・保存HTML・画面画像は配布アーカイブに含めません。リポジトリは非公開です。オープンソースライセンスは付与していません。
 
 `node tests/smoke.cjs` でWorkerの解析・検索を検証します。開発用Playwrightが利用可能な環境で `node tests/facets.cjs`、`node tests/extension.cjs`、`node tests/gdh-export.cjs` を実行できます。`TEST_BROWSER_CHANNEL=msedge`、拡張機能試験は `TEST_EXTENSION_CHANNEL=msedge` でEdgeを指定できます。アプリ本体に外部ライブラリは不要です。詳細は `RELEASE_CHECKLIST.md` を参照してください。
+
+画面上部に「この画面はベータ版で、動作保証はありません。」「画面に関する問い合わせは、NC戦略までお問い合わせください。」を表示します。

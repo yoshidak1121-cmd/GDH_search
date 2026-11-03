@@ -1,6 +1,6 @@
 # Chrome / Edge 拡張機能の導入
 
-配布ファイル：`GDH_Search_Extension_v1.7.0.zip`
+配布ファイル：`GDH_Search_Extension_v1.7.1.zip`
 
 1. ZIPを展開し、`GDH_Search_Extension` フォルダーを残します。
 2. Edgeは `edge://extensions`、Chromeは `chrome://extensions` を開き、開発者モード（デベロッパーモード）を有効にします。
@@ -53,3 +53,5 @@ Edge 156の独立したテストプロファイルに実際のManifest V3パッ�
 テストはPlaywrightが利用できる環境で `node tests/extension.cjs` を実行します。既定はテスト用Chromium、`TEST_EXTENSION_CHANNEL=msedge` でEdgeを指定できます。HTTP(S)通信はすべてテスト内で処理し、GDH本番へ通信しません。
 
 参考：[Chrome公式の拡張機能読み込み手順](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)、[拡張機能のCSP](https://developer.chrome.com/docs/extensions/reference/manifest/content-security-policy)。
+
+画面上部に「この画面はベータ版で、動作保証はありません。」「画面に関する問い合わせは、NC戦略までお問い合わせください。」を表示します。
