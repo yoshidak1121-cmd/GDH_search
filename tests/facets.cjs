@@ -5,35 +5,34 @@ const root=path.resolve(__dirname,'..');
  const browser=await chromium.launch({headless:true,...(process.env.TEST_BROWSER_CHANNEL?{channel:process.env.TEST_BROWSER_CHANNEL}:{})});
  try{
  const header=fs.readFileSync(path.join(root,'tests/synthetic.csv'),'utf8').split(/\r?\n/)[0].replace(/^\ufeff/,'').split(',');
- const make=(id,type,service,maker,date,months)=>{const row=Array(33).fill('');for(const [h,v] of Object.entries({'NCシリアル番号':id,'契約タイプ':type,'サービス拠点':service,'機械メーカー':maker,'契約開始日':date,'契約期間（月）':months,'販売会社':'Sales A','輸出国':'JP','輸入国':'US'}))row[header.indexOf(h)]=v;return row.join(',');};
- const buffer=Buffer.from(header.join(',')+'\n'+[make('QA1','A','East','Maker A','2024/01/01','12'),make('QA2','B','East','Maker B','2024-06-30','24'),make('QA3','B','West','Maker A','2025/01/01','36'),make('QA4','','East','Maker A','','')].join('\n'));
+ const data=[['QA1','A','Maker A','US','(株)あおぞら','DEMO-001'],['QA2','B','Maker B','US','㈱アオゾラ','DEMO001'],['QA3','B','Maker A','DE','株式会社あおぞら','DEMO-003'],['QA4','','Maker A','DE','株式会社あおそら','DEMO-004'],['QA5','A','Maker B','US','有限会社あおぞら','DEMO-005']];
+ const rows=data.map(([id,type,maker,country,name,serial])=>{const r=Array(33).fill('');for(const [h,v] of Object.entries({'NCシリアル番号':id,'契約タイプ':type,'機械メーカー':maker,'輸入国':country,'輸出国':'JP','エンドユーザー':name,'工作機械シリアル番号':serial}))r[header.indexOf(h)]=v;return r;});
+ const bytes=(heads=header,body=rows)=>Buffer.from([heads,...body].map(r=>r.join(',')).join('\n'));
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.join(root,'index.html')).href);
- const load=async()=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-fields.csv',mimeType:'text/csv',buffer});await count(4);};
- const count=n=>page.waitForFunction(n=>document.querySelector('#resultTitle').textContent===n+'件',n).catch(async e=>{console.log({expected:n,actual:await page.locator('#resultTitle').textContent(),status:await page.locator('#status').textContent(),errors});throw e;});
+ const count=n=>page.waitForFunction(n=>document.querySelector('#resultTitle').textContent===n+'件',n);
+ const load=async buffer=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-seven.csv',mimeType:'text/csv',buffer});await count(5);};
  const search=async n=>{await page.locator('#searchBtn').click();await count(n);};
- const card=name=>page.locator('.facet-card[data-column="'+header.indexOf(name)+'"]');
- const add=async name=>{await page.locator('#facetField').selectOption(String(header.indexOf(name)));await page.locator('#addFacet').click();};
- await load();await page.locator('#facetPanel summary').click();
- await card('契約タイプ').getByLabel('A（1件）',{exact:true}).check();await card('契約タイプ').getByLabel('B（2件）',{exact:true}).check();await search(3);
- await card('サービス拠点').getByRole('combobox').fill('East');await card('サービス拠点').getByRole('option',{name:'East（3件）',exact:true}).click();await search(2);
- await card('機械メーカー').getByRole('combobox').fill('Maker A');await card('機械メーカー').getByRole('option',{name:'Maker A（3件）',exact:true}).waitFor();await card('機械メーカー').getByRole('combobox').press('ArrowDown');await page.keyboard.press('Enter');await search(1);
- await page.locator('#keyword').fill('QA2');await search(0);await page.locator('#clearFacets').click();await count(1);
- await page.locator('#resetBtn').click();await count(4);
- await card('契約タイプ').getByLabel(/空欄も選択/).check();await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA4/);
- await page.locator('#clearFacets').click();await count(4);
- await add('契約期間（月）');await card('契約期間（月）').getByLabel('契約期間（月） 最小月数',{exact:true}).fill('12');await card('契約期間（月）').getByLabel('契約期間（月） 最大月数',{exact:true}).fill('24');await search(2);
- await card('契約期間（月）').getByRole('combobox').fill('36');await card('契約期間（月）').getByRole('option',{name:'36（1件）'}).click();await search(3);
- await card('契約期間（月）').getByLabel(/空欄も選択/).check();await search(4);
- await add('契約開始日');await card('契約開始日').getByLabel('契約開始日 開始日',{exact:true}).fill('2024-01-01');await card('契約開始日').getByLabel('契約開始日 終了日',{exact:true}).fill('2024-06-30');await search(2);
- await card('契約開始日').getByLabel('契約開始日 開始日',{exact:true}).fill('2025-01-01');await page.locator('#searchBtn').click();await page.locator('#status.err').waitFor();assert.equal(await page.locator('#resultTitle').textContent(),'2件');
- await page.locator('#clearFacets').click();await count(4);await add('NCシリアル番号');await card('NCシリアル番号').getByRole('searchbox').fill('QA1');await card('NCシリアル番号').getByRole('button',{name:'OR条件として追加'}).click();await card('NCシリアル番号').getByRole('searchbox').fill('QA3');await search(2);
- await card('NCシリアル番号').getByRole('button',{name:'NCシリアル番号の条件を削除'}).click();await search(4);
- await add('NCシリーズ名');await card('NCシリーズ名').getByText('この列は全件空欄です。').waitFor();assert.equal(await card('NCシリーズ名').getByRole('combobox').isDisabled(),true);
- await page.locator('#resetBtn').click();await count(4);
- await card('機械メーカー').getByRole('combobox').fill('Maker B');await load();assert.equal(await page.locator('#facetCount').textContent(),'指定なし');assert.equal(await page.locator('.facet-card').count(),6);
- await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- if(process.env.TEST_SCREENSHOT){await page.setViewportSize({width:1440,height:1100});await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});}
- assert.deepEqual(errors,[]);console.log('PASS: field UI OR/AND, exact suggestions and keyboard choice, keyword intersection, blank, numeric union, date validation, ID input, clear/remove/reload, empty column, mobile');
+ const card=name=>page.locator('.facet-card[data-field="'+name+'"]');
+ const clear=async()=>{await page.locator('#resetBtn').click();await count(5);};
+ await load(bytes());assert.equal(await page.locator('.facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
+ for(const name of ['工作機械シリアル番号','NCシリアル番号','エンドユーザー']){assert.ok((await card(name).locator('input[type=search]').boundingBox()).width>180,'Input width: '+name);}
+ assert.equal(await card('機械メーカー').getByRole('option').count(),0); // Candidate menu closed until focus.
+ await card('契約タイプ').getByLabel('A（2件）',{exact:true}).check();await card('契約タイプ').getByLabel('B（2件）',{exact:true}).check();await search(4);
+ await card('機械メーカー').getByRole('combobox').fill('Maker A');await card('機械メーカー').getByRole('option',{name:'Maker A（3件）',exact:true}).click();await search(2);
+ await card('輸入国').getByRole('combobox').fill('US');await card('輸入国').getByRole('option',{name:'US（3件）',exact:true}).click();await search(1);
+ await clear();await card('工作機械シリアル番号').getByRole('searchbox').fill('DEMO001');await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA2/);
+ await clear();await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).fill('株式会社あおぞら');await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).press('Enter');await count(3);assert.match(await card('エンドユーザー').locator('.facet-values').innerText(),/含む/);assert.equal(await card('エンドユーザー').locator('.facet-values button').count(),1);
+ await card('NCシリアル番号').getByRole('searchbox').fill('QA1');await search(1);
+ await clear();const input=card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true});await input.fill('株式会社あおぞら');await card('エンドユーザー').getByRole('option',{name:'㈱アオゾラ（1件）',exact:true}).waitFor();await input.press('ArrowDown');assert.ok(await input.getAttribute('aria-activedescendant'));await card('エンドユーザー').getByRole('option',{name:'㈱アオゾラ（1件）',exact:true}).click();await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA2/);assert.match(await card('エンドユーザー').locator('.facet-values').innerText(),/元の表記/);
+ await clear();await input.fill('株式会社あおぞら');await card('エンドユーザー').getByRole('option',{name:/株式会社あおそら.*類似候補/}).waitFor();await search(3); // Similar candidates are not automatically included.
+ await clear();const makerInput=card('機械メーカー').getByRole('combobox');await makerInput.fill('Maker B');await card('機械メーカー').getByRole('option',{name:'Maker B（2件）',exact:true}).waitFor();await makerInput.fill('Maker A');await makerInput.press('ArrowDown');await makerInput.press('Enter');assert.doesNotMatch(await card('機械メーカー').locator('.facet-values').innerText(),/Maker B/);await clear();await card('機械メーカー').getByRole('combobox').fill('Maker');await page.locator('#searchBtn').click();await page.locator('#status.err').waitFor();assert.match(await page.locator('#status').textContent(),/候補から選択/);await clear();
+ await card('契約タイプ').getByLabel(/空欄/).check();await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA4/);await clear();assert.equal(await card('契約タイプ').getByRole('checkbox').count(),2+1);
+ const changed=rows.map(r=>r.map((v,i)=>header[i]==='機械メーカー'&&v==='Maker A'?'Maker C':v));await load(bytes(header,changed));const changedMaker=card('機械メーカー').getByRole('combobox');await changedMaker.fill('Maker C');await card('機械メーカー').getByRole('option',{name:'Maker C（3件）',exact:true}).waitFor();assert.equal(await card('機械メーカー').locator('.facet-values button').count(),0);await clear();
+ const reversed=header.slice().reverse();await load(bytes(reversed,rows.map(r=>r.slice().reverse())));await card('NCシリアル番号').getByRole('searchbox').fill('QA3');await search(1);await clear();
+ const missing=header.filter(h=>h!=='輸出国');await load(bytes(missing,rows.map(r=>r.filter((_,i)=>header[i]!=='輸出国'))));await card('輸出国').getByText('このCSVに対応する列がありません。').waitFor();
+ await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);for(const name of ['工作機械シリアル番号','NCシリアル番号','エンドユーザー'])assert.ok((await card(name).locator('input[type=search]').boundingBox()).width>120);
+ if(process.env.TEST_SCREENSHOT){await load(bytes());await page.setViewportSize({width:1440,height:1100});await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});}
+ assert.deepEqual(errors,[]);console.log('PASS: fixed seven fields, OR/AND, explicit choices, serial punctuation, end-user variants/raw exact/similar candidates, Enter behavior, clear, CSV reorder/missing column, mobile');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

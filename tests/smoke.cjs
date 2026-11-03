@@ -113,3 +113,19 @@ loadText(headers.join(',')+'\n'+multi.map(csvCell).join(','));
 filtered([f('契約開始日',[],{min:'2024-01-01',max:'2024-12-31'}),f('契約期間（月）',[],{min:'36',max:'36'})],'QA5');
 filtered([f('契約開始日',[],{min:'2023-01-01',max:'2023-12-31'})],'');
 console.log('PASS: multi-valued date/month cells match any value within range');
+
+const variants=[
+ ['NAME1','(株)あおぞら','DEMO-001'],['NAME2','㈱アオゾラ','DEMO001'],['NAME3','株式会社あおぞら','DEMO-002'],['NAME4','株式会社あおそら','DEMO-003'],['NAME5','有限会社あおぞら','DEMO-004']
+].map(([id,name,serial])=>{const row=Array(33).fill('');row[0]=id;row[headers.indexOf('エンドユーザー')]=name;row[headers.indexOf('工作機械シリアル番号')]=serial;return row;});
+loadText(headers.join(',')+'\n'+variants.map(r=>r.map(csvCell).join(',')).join('\n'));
+filtered([f('エンドユーザー',[],{queries:['株式会社あおぞら']})],'NAME1,NAME2,NAME3');
+filtered([f('エンドユーザー',[],{queries:['あおぞら']})],'NAME1,NAME2,NAME3,NAME5');
+filtered([f('エンドユーザー',['㈱アオゾラ'])],'NAME2');
+filtered([f('エンドユーザー',[],{queries:['(株)あおぞら'],match:'exact'})],'NAME1');
+filtered([f('エンドユーザー',[],{queries:['株式会社あおぞら','有限会社あおぞら']})],'NAME1,NAME2,NAME3,NAME5');
+filtered([f('工作機械シリアル番号',[],{queries:['DEMO001']})],'NAME2');
+filtered([f('工作機械シリアル番号',[],{queries:['DEMO-001'],match:'exact'})],'NAME1');
+filtered([f('エンドユーザー',[],{queries:['株式会社あおぞら']}),f('工作機械シリアル番号',[],{queries:['DEMO-001'],match:'exact'})],'NAME1');
+const nameCandidates=send({type:'candidates',column:headers.indexOf('エンドユーザー'),query:'株式会社あおぞら',requestId:77}).find(m=>m.type==='candidates');
+if(nameCandidates.options.filter(x=>!x.approx).length!==3||!nameCandidates.options.some(x=>x.value==='株式会社あおそら'&&x.approx))throw Error('Name variants/similar candidates');
+console.log('PASS: name spelling normalization, original-value selection, no fuzzy auto-merge, serial punctuation, query OR and field AND');
