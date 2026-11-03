@@ -14,8 +14,8 @@ const root=path.resolve(__dirname,'..');
  const load=async buffer=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-seven.csv',mimeType:'text/csv',buffer});await count(5);};
  const search=async n=>{await page.locator('#searchBtn').click();await count(n);};
  const card=name=>page.locator('.facet-card[data-field="'+name+'"]');
- const clear=async()=>{await page.locator('#resetBtn').click();await count(5);};
- await load(bytes());assert.equal(await page.locator('.facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
+ const clear=async()=>{await page.locator('#resetBtn').click();await count(5);await page.locator('#advancedToggle').check();};
+ await load(bytes());await page.locator('#advancedToggle').check();assert.equal(await page.locator('.facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
  for(const name of ['工作機械シリアル番号','NCシリアル番号','エンドユーザー']){assert.ok((await card(name).locator('input[type=search]').boundingBox()).width>180,'Input width: '+name);}
  assert.equal(await card('機械メーカー').getByRole('option').count(),0); // Candidate menu closed until focus.
  await card('契約タイプ').getByLabel('A（2件）',{exact:true}).check();await card('契約タイプ').getByLabel('B（2件）',{exact:true}).check();await search(4);

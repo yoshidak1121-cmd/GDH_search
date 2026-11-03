@@ -31,6 +31,10 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
 .data-table{min-width:1080px}.data-table th:nth-child(1){width:190px}.data-table th:nth-child(2),.data-table th:nth-child(3){width:150px}.data-table th:nth-child(4){width:280px}.data-table th:nth-child(5),.data-table th:nth-child(6){width:100px}.data-table th:nth-child(7){width:110px}.metrics{grid-template-columns:1fr 1fr 1.8fr}.metrics .metric:nth-child(2){display:none}@media(max-width:680px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics .metric:last-child{grid-column:1/-1}}
 .facet-values:empty{display:none}.content{grid-template-columns:minmax(0,1fr)}.detail{display:none}.content.has-selection{grid-template-columns:minmax(0,1fr) 345px}.content.has-selection .detail{display:block}@media(max-width:1200px){.content.has-selection{grid-template-columns:minmax(0,1fr)}}
 .duplicate-badge{display:inline-flex;background:#fff0cc;color:#815000;border:1px solid #e4b656;border-radius:5px;font-size:11px;font-weight:700;line-height:1.5;padding:2px 7px;white-space:nowrap;margin:0 5px 5px 0}.data-table tr[data-duplicate=true] td:first-child{box-shadow:inset 3px 0 #dc9c28}.data-table td{vertical-align:top}.multi-cell{display:flex;flex-direction:column;gap:4px;white-space:normal}.multi-value{display:block;width:fit-content;max-width:100%;overflow-wrap:anywhere;white-space:normal;background:#fff8e8;border-radius:4px;padding:2px 5px;font-size:12px}.multi-more{font-size:10px;color:#806634}.multi-detail{background:#fffaf0}.multi-detail dd .multi-value{margin-bottom:5px}.multi-label{display:block;color:#8c641b;font-size:10px}.raw-cell{font-size:10px;color:#65768a;margin-top:7px}.raw-cell pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}.data-table td .duplicate-badge{display:flex;width:fit-content}
+
+.fixed-search{display:flex;flex-direction:column;gap:0;max-width:1060px;margin:0 auto}.fixed-search .facet-card{display:grid;grid-template-columns:155px minmax(0,1fr);column-gap:24px;row-gap:0;padding:13px 0;border-bottom:1px solid #edf1f6}.fixed-search .facet-card:last-child{border-bottom:0}.fixed-search .facet-title{grid-column:1;grid-row:1 / span 4;display:block;margin:0;padding-top:10px}.fixed-search .facet-title label{display:block;line-height:1.6}.fixed-search .filter-count{display:block;margin:3px 0 0;font-size:10px}.fixed-search .facet-control,.fixed-search .facet-values,.fixed-search .facet-note,.fixed-search .blank-pop{grid-column:2;min-width:0}.fixed-search .facet-control{position:relative}.fixed-search .facet-options{top:44px;left:0;right:0}.fixed-search .contract-options{min-height:41px;align-items:center}.fixed-search .missing-field>strong{grid-column:1;padding-top:10px}.fixed-search .missing-field>p{grid-column:2;margin:0}.fixed-search .input-and-mode input{min-height:41px}.fixed-search .search-await{margin:0}.search-bottom{max-width:1060px;margin-left:auto;margin-right:auto}.fixed-search .facet-values:empty{display:none}
+@media(max-width:680px){.fixed-search .facet-card{grid-template-columns:100px minmax(0,1fr);column-gap:12px;padding:12px 0}.fixed-search .facet-title label{font-size:12px}.fixed-search .input-and-mode{flex-wrap:wrap}.fixed-search .input-and-mode input{flex:1 1 100%;width:100%}.fixed-search .input-and-mode select{flex:0 1 124px}.fixed-search .facet-title{padding-top:9px}.fixed-search .facet-options{top:44px}.fixed-search .facet-control>.btn.sm{margin-top:4px}}
+.fixed-search .facet-card{padding:9px 0}.fixed-search .facet-help,.fixed-search .blank-pop,.fixed-search .match-select,.fixed-search .facet-control>.btn.sm{display:none}.fixed-search.show-advanced .facet-help,.fixed-search.show-advanced .blank-pop,.fixed-search.show-advanced .match-select,.fixed-search .custom-match .match-select{display:block}.fixed-search .facet-card.has-query .facet-control>.btn.sm{display:inline-flex;margin-top:5px}.search-bottom-info{display:flex;flex-direction:column;gap:7px}.advanced-toggle{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#476484;font-size:12px}.advanced-toggle input{accent-color:#1768dc}.fixed-search .facet-note{margin:3px 0}
 </style>
 </head>
 <body>
@@ -58,7 +62,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
  <section class="panel searchpanel" aria-label="検索条件">
   <div class="search-heading"><div><h2>機械を検索</h2><p>入力した条件をすべて満たす機械を探します。同じ項目に複数指定すると「いずれか（OR）」です。</p></div><span id="facetCount" class="facet-count">条件なし</span></div>
   <div id="facetFields" class="facet-grid fixed-search"><p class="search-await">「データ取得」または「CSVを開く」で検索データを読み込んでください。検索候補はCSVから毎回作成します。</p></div>
-  <div class="search-bottom"><span id="searchSummary" role="status">条件なし：すべての機械を表示</span><div class="searchBtns"><button id="resetBtn" class="btn" type="button">条件をクリア</button><button id="searchBtn" class="btn primary" type="button" disabled>この条件で検索</button></div></div>
+  <div class="search-bottom"><div class="search-bottom-info"><label class="advanced-toggle"><input id="advancedToggle" type="checkbox"> 詳細条件</label><span id="searchSummary" role="status">条件なし：すべての機械を表示</span></div><div class="searchBtns"><button id="resetBtn" class="btn" type="button">条件をクリア</button><button id="searchBtn" class="btn primary" type="button" disabled>この条件で検索</button></div></div>
   <div hidden><input id="keyword"><select id="columnSelect"><option value="all">主要項目</option></select><select id="queryJoin"><option value="AND">AND</option><option value="OR">OR</option></select><input type="radio" name="searchMode" value="standard" checked><input type="radio" name="searchMode" value="fuzzy"></div>
  </section>
  <div id="status" class="statusline" role="status" aria-live="polite"></div>
@@ -70,7 +74,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.6.0 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.6.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -419,13 +423,13 @@ worker.onmessage=event=>{
 worker.onerror=()=>{setBusy(false);status('検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。','err');};
 let facetDefinitions=[],facetStates=new Map(),facetSequence=0;
 const searchFields=[
- {name:'機械メーカー',label:'機械メーカー',kind:'suggest',aliases:['機械メーカ']},
  {name:'工作機械シリアル番号',label:'機械シリアル',kind:'text',aliases:['機械シリアル番号','機械シリアル']},
  {name:'NCシリアル番号',label:'NCシリアル',kind:'text',aliases:['NCシリアル']},
+ {name:'契約タイプ',label:'契約タイプ',kind:'checkbox',aliases:[]},
+ {name:'機械メーカー',label:'機械メーカー',kind:'suggest',aliases:['機械メーカ']},
  {name:'エンドユーザー',label:'エンドユーザー',kind:'name',aliases:['エンドユーザ']},
- {name:'輸入国',label:'輸入国',kind:'suggest',aliases:[]},
  {name:'輸出国',label:'輸出国',kind:'suggest',aliases:[]},
- {name:'契約タイプ',label:'契約タイプ',kind:'checkbox',aliases:[]}
+ {name:'輸入国',label:'輸入国',kind:'suggest',aliases:[]}
 ];
 function collectFilters(){
  return Array.from(facetStates.values(),f=>({column:f.index,values:[...f.values],queries:[...f.queries,...(['text','name'].includes(f.kind)&&f.input.value.trim()?[f.input.value.trim()]:[])],match:f.match?.value||'contains',blank:f.blank.checked}));
@@ -438,6 +442,7 @@ function requestCandidates(f){f.requestId=++facetSequence;worker.postMessage({ty
 function hideOptions(f){if(f.kind==='checkbox')return;if(f.input)f.input.removeAttribute('aria-activedescendant');if(f.options){f.options.hidden=true;f.input?.setAttribute('aria-expanded','false');}f.active=-1;}
 function showOptions(f){if(f.options&&f.options.childElementCount){f.options.hidden=false;f.input.setAttribute('aria-expanded','true');}}
 function renderFacetValues(f){
+ f.card.classList.toggle('has-query',!!f.input?.value.trim());f.card.classList.toggle('custom-match',!!f.match&&f.match.value!=='contains');
  f.chips.replaceChildren();
  for(const [key,set] of [['value',f.values],['query',f.queries]])for(const value of set){
   const b=document.createElement('button');b.type='button';b.className='chip';const prefix=key==='query'?(f.match?.value==='exact'?'完全一致：':f.match?.value==='prefix'?'前方一致：':'含む：'):(f.kind==='name'?'元の表記：':'');b.textContent=prefix+value+' ×';b.setAttribute('aria-label',f.label+'の条件を解除：'+value);b.onclick=()=>{set.delete(value);renderFacetValues(f);if(f.lastMessage)renderCandidates(f.lastMessage);};f.chips.appendChild(b);
@@ -468,14 +473,14 @@ function addFacet(def){
  else{
   const row=document.createElement('div');row.className='input-and-mode';f.input=document.createElement('input');f.input.type='search';f.input.id=id;f.input.autocomplete='off';f.input.placeholder=kind==='name'?'会社名の一部を入力。表記揺れも検索できます':kind==='text'?'番号の一部、または番号全体を入力':label+'を入力して候補から選択';row.appendChild(f.input);
   if(['name','text'].includes(kind)){
-   f.match=document.createElement('select');f.match.setAttribute('aria-label',label+'の一致方法');f.match.add(new Option(kind==='name'?'表記揺れを吸収':'部分一致','contains'));if(kind==='text')f.match.add(new Option('前方一致','prefix'));f.match.add(new Option('完全一致','exact'));f.match.onchange=()=>renderFacetValues(f);row.appendChild(f.match);
+   f.match=document.createElement('select');f.match.className='match-select';f.match.setAttribute('aria-label',label+'の一致方法');f.match.add(new Option(kind==='name'?'表記揺れを吸収':'部分一致','contains'));if(kind==='text')f.match.add(new Option('前方一致','prefix'));f.match.add(new Option('完全一致','exact'));f.match.onchange=()=>{f.card.classList.toggle('custom-match',f.match.value!=='contains');renderFacetValues(f);};row.appendChild(f.match);
   }control.appendChild(row);
-  if(['name','text'].includes(kind)){const help=document.createElement('p');help.className='facet-help';help.textContent=kind==='name'?'全半角・かな・空白・(株)等を吸収。候補を選ぶと元の表記で完全一致。':'ハイフンを保持して検索します。';control.appendChild(help);const add=document.createElement('button');add.type='button';add.className='btn sm';add.textContent='入力語をOR条件に追加';add.onclick=()=>addQuery(f);control.appendChild(add);}
+  if(['name','text'].includes(kind)){const help=document.createElement('p');help.className='facet-help';help.textContent=kind==='name'?'全半角・かな・空白・(株)等を吸収。候補を選ぶと元の表記で完全一致。':'ハイフンを保持して検索します。';f.input.title=help.textContent;control.appendChild(help);const add=document.createElement('button');add.type='button';add.className='btn sm';add.textContent='＋追加';add.setAttribute('aria-label','入力語をOR条件に追加');add.onclick=()=>addQuery(f);control.appendChild(add);}
   if(kind!=='text'){
    f.options=document.createElement('ul');f.options.className='facet-options';f.options.hidden=true;f.options.id=id+'-options';f.options.setAttribute('role','listbox');f.options.setAttribute('aria-label',label+'の候補');control.appendChild(f.options);f.input.setAttribute('role','combobox');f.input.setAttribute('aria-autocomplete','list');f.input.setAttribute('aria-controls',f.options.id);f.input.setAttribute('aria-expanded','false');
    f.input.onfocus=()=>{f.suppressOpen=false;for(const other of facetStates.values())if(other!==f&&other.kind!=='checkbox')hideOptions(other);showOptions(f);requestCandidates(f);};f.input.onblur=()=>setTimeout(()=>{if(!f.options.contains(document.activeElement))hideOptions(f);},0);
   }
-  f.input.oninput=()=>{f.suppressOpen=false;updateFacetCount();f.active=-1;if(f.options){f.requestId=++facetSequence;f.lastMessage=null;f.options.replaceChildren();hideOptions(f);clearTimeout(f.timer);f.timer=setTimeout(()=>requestCandidates(f),150);}};
+  f.input.oninput=()=>{f.card.classList.toggle('has-query',!!f.input.value.trim());f.suppressOpen=false;updateFacetCount();f.active=-1;if(f.options){f.requestId=++facetSequence;f.lastMessage=null;f.options.replaceChildren();hideOptions(f);clearTimeout(f.timer);f.timer=setTimeout(()=>requestCandidates(f),150);}};
   f.input.onkeydown=e=>{
    const buttons=f.options?Array.from(f.options.querySelectorAll('button')):[];
    if((e.key==='ArrowDown'||e.key==='ArrowUp')&&buttons.length){e.preventDefault();f.suppressOpen=false;showOptions(f);f.active=(f.active+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons.forEach((b,i)=>b.setAttribute('aria-selected',String(i===f.active)));f.input.setAttribute('aria-activedescendant',buttons[f.active].id);buttons[f.active].scrollIntoView({block:'nearest'});}
@@ -491,11 +496,12 @@ function initFacets(definitions){
  for(const config of searchFields){const d=(definitions||[]).find(d=>[config.name,...config.aliases].some(name=>key(name)===key(d.name)));
   if(d){const def={...d,...config};facetDefinitions.push(def);addFacet(def);}
   else{const section=document.createElement('section');section.className='facet-card missing-field';section.dataset.field=config.name;section.innerHTML='<strong>'+escapeHTML(config.label)+'</strong><p>このCSVに対応する列がありません。</p>';$('facetFields').appendChild(section);}
- }updateFacetCount();
+ }$('advancedToggle').checked=false;$('facetFields').classList.remove('show-advanced');updateFacetCount();
 }
 function clearFacetValues(){for(const f of facetStates.values()){clearTimeout(f.timer);f.values.clear();f.queries.clear();f.blank.checked=false;if(f.input)f.input.value='';if(f.match)f.match.value='contains';renderFacetValues(f);if(f.kind!=='text')requestCandidates(f);hideOptions(f);}updateFacetCount();}
 document.addEventListener('pointerdown',event=>{for(const f of facetStates.values())if(f.kind!=='checkbox'&&!f.card.contains(event.target))hideOptions(f);});
 
+$('advancedToggle').onchange=()=>$('facetFields').classList.toggle('show-advanced',$('advancedToggle').checked);
 $('closeDetail').onclick=detailPlaceholder;
 $('fileBtn').addEventListener('click',()=>$('csvFile').click());
 $('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
