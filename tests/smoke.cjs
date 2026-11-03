@@ -129,3 +129,30 @@ filtered([f('エンドユーザー',[],{queries:['株式会社あおぞら']}),f
 const nameCandidates=send({type:'candidates',column:headers.indexOf('エンドユーザー'),query:'株式会社あおぞら',requestId:77}).find(m=>m.type==='candidates');
 if(nameCandidates.options.filter(x=>!x.approx).length!==3||!nameCandidates.options.some(x=>x.value==='株式会社あおそら'&&x.approx))throw Error('Name variants/similar candidates');
 console.log('PASS: name spelling normalization, original-value selection, no fuzzy auto-merge, serial punctuation, query OR and field AND');
+
+const multiRecords=[
+ ['NC-X1','Alpha, Beta','SER-1, SER-2','(株)あおぞら, ㈱ミドリ','JP, US','A, B'],
+ ['NC-X1','Beta','SER-3','単独ユーザー','US','B'],
+ ['NCX1','Gamma','SER-4','別ユーザー','',''],
+ ['NC-X4','Alpha, Alpha','SER-5','別ユーザー','','A']
+].map(([nc,maker,serial,name,country,type])=>{const r=Array(33).fill('');for(const [h,v] of Object.entries({'NCシリアル番号':nc,'機械メーカー':maker,'工作機械シリアル番号':serial,'エンドユーザー':name,'輸入国':country,'輸出国':'JP','契約タイプ':type}))r[headers.indexOf(h)]=v;return r;});
+const dupLoad=loadText(headers.join(',')+'\n'+multiRecords.map(r=>r.map(csvCell).join(',')).join('\n'));
+const dupPage=dupLoad.find(m=>m.type==='page');
+if(dupLoad.find(m=>m.type==='loaded').duplicateCount!==3)throw Error('Duplicate total');
+if(!dupPage.entries[0].duplicate||dupPage.entries[0].ncRows!==2||!dupPage.entries[1].duplicate||dupPage.entries[2].duplicate||!dupPage.entries[3].duplicate)throw Error('Duplicate classification or serial punctuation');
+const filteredRows=filters=>send({type:'search',filters,query:'',sort:'original',page:1,pageSize:20}).find(m=>m.type==='page').entries.map(e=>e.index).join(',');
+if(filteredRows([f('機械メーカー',['Beta'])])!=='0,1')throw Error('Split maker choice');
+if(filteredRows([f('工作機械シリアル番号',[],{queries:['SER-2'],match:'exact'})])!=='0')throw Error('Split exact serial');
+if(filteredRows([f('エンドユーザー',[],{queries:['株式会社ミドリ']})])!=='0')throw Error('Split name query');
+if(filteredRows([f('エンドユーザー',['㈱ミドリ'])])!=='0')throw Error('Split exact name choice');
+if(filteredRows([f('契約タイプ',['A']),f('輸入国',['US'])])!=='0')throw Error('Split cross-field AND');
+if(filteredRows([f('輸入国',[],{blank:true})])!=='2,3')throw Error('Split empty cell');
+const makerParts=send({type:'candidates',column:headers.indexOf('機械メーカー'),query:'',requestId:88}).find(m=>m.type==='candidates');
+if(makerParts.distinct!==3||makerParts.options.find(x=>x.value==='Alpha').count!==2||makerParts.options.find(x=>x.value==='Beta').count!==2||makerParts.options.some(x=>x.value.includes(',')))throw Error('Split candidate counts per row');
+const duplicateDetail=send({type:'row-request',index:0}).find(m=>m.type==='row');
+if(duplicateDetail.values[headers.indexOf('機械メーカー')]!=='Alpha, Beta'||!duplicateDetail.multiColumns.includes(headers.indexOf('機械メーカー')))throw Error('Original cell or duplicate metadata lost');
+loadText('NCシリアル番号,機械メーカー\nwrong');
+if(!send({type:'row-request',index:0}).find(m=>m.type==='row').duplicate)throw Error('Failed load lost duplicate state');
+loadText(headers.join(',')+'\n'+multiRecords[2].map(csvCell).join(','));
+if(send({type:'row-request',index:0}).find(m=>m.type==='row').duplicate)throw Error('Reload retained duplicate state');
+console.log('PASS: comma-separated candidates/exact serial/name/OR-AND, per-row counts, duplicate badges metadata, raw values, NC identity, failed/successful reload');

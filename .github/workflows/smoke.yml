@@ -24,4 +24,5 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/build-extension.cjs
       - run: node tests/facets.cjs
+      - run: node tests/duplicates.cjs
       - run: node tests/extension.cjs

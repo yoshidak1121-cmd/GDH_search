@@ -9,6 +9,10 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
  try{
   const fixture=fs.readFileSync(path.join(root,'tests/synthetic.csv'));
   let largeFixture;
+  const fixtureLines=fixture.toString('utf8').trimEnd().split(/\r?\n/),duplicateHeader=fixtureLines[0].replace(/^\ufeff/,'').split(','),duplicateRows=fixtureLines.slice(1).map(r=>r.split(','));
+  duplicateRows[0][duplicateHeader.indexOf('機械メーカー')]='TEST MANUFACTURER, EXTRA MAKER';duplicateRows[0][duplicateHeader.indexOf('工作機械シリアル番号')]='S-001, S-009';
+  const quote=v=>/[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+  const duplicateFixture=Buffer.from([duplicateHeader,...duplicateRows].map(r=>r.map(quote).join(',')).join('\n'));
   let mode='csv';const posts=[];const blocked=[];
   const hostHtml=`<!doctype html><html><head><base href="${origin}/cncservice/"></head><body><h1>テスト専用GDH機械情報画面</h1><form id="frmmain" method="post"><input name="dataview_cd" value="synthetic-view"><input name="iszip" value="original"><input name="pdf" value="original"><input name="downloadToken" value="original"><input name="form_submit" value="true"><input name="keyword" value="first"><input name="keyword" value="second"></form></body></html>`;
   await context.route(/^https?:/,async route=>{
@@ -17,7 +21,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
    if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list_csv'){
     posts.push({method:req.method(),fields:new URLSearchParams(req.postData())});
     if(mode==='error')return route.fulfill({status:403,body:'Forbidden'});
-    return route.fulfill({contentType:'text/csv',headers:{'Content-Disposition':'attachment; filename="synthetic.csv"'},body:mode==='large'?largeFixture:fixture});
+    return route.fulfill({contentType:'text/csv',headers:{'Content-Disposition':'attachment; filename="synthetic.csv"'},body:mode==='large'?largeFixture:mode==='duplicate'?duplicateFixture:fixture});
    }
    blocked.push(req.url());return route.abort();
   });
@@ -39,6 +43,10 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await frame.locator('.facet-card[data-field="輸入国"]').getByLabel(/空欄/).check();await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'2件'}).waitFor();
   mode='error';await frame.locator('#fetchBtn').click();await frame.locator('#status.err').waitFor();assert.equal(await frame.locator('#resultTitle').textContent(),'2件');
   mode='csv';accept=false;const before=posts.length;await frame.locator('#fetchBtn').click();await frame.locator('#status.err').waitFor();assert.equal(posts.length,before);accept=true;
+  mode='duplicate';const duplicateDownload=page.waitForEvent('download');await frame.locator('#fetchBtn').click();await duplicateDownload;await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  await maker.getByRole('combobox').fill('EXTRA MAKER');await maker.getByRole('option',{name:'EXTRA MAKER（1件）',exact:true}).click();await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'1件'}).waitFor();
+  const machineSerial=frame.locator('.facet-card[data-field="工作機械シリアル番号"]');await machineSerial.getByRole('searchbox').fill('S-009');await machineSerial.getByLabel('機械シリアルの一致方法').selectOption('exact');await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'1件'}).waitFor();assert.equal(await frame.locator('#resultsBody .duplicate-badge').textContent(),'重複あり');
+  await frame.locator('tr[data-index]').click();await frame.locator('#detailBody .duplicate-badge').waitFor();await frame.locator('#closeDetail').click();
   await page.getByRole('button',{name:'拡張検索を閉じる'}).click();assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);
   await page.locator('#gdh-search-extension-button').click();await frame.locator('#fetchBtn').waitFor();assert.equal(await frame.locator('#filename').textContent(),'未読み込み');
   // A host-page message cannot impersonate the extension iframe.

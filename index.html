@@ -30,6 +30,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
 .fixed-search .input-and-mode input{flex:1 1 0;width:0;min-width:0}.fixed-search .input-and-mode select{flex:0 0 124px;width:124px;max-width:124px}.fixed-search .facet-control>.btn.sm{padding:3px 7px;font-size:11px;min-height:24px}.fixed-search .facet-help{margin:4px 0}.fixed-search .blank-pop{margin:4px 0}
 .data-table{min-width:1080px}.data-table th:nth-child(1){width:190px}.data-table th:nth-child(2),.data-table th:nth-child(3){width:150px}.data-table th:nth-child(4){width:280px}.data-table th:nth-child(5),.data-table th:nth-child(6){width:100px}.data-table th:nth-child(7){width:110px}.metrics{grid-template-columns:1fr 1fr 1.8fr}.metrics .metric:nth-child(2){display:none}@media(max-width:680px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics .metric:last-child{grid-column:1/-1}}
 .facet-values:empty{display:none}.content{grid-template-columns:minmax(0,1fr)}.detail{display:none}.content.has-selection{grid-template-columns:minmax(0,1fr) 345px}.content.has-selection .detail{display:block}@media(max-width:1200px){.content.has-selection{grid-template-columns:minmax(0,1fr)}}
+.duplicate-badge{display:inline-flex;background:#fff0cc;color:#815000;border:1px solid #e4b656;border-radius:5px;font-size:11px;font-weight:700;line-height:1.5;padding:2px 7px;white-space:nowrap;margin:0 5px 5px 0}.data-table tr[data-duplicate=true] td:first-child{box-shadow:inset 3px 0 #dc9c28}.data-table td{vertical-align:top}.multi-cell{display:flex;flex-direction:column;gap:4px;white-space:normal}.multi-value{display:block;width:fit-content;max-width:100%;overflow-wrap:anywhere;white-space:normal;background:#fff8e8;border-radius:4px;padding:2px 5px;font-size:12px}.multi-more{font-size:10px;color:#806634}.multi-detail{background:#fffaf0}.multi-detail dd .multi-value{margin-bottom:5px}.multi-label{display:block;color:#8c641b;font-size:10px}.raw-cell{font-size:10px;color:#65768a;margin-top:7px}.raw-cell pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}.data-table td .duplicate-badge{display:flex;width:fit-content}
 </style>
 </head>
 <body>
@@ -69,7 +70,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.5.0 · 7項目検索 / エンドユーザー表記揺れ対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.6.0 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -162,11 +163,21 @@ function getScore(row, terms, selected, mode, isFuzzyFallback=false){
  }
  return Math.round(overall/terms.length);
 }
+let duplicateState={multiColumns:[],ncCounts:[]};
+function cellParts(value){const raw=cap(value);return /[,，]/.test(raw)?raw.split(/[,，]/).map(cap).filter(Boolean):raw?[raw]:[];}
+function buildDuplicateState(data,headers){
+ const multiColumns=data.map(row=>{const cols=[];for(let i=0;i<row.length;i++)if(/[,，]/.test(row[i])&&cellParts(row[i]).length>1)cols.push(i);return cols.length?cols:null;});
+ const ncIndex=headers.findIndex(h=>['NCシリアル番号','NCシリアル'].includes(h)),counts=new Map();
+ if(ncIndex>=0)for(const row of data)for(const value of new Set(cellParts(row[ncIndex])))counts.set(value,(counts.get(value)||0)+1);
+ const ncCounts=data.map(row=>{let max=0;if(ncIndex>=0)for(const value of cellParts(row[ncIndex]))max=Math.max(max,counts.get(value)||0);return max;});
+ return {multiColumns,ncCounts};
+}
+function duplicateMeta(index){const multiColumns=duplicateState.multiColumns[index]||[],ncRows=duplicateState.ncCounts[index]||0;return {duplicate:multiColumns.length>0||ncRows>1,multiColumns,ncRows};}
 function outputPage(page,pageSize){
  const maxPage=Math.max(1,Math.ceil(resultIndexes.length/pageSize));
  const target=Math.min(Math.max(1,page),maxPage);
  const start=(target-1)*pageSize;
- const arr=resultIndexes.slice(start,start+pageSize).map(index=>({index,values:rows[index],score:rowScores.get(index)??null}));
+ const arr=resultIndexes.slice(start,start+pageSize).map(index=>({index,values:rows[index],score:rowScores.get(index)??null,...duplicateMeta(index)}));
  postMessage({type:'page',page:target,total:resultIndexes.length,totalPages:maxPage,entries:arr,start,pageSize,headings,query:lastQuery});
 }
 function parseQuery(query, defaultJoin='AND'){
@@ -218,7 +229,7 @@ function candidateOptions(column,query,requestId){
  const index=Number(column);if(!Number.isInteger(index)||index<0||index>=headings.length)return;
  if(!facetCache.has(index)){
   const counts=new Map();let blankCount=0;
-  for(const row of rows){const value=cap(row[index]);if(value)counts.set(value,(counts.get(value)||0)+1);else blankCount++;}
+  for(const row of rows){const parts=new Set(cellParts(row[index]));if(!parts.size)blankCount++;for(const value of parts)counts.set(value,(counts.get(value)||0)+1);}
   const values=Array.from(counts,([value,count])=>({value,count})).sort((a,b)=>facetCompare(a.value,b.value));
   facetCache.set(index,{values,blankCount});
  }
@@ -258,12 +269,14 @@ function compileFilters(filters){
 }
 function matchesFilters(row,filters){
  return filters.every(f=>{
-  const value=cap(row[f.index]);if(!value)return f.blank;
-  if(f.kind==='text'?f.text.some(t=>normalized(value,true).includes(t)):f.values.has(value))return true;
-  if(f.queries.some(q=>{const key=f.kind==='name'?(f.match==='exact'?cap:nameKey):s=>normalized(s,true),v=key(value),term=key(q);return f.match==='exact'?v===term:f.match==='prefix'?v.startsWith(term):v.includes(term);}))return true;
-  if(!f.hasRange)return false;
-  const numbers=value.split(/[,、;\n]+/).map(part=>{const v=cap(part).normalize('NFKC');return f.kind==='date'?dateValue(v):/^\d+(?:\.\d+)?$/.test(v)?Number(v):null;});
-  return numbers.some(number=>number!==null&&(f.min===null||number>=f.min)&&(f.max===null||number<=f.max));
+  const parts=cellParts(row[f.index]);if(!parts.length)return f.blank;
+  return parts.some(value=>{
+   if(f.kind==='text'?f.text.some(t=>normalized(value,true).includes(t)):f.values.has(value))return true;
+   if(f.queries.some(q=>{const key=f.kind==='name'?(f.match==='exact'?cap:nameKey):s=>normalized(s,true),v=key(value),term=key(q);return f.match==='exact'?v===term:f.match==='prefix'?v.startsWith(term):v.includes(term);}))return true;
+   if(!f.hasRange)return false;
+   const numbers=value.split(/[、;\n]+/).map(part=>{const v=cap(part).normalize('NFKC');return f.kind==='date'?dateValue(v):/^\d+(?:\.\d+)?$/.test(v)?Number(v):null;});
+   return numbers.some(number=>number!==null&&(f.min===null||number>=f.min)&&(f.max===null||number<=f.max));
+  });
  });
 }
 function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[]){
@@ -303,7 +316,7 @@ function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[])
  outputPage(page,pageSize);
 }
 function handleLoad(file){
- const previous={headings,rows,corpus,preferred,resultIndexes,rowScores};
+ const previous={headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState};
  try{
   postMessage({type:'progress',message:'CSVファイルを読み込み、検索用データを準備しています…'});
   const buffer=new FileReaderSync().readAsArrayBuffer(file);
@@ -320,10 +333,11 @@ function handleLoad(file){
   const main=hdr.map((h,i)=>preferredRE.test(h)?i:-1).filter(i=>i>=0);
   if(!main.length)throw new Error('主要項目が判別できません。ヘッダー定義を確認してください。');
   const idx=parsed.map(r=>main.map(i=>normalized(r[i],isIdentifier(hdr[i]))).join('\u0001'));
-  headings=hdr;rows=parsed;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();facetCache=new Map();
-  postMessage({type:'loaded',count:rows.length,headings,facets:headings.map((name,index)=>({name,index,kind:facetKind(name)})),preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
+  const duplicates=buildDuplicateState(parsed,hdr);
+  headings=hdr;rows=parsed;duplicateState=duplicates;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();facetCache=new Map();
+  postMessage({type:'loaded',count:rows.length,duplicateCount:rows.reduce((n,_,i)=>n+(duplicateMeta(i).duplicate?1:0),0),headings,facets:headings.map((name,index)=>({name,index,kind:facetKind(name)})),preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
   runSearch('','all','fuzzy','original',1,20);
- }catch(err){({headings,rows,corpus,preferred,resultIndexes,rowScores}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
+ }catch(err){({headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
 }
 onmessage=event=>{
  const m=event.data;
@@ -332,7 +346,7 @@ onmessage=event=>{
   else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND',m.filters||[]);
   else if(m.type==='candidates')candidateOptions(m.column,m.query||'',m.requestId);
   else if(m.type==='page-request')outputPage(m.page||1,m.pageSize||20);
-  else if(m.type==='row-request' && rows[m.index])postMessage({type:'row',index:m.index,values:rows[m.index],headings,score:rowScores.get(m.index)??null});
+  else if(m.type==='row-request' && rows[m.index])postMessage({type:'row',index:m.index,values:rows[m.index],headings,score:rowScores.get(m.index)??null,...duplicateMeta(m.index)});
  }catch(err){postMessage({type:'error',message:err?.message||String(err)});}
 };
 </script>
@@ -362,11 +376,14 @@ function updateSelect(headings){const s=$('columnSelect'),v=s.value;s.innerHTML=
  headings.forEach((h,i)=>{const op=document.createElement('option');op.value=String(i);op.textContent=h||`列${i+1}`;s.appendChild(op);});
  s.value=Array.from(s.options).some(o=>o.value===v)?v:'all';}
 function detailPlaceholder(){document.querySelector('.content').classList.remove('has-selection');document.querySelectorAll('#resultsBody tr.selected').forEach(tr=>tr.classList.remove('selected')); $('detailBody').innerHTML='<div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div>';}
+function cellParts(value){const raw=String(value??'').trim();return /[,，]/.test(raw)?raw.split(/[,，]/).map(v=>v.trim()).filter(Boolean):raw?[raw]:[];}
+function duplicateBadge(record){return record.duplicate?'<span class="duplicate-badge" title="複数値を含むセル、または同一NCシリアルの複数行があります">重複あり</span>':'';}
+function renderCell(value,query){const parts=cellParts(value);if(parts.length<2)return highlight(value,query);return '<div class="multi-cell">'+parts.slice(0,3).map(v=>'<span class="multi-value">'+highlight(v,query)+'</span>').join('')+(parts.length>3?'<span class="multi-more">ほか'+(parts.length-3)+'件（行を選択して確認）</span>':'')+'</div>';}
 function showDetail(record){document.querySelector('.content').classList.add('has-selection');const h=record.headings,v=record.values;
  const modelIndex=h.indexOf('工作機械モデル番号'), ncIndex=h.indexOf('NCシリアル番号');
  const title=modelIndex>=0?v[modelIndex]:v[ncIndex]||'機械情報';
- const rows=h.map((label,i)=>`<div class="detailrow"><dt>${escapeHTML(label)}</dt><dd>${escapeHTML(String(v[i]||'').trim()||'—')}</dd></div>`).join('');
- $('detailBody').innerHTML=`<div class="detailtop"><span class="tag">${record.score==null?'原本データ':record.score+'% 一致'}</span><strong>${escapeHTML(title||'機械情報')}</strong><small>表示内容は元CSVの値です。類似一致は同一機械を意味しません。</small></div><div class="detailrows">${rows}</div>`;
+ const rows=h.map((label,i)=>{const parts=cellParts(v[i]),multi=parts.length>1;return `<div class="detailrow ${multi?'multi-detail':''}"><dt>${escapeHTML(label)}${multi?'<small class="multi-label">'+parts.length+'値</small>':''}</dt><dd>${multi?parts.map(value=>'<span class="multi-value">'+escapeHTML(value)+'</span>').join('')+'<details class="raw-cell"><summary>元のCSV値</summary><pre>'+escapeHTML(v[i])+'</pre></details>':escapeHTML(String(v[i]||'').trim()||'—')}</dd></div>`;}).join('');
+ $('detailBody').innerHTML=`<div class="detailtop">${duplicateBadge(record)}<span class="tag">${record.score==null?'原本データ':record.score+'% 一致'}</span><strong>${escapeHTML(title||'機械情報')}</strong><small>${record.ncRows>1?'同一NCシリアルがCSV内に'+record.ncRows+'行あります。 ':''}${record.multiColumns?.length?'カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。':'表示内容は元CSVの値です。'}</small></div><div class="detailrows">${rows}</div>`;
  document.querySelectorAll('#resultsBody tr[data-index]').forEach(tr=>tr.classList.toggle('selected',Number(tr.dataset.index)===record.index));
 }
 function renderPage(m){clearStatus();current.query=m.query||'';const summary=$('searchSummary');if(summary)summary.textContent=filterDescription()+'：'+formatNum(m.total)+'件';current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
@@ -375,7 +392,7 @@ function renderPage(m){clearStatus();current.query=m.query||'';const summary=$('
  if(!m.entries.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>一致する機械情報がありません</strong>入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。</div></td></tr>';}
  else{
   const indexes=primaryFields.map(h=>m.headings.findIndex(name=>name===h||searchFields.find(f=>f.name===h)?.aliases.includes(name)));
-  tbody.innerHTML=m.entries.map(ent=>`<tr data-index="${ent.index}" tabindex="0" aria-label="レコード詳細を表示">${indexes.map(i=>`<td title="${escapeHTML(i<0?'':ent.values[i])}">${highlight(i<0?'':ent.values[i],current.query)}</td>`).join('')}</tr>`).join('');
+  tbody.innerHTML=m.entries.map(ent=>`<tr data-index="${ent.index}" data-duplicate="${ent.duplicate?'true':'false'}" tabindex="0" aria-label="レコード詳細を表示">${indexes.map((i,k)=>`<td title="${escapeHTML(i<0?'':ent.values[i])}">${k===2?duplicateBadge(ent):''}${renderCell(i<0?'':ent.values[i],current.query)}</td>`).join('')}</tr>`).join('');
   tbody.querySelectorAll('tr[data-index]').forEach(tr=>{const select=()=>worker.postMessage({type:'row-request',index:Number(tr.dataset.index)});tr.addEventListener('click',select);tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select();}});});
  }
  const start=m.total?(m.page-1)*m.pageSize+1:0,end=Math.min(m.page*m.pageSize,m.total);
@@ -391,7 +408,7 @@ worker.onmessage=event=>{
    current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);initFacets(m.facets);$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
    $('totalCount').innerHTML=`${formatNum(m.count)}<span>件</span>`;
    $('loadTime').textContent=new Date(m.loadedAt).toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-   $('filename').textContent=m.fileName;$('fileMeta').textContent=`${m.headings.length}項目 ・ ${(m.fileSize/1024/1024).toFixed(1)} MB ・ UTF-8/CP932対応`;
+   $('filename').textContent=m.fileName;$('fileMeta').textContent=`${m.duplicateCount?"重複あり "+formatNum(m.duplicateCount)+"行 ・ ":""}${m.headings.length}項目 ・ ${(m.fileSize/1024/1024).toFixed(1)} MB ・ UTF-8/CP932対応`;
    status(`${formatNum(m.count)}件のCSV読込が完了しました。検索できます。`,'ok');setTimeout(()=>{if($('status').classList.contains('ok'))clearStatus()},7000);
  }
  else if(m.type==='page')renderPage(m);
