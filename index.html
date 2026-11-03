@@ -21,6 +21,8 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
 .searchpanel code{overflow-wrap:anywhere}
 @media(max-width:680px){.top-right{display:none}.resultshead{flex-wrap:wrap}.topbar{height:58px;padding:0 15px}.nav{display:none}main{padding:21px 12px}.intro{flex-direction:column;align-items:start}.intro h1{font-size:23px}.actions{width:100%}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:13px}.metric-value{font-size:19px}.searchpanel{padding:15px}.searchrow{grid-template-columns:1fr}.searchBtns{width:100%}.searchBtns .btn{flex:1}.footer{flex-direction:column}}
 .embedded .topbar{display:none}.embedded main{max-width:none;padding:16px}.embedded .eyebrow{display:none}.embedded .intro h1{font-size:21px}.embedded .intro{margin-bottom:16px}
+
+.facets{margin-top:17px;border-top:1px solid var(--line);padding-top:14px}.facets summary{cursor:pointer;font-weight:700;color:#24405f}.facet-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}.facet-toolbar select{max-width:100%;padding:8px;border:1px solid #cfdaea;border-radius:6px}.facet-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:12px}.facet-card{border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}.facet-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.facet-title label{font-weight:700}.facet-card input:not([type=checkbox]),.facet-card select{width:100%;min-width:0;padding:8px;border:1px solid #cfdaea;border-radius:6px;background:#fff}.facet-card .facet-range{display:flex;gap:6px;align-items:center}.facet-range label{flex:1;min-width:0;font-size:11px;color:var(--muted)}.facet-range input{display:block;margin-top:4px}.facet-values{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}.facet-values button{max-width:100%;overflow-wrap:anywhere;white-space:normal;text-align:left}.facet-options{list-style:none;padding:0;margin:5px 0;max-height:155px;overflow:auto}.facet-options button{width:100%;border:0;background:#f5f8fd;text-align:left;padding:7px;overflow-wrap:anywhere}.facet-options button:hover,.facet-options button:focus{background:#dfecff}.facet-options label{display:block;padding:4px;overflow-wrap:anywhere}.facet-note{font-size:11px;color:var(--muted);margin:5px 0}.facet-remove{border:0;background:none;color:#66768c;cursor:pointer}.facet-text-add{display:flex;gap:5px}.facet-text-add .btn{padding:5px 9px}.facet-count{font-size:11px;color:#1768dc}.facet-blank{display:block;font-size:11px;color:var(--muted);margin-top:7px}
 </style>
 </head>
 <body>
@@ -55,6 +57,10 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
   </div>
   <p class="muted" style="font-size:11px;line-height:1.7;margin:12px 0 0">空白で複数語を入力し、AND／ORを選べます。式の例：<code>(M800V OR M800W) AND メーカー</code>。ANDを優先し、括弧で順序を指定できます。<code>"Test Manufacturer"</code>は1つの語として検索します。</p>
   <div class="hintrow"><span class="muted" style="font-size:11px">全角・半角 / 大文字・小文字 / 空白・記号 / かな・カナの揺れを吸収。シリアル番号・IDは厳格判定です。</span><div class="scope-tags" aria-label="検索対象ショートカット"><button class="chip" data-field="NCシリアル番号">NCシリアル</button><button class="chip" data-field="工作機械モデル番号">機械モデル</button><button class="chip" data-field="機械メーカー">メーカー</button><button class="chip" data-field="エンドユーザー">エンドユーザー</button></div></div>
+ <details class="facets" id="facetPanel"><summary>項目別条件 <span id="facetCount" class="facet-count">指定なし</span></summary>
+ <p class="facet-note">同じ項目の選択値はOR、項目同士とキーワード検索はANDで絞り込みます。選択値は完全一致、番号・IDの入力条件は部分一致です。条件を設定後に「検索」を押してください。</p>
+ <div class="facet-toolbar"><label for="facetField">項目を追加</label><select id="facetField" disabled><option>CSV読込後に選べます</option></select><button id="addFacet" type="button" class="btn sm" disabled>追加</button><button id="clearFacets" type="button" class="btn sm">項目条件をクリア</button></div><div id="facetFields" class="facet-grid"></div>
+ </details>
  </section>
  <div id="status" class="statusline" role="status" aria-live="polite"></div>
  <div class="content">
@@ -65,7 +71,7 @@ main{max-width:1680px;margin:0 auto;padding:27px 30px 42px}.intro{display:flex;j
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><span class="detail-sub">33項目をそのまま表示</span></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.3.0 · CSV検索 / GDH拡張機能対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.4.0 · 項目別検索 / GDH拡張機能対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -203,15 +209,64 @@ function evaluateQuery(node,scoreTerm){
  const b=evaluateQuery(node.right,scoreTerm);
  return node.type==='OR'?Math.max(a,b):b?Math.round((a+b)/2):0;
 }
-function runSearch(query,selected,mode,sort,page,pageSize,join='AND'){
+let facetCache=new Map();
+const facetCompare=new Intl.Collator('ja',{numeric:true}).compare;
+const choiceFields=new Set(['契約タイプ','販売会社','輸出国','サービス拠点','契約元拠点','輸入国']);
+const suggestionFields=new Set(['NCシリーズ名','NCシステム型名','機械メーカー','契約者名','機械代理店','工作機械モデル番号','エンドユーザー']);
+const dateFields=new Set(['契約開始日','契約終了日','販売日','機械出荷日','設置日']);
+function facetKind(name){return name==='契約期間（月）'?'number':dateFields.has(name)?'date':choiceFields.has(name)?(name==='契約タイプ'?'checkbox':['販売会社','輸出国'].includes(name)?'select':'suggest'):suggestionFields.has(name)?'suggest':'text';}
+function candidateOptions(column,query,requestId){
+ const index=Number(column);if(!Number.isInteger(index)||index<0||index>=headings.length)return;
+ if(!facetCache.has(index)){
+  const counts=new Map();let blankCount=0;
+  for(const row of rows){const value=cap(row[index]);if(value)counts.set(value,(counts.get(value)||0)+1);else blankCount++;}
+  const values=Array.from(counts,([value,count])=>({value,count})).sort((a,b)=>facetCompare(a.value,b.value));
+  facetCache.set(index,{values,blankCount});
+ }
+ const {values,blankCount}=facetCache.get(index),needle=normalized(query),limit=['checkbox','select'].includes(facetKind(headings[index]))?1000:30;
+ const matches=needle?values.filter(x=>normalized(x.value).includes(needle)):values;
+ postMessage({type:'candidates',column:index,requestId,options:matches.slice(0,limit),total:matches.length,distinct:values.length,blankCount});
+}
+function dateValue(value){
+ const s=cap(value).normalize('NFKC'),m=s.match(/^(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})(?:日)?(?:$|[ T])/);
+ if(!m)return null;
+ const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const leap=y%4===0&&(y%100!==0||y%400===0);
+ const days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+ return y>=1&&mo>=1&&mo<=12&&d>=1&&d<=days[mo-1]?y*10000+mo*100+d:null;
+}
+function compileFilters(filters){
+ if(!Array.isArray(filters)||filters.length>headings.length)throw Error('項目条件が不正です。');
+ const seen=new Set();return filters.map(f=>{
+  const index=Number(f.column);if(!Number.isInteger(index)||index<0||index>=headings.length||seen.has(index))throw Error('検索対象の項目が不正です。');seen.add(index);
+  const kind=facetKind(headings[index]),values=Array.isArray(f.values)?f.values.map(cap).filter(Boolean):[];
+  if(values.length>500)throw Error('選択値が多すぎます。');
+  const low=cap(f.min),high=cap(f.max),hasRange=!!(low||high);
+  if(hasRange&&!['number','date'].includes(kind))throw Error('この項目では範囲を指定できません。');
+  const parse=v=>kind==='date'?dateValue(v):/^\d+$/.test(v)&&Number.isSafeInteger(Number(v))?Number(v):null;
+  const min=low?parse(low):null,max=high?parse(high):null;
+  if((low&&min===null)||(high&&max===null)||(min!==null&&max!==null&&min>max))throw Error(headings[index]+'の範囲を確認してください。');
+  return {index,kind,values:new Set(values),text:values.map(v=>normalized(v,true)),blank:f.blank===true,min,max,hasRange,active:values.length>0||f.blank===true||hasRange};
+ }).filter(f=>f.active);
+}
+function matchesFilters(row,filters){
+ return filters.every(f=>{
+  const value=cap(row[f.index]);if(!value)return f.blank;
+  if(f.kind==='text'?f.text.some(t=>normalized(value,true).includes(t)):f.values.has(value))return true;
+  if(!f.hasRange)return false;
+  const numbers=value.split(/[,、;\n]+/).map(part=>{const v=cap(part).normalize('NFKC');return f.kind==='date'?dateValue(v):/^\d+(?:\.\d+)?$/.test(v)?Number(v):null;});
+  return numbers.some(number=>number!==null&&(f.min===null||number>=f.min)&&(f.max===null||number<=f.max));
+ });
+}
+function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[]){
  if(!rows.length){postMessage({type:'error',message:'検索元CSVが読み込まれていません。'});return;}
  // Parse before changing results: invalid expressions preserve the last successful search.
- const plan=parseQuery(query,join), terms=plan.terms;
+ const plan=parseQuery(query,join), terms=plan.terms,compiled=compileFilters(filters);
  const indexList=fieldIndices(selected);
  let result=[];const scores=new Map();
- if(!plan.root){result=rows.map((_,i)=>i);}
+ if(!plan.root){result=rows.map((_,i)=>i).filter(i=>matchesFilters(rows[i],compiled));}
  else{
   for(let i=0;i<rows.length;i++){
+   if(!matchesFilters(rows[i],compiled))continue;
    const hay=selected==='all'?corpus[i]:selected==='all-columns'?null:normalized(rows[i][indexList[0]],isIdentifier(headings[indexList[0]]));
    if(hay!=null && !evaluateQuery(plan.root,t=>(hay.includes(t.norm)||hay.includes(t.strict))?100:0))continue;
    const score=evaluateQuery(plan.root,t=>getScore(rows[i],[t.value],selected,mode,false));
@@ -220,7 +275,7 @@ function runSearch(query,selected,mode,sort,page,pageSize,join='AND'){
   // Retain the bounded fuzzy fallback and exclude identifier fields from edit distance.
   if(mode==='fuzzy' && result.length<80 && terms.some(t=>t.norm.length>=4&&!/^\d+$/.test(t.norm))){
    for(let i=0;i<rows.length;i++){
-    if(scores.has(i))continue;
+    if(scores.has(i)||!matchesFilters(rows[i],compiled))continue;
     const hay=selected==='all'?corpus[i]:selected==='all-columns'?null:normalized(rows[i][indexList[0]],isIdentifier(headings[indexList[0]]));
     const score=evaluateQuery(plan.root,t=>{
      const eligible=t.norm.length>=4&&!/^\d+$/.test(t.norm);
@@ -256,8 +311,8 @@ function handleLoad(file){
   const main=hdr.map((h,i)=>preferredRE.test(h)?i:-1).filter(i=>i>=0);
   if(!main.length)throw new Error('主要項目が判別できません。ヘッダー定義を確認してください。');
   const idx=parsed.map(r=>main.map(i=>normalized(r[i],isIdentifier(hdr[i]))).join('\u0001'));
-  headings=hdr;rows=parsed;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();
-  postMessage({type:'loaded',count:rows.length,headings,preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
+  headings=hdr;rows=parsed;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();facetCache=new Map();
+  postMessage({type:'loaded',count:rows.length,headings,facets:headings.map((name,index)=>({name,index,kind:facetKind(name)})),preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
   runSearch('','all','fuzzy','original',1,20);
  }catch(err){({headings,rows,corpus,preferred,resultIndexes,rowScores}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
 }
@@ -265,7 +320,8 @@ onmessage=event=>{
  const m=event.data;
  try{
   if(m.type==='load')handleLoad(m.file);
-  else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND');
+  else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND',m.filters||[]);
+  else if(m.type==='candidates')candidateOptions(m.column,m.query||'',m.requestId);
   else if(m.type==='page-request')outputPage(m.page||1,m.pageSize||20);
   else if(m.type==='row-request' && rows[m.index])postMessage({type:'row',index:m.index,values:rows[m.index],headings,score:rowScores.get(m.index)??null});
  }catch(err){postMessage({type:'error',message:err?.message||String(err)});}
@@ -289,8 +345,8 @@ function highlight(value,query){const s=String(value??'').trim();const terms=(qu
 function status(message,style=''){const el=$('status');el.className='statusline show '+style;el.innerHTML=message;}
 function clearStatus(){const el=$('status');el.className='statusline';el.textContent='';}
 function setBusy(value){current.busy=value;$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value;}
-function requestSearch(page=1){if(!current.loaded || current.busy)return;current.page=page;const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
-function requestPage(page){if(!current.loaded || current.busy)return;current.page=page;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
+function requestSearch(page=1){if(!current.loaded || current.busy)return;const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
+function requestPage(page){if(!current.loaded || current.busy)return;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
 function loadFile(file){if(!file){setBusy(false);return;}if(!/\.csv$/i.test(file.name||'')){setBusy(false);status('CSV形式のファイルを指定してください。','err');return;}
  setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
 function updateSelect(headings){const s=$('columnSelect'),v=s.value;s.innerHTML='<option value="all">主要項目（横断検索）</option><option value="all-columns">全項目（横断検索）</option>';
@@ -323,7 +379,7 @@ worker.onmessage=event=>{
  const m=event.data;
  if(m.type==='progress')status('<span class="spinner"></span>'+escapeHTML(m.message));
  else if(m.type==='loaded'){
-   current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
+   current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);initFacets(m.facets);$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
    $('totalCount').innerHTML=`${formatNum(m.count)}<span>件</span>`;
    $('loadTime').textContent=new Date(m.loadedAt).toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
    $('filename').textContent=m.fileName;$('fileMeta').textContent=`${m.headings.length}項目 ・ ${(m.fileSize/1024/1024).toFixed(1)} MB ・ UTF-8/CP932対応`;
@@ -331,9 +387,90 @@ worker.onmessage=event=>{
  }
  else if(m.type==='page')renderPage(m);
  else if(m.type==='row')showDetail(m);
+ else if(m.type==='candidates')renderCandidates(m);
  else if(m.type==='error'){setBusy(false);status(escapeHTML(m.message),'err');}
 };
 worker.onerror=()=>{setBusy(false);status('検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。','err');};
+let facetDefinitions=[],facetStates=new Map(),facetSequence=0;
+const defaultFacets=['契約タイプ','サービス拠点','販売会社','機械メーカー','輸入国','NCシステム型名'];
+function collectFilters(){
+ return Array.from(facetStates.values(),f=>({column:f.index,values:[...f.values,...(f.kind==='text'&&f.input.value.trim()?[f.input.value.trim()]:[])],blank:f.blank.checked,min:f.min?.value||'',max:f.max?.value||''}));
+}
+function updateFacetCount(){const filters=collectFilters(),count=filters.filter(f=>f.values.length||f.blank||f.min||f.max).length;$('facetCount').textContent=count?count+'項目を指定':'指定なし';}
+function requestCandidates(f){f.requestId=++facetSequence;worker.postMessage({type:'candidates',column:f.index,query:f.input?.value||'',requestId:f.requestId});}
+function renderFacetValues(f){
+ f.chips.replaceChildren();for(const value of f.values){const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=value+' ×';b.setAttribute('aria-label',f.name+'の選択を解除：'+value);b.onclick=()=>{f.values.delete(value);renderFacetValues(f);if(f.lastMessage)renderCandidates(f.lastMessage);updateFacetCount();};f.chips.appendChild(b);}updateFacetCount();
+}
+function chooseFacet(f,value){if(!value)return;f.values.add(value);if(f.input)f.input.value='';renderFacetValues(f);if(f.kind==='text')return;requestCandidates(f);}
+function renderCandidates(m){
+ const f=facetStates.get(m.column);if(!f||f.requestId!==m.requestId)return;f.lastMessage=m;
+ f.note.textContent=m.distinct===0?'この列は全件空欄です。':`${m.distinct.toLocaleString('ja-JP')}種類${m.total>m.options.length?'／候補は先頭'+m.options.length+'件。入力して絞り込めます。':''}`;
+ f.blankText.textContent='空欄も選択（'+m.blankCount.toLocaleString('ja-JP')+'件）';
+ if(f.kind==='select'){
+  f.select.replaceChildren(new Option('値を選択して追加',''));
+  for(const op of m.options){if(!f.values.has(op.value))f.select.add(new Option(op.value+'（'+op.count+'件）',op.value));}f.select.disabled=m.distinct===0;return;
+ }
+ f.options.replaceChildren();
+ for(const op of m.options){
+  const li=document.createElement('li');
+  if(f.kind==='checkbox'){
+   const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=f.values.has(op.value);check.onchange=()=>{if(check.checked)f.values.add(op.value);else f.values.delete(op.value);renderFacetValues(f);};label.append(check,document.createTextNode(' '+op.value+'（'+op.count+'件）'));li.appendChild(label);
+  }else{
+   if(f.values.has(op.value))continue;const b=document.createElement('button');b.type='button';b.textContent=op.value+'（'+op.count+'件）';b.setAttribute('role','option');b.onclick=()=>{chooseFacet(f,op.value);f.input.focus();};li.appendChild(b);
+  }
+  f.options.appendChild(li);
+ }
+ if(f.input){f.input.disabled=m.distinct===0;f.input.setAttribute('aria-expanded',String(f.options.childElementCount>0));}
+ if(m.total===0&&m.distinct>0)f.note.textContent='一致する候補がありません。選択済みの値は保持しています。';
+}
+function addFacet(index){
+ const d=facetDefinitions.find(x=>x.index===index);if(!d||facetStates.has(index))return;
+ const f={...d,values:new Set()},card=document.createElement('section');f.card=card;card.className='facet-card';card.dataset.column=String(index);const id='facet-'+index;
+ card.innerHTML=`<div class="facet-title"><label for="${id}">${escapeHTML(d.name)}</label><button type="button" class="facet-remove" aria-label="${escapeHTML(d.name)}の条件を削除">×</button></div><div class="facet-values"></div><div class="facet-control"></div><p class="facet-note"></p><label class="facet-blank"><input type="checkbox"> <span>空欄も選択</span></label>`;
+ f.chips=card.querySelector('.facet-values');f.note=card.querySelector('.facet-note');f.blank=card.querySelector('.facet-blank input');f.blankText=card.querySelector('.facet-blank span');f.blank.onchange=updateFacetCount;
+ const control=card.querySelector('.facet-control');
+ if(['date','number'].includes(d.kind)){
+  if(d.kind==='number'){
+   f.input=document.createElement('input');f.input.type='search';f.input.id=id;f.input.placeholder='月数の候補を選択';control.appendChild(f.input);
+  }
+  const range=document.createElement('div');range.className='facet-range';
+  for(const [key,label] of [['min',d.kind==='date'?'開始日':'最小月数'],['max',d.kind==='date'?'終了日':'最大月数']]){
+   const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.type=d.kind==='date'?'date':'number';if(d.kind==='number'){input.min='0';input.step='1';}input.setAttribute('aria-label',d.name+' '+label);if(d.kind==='date'&&key==='min')input.id=id;l.appendChild(input);range.appendChild(l);f[key]=input;input.oninput=updateFacetCount;
+  }control.appendChild(range);
+ }else if(d.kind==='select'){
+  f.select=document.createElement('select');f.select.id=id;f.select.add(new Option('候補を読込中…',''));f.select.onchange=()=>chooseFacet(f,f.select.value);control.appendChild(f.select);
+ }else if(d.kind!=='checkbox'){
+  f.input=document.createElement('input');f.input.id=id;f.input.type='search';f.input.placeholder=d.kind==='text'?'部分一致で入力':'入力して候補を選択';control.appendChild(f.input);
+  if(d.kind==='text'){
+   const b=document.createElement('button');b.type='button';b.className='btn sm';b.textContent='OR条件として追加';b.onclick=()=>chooseFacet(f,f.input.value.trim());control.appendChild(b);f.note.textContent='入力内容を部分一致で検索します。複数追加するとOR条件になります。';
+  }
+ }
+ if(d.kind!=='select'&&d.kind!=='text'&&d.kind!=='date'){
+  f.options=document.createElement('ul');f.options.className='facet-options';f.options.id=id+'-options';f.options.setAttribute('role',d.kind==='checkbox'?'group':'listbox');f.options.setAttribute('aria-label',d.name+'の候補');control.appendChild(f.options);
+ }
+ if(f.input){
+  if(d.kind==='text'){f.input.oninput=updateFacetCount;f.input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();chooseFacet(f,f.input.value.trim());requestSearch();}};}
+  else{
+   f.input.setAttribute('role','combobox');f.input.setAttribute('aria-autocomplete','list');f.input.setAttribute('aria-controls',f.options.id);f.input.setAttribute('aria-expanded','false');
+   f.input.oninput=()=>{clearTimeout(f.timer);f.timer=setTimeout(()=>requestCandidates(f),150);};
+   f.input.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();f.options.querySelector('button')?.focus();}else if(e.key==='Enter'){e.preventDefault();f.options.querySelector('button')?.click();}};
+   f.options.onkeydown=e=>{const buttons=Array.from(f.options.querySelectorAll('button')),i=buttons.indexOf(document.activeElement);if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();buttons[(i+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();}else if(e.key==='Escape'){f.input.focus();}};
+  }
+ }
+ card.querySelector('.facet-remove').onclick=()=>{clearTimeout(f.timer);facetStates.delete(index);card.remove();updateFacetCount();};
+ facetStates.set(index,f);$('facetFields').appendChild(card);if(!['text','date'].includes(d.kind))requestCandidates(f);
+}
+function initFacets(definitions){
+ for(const f of facetStates.values())clearTimeout(f.timer);facetStates=new Map();facetDefinitions=definitions||[];$('facetFields').replaceChildren();$('facetField').replaceChildren();
+ for(const d of facetDefinitions)$('facetField').add(new Option(d.name+'（'+({checkbox:'複数選択',select:'選択式',suggest:'入力候補',number:'月数・範囲',date:'日付範囲',text:'文字入力'}[d.kind])+'）',String(d.index)));
+ $('facetField').disabled=$('addFacet').disabled=facetDefinitions.length===0;
+ for(const name of defaultFacets){const d=facetDefinitions.find(x=>x.name===name);if(d)addFacet(d.index);}updateFacetCount();
+}
+function clearFacetValues(){
+ for(const f of facetStates.values()){clearTimeout(f.timer);f.values.clear();f.blank.checked=false;if(f.input)f.input.value='';if(f.min)f.min.value='';if(f.max)f.max.value='';renderFacetValues(f);if(!['text','date'].includes(f.kind))requestCandidates(f);}updateFacetCount();
+}
+$('addFacet').onclick=()=>addFacet(Number($('facetField').value));
+$('clearFacets').onclick=()=>{clearFacetValues();requestSearch();};
 $('fileBtn').addEventListener('click',()=>$('csvFile').click());
 $('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
 $('fetchBtn').addEventListener('click',async()=>{
@@ -356,7 +493,7 @@ $('fetchBtn').addEventListener('click',async()=>{
 });
 $('searchBtn').addEventListener('click',()=>requestSearch());
 $('keyword').addEventListener('keydown',e=>{if(e.key==='Enter')requestSearch();});
-$('resetBtn').addEventListener('click',()=>{$('keyword').value='';$('columnSelect').value='all';$('queryJoin').value='AND';document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;requestSearch();});
+$('resetBtn').addEventListener('click',()=>{clearFacetValues();$('keyword').value='';$('columnSelect').value='all';$('queryJoin').value='AND';document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;requestSearch();});
 $('queryJoin').addEventListener('change',()=>requestSearch());
 $('sortOrder').addEventListener('change',()=>requestSearch());
 $('pageSize').addEventListener('change',()=>{current.pageSize=Number($('pageSize').value);requestPage(1);});

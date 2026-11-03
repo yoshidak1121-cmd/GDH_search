@@ -64,3 +64,52 @@ for(const csv of ['NCシリアル番号,機械メーカー\nX1,"unfinished', 'NC
 const valid=loadText('NCシリアル番号,機械メーカー\r\nX1,"Maker, Inc.\nLine ""two"""\r\n');
 if(!valid.some(m=>m.type==='loaded'&&m.count===1)) throw Error('Quoted multiline CSV failed');
 console.log('PASS: malformed CSV, rollback, quoted commas/newlines/quotes');
+
+// Field filters: exact selected values are OR; different columns are AND.
+const headers=fs.readFileSync(file,'utf8').split(/\r?\n/)[0].replace(/^\ufeff/,'').split(',');
+const fixtureRows=[
+ ['QA1','A','East','Maker A','2024/01/01','12'],
+ ['QA2','B','East','Maker B','2024-06-30','24'],
+ ['QA3','B','West','Maker A','2025/01/01','36'],
+ ['QA4','','East','Maker A','',''],
+];
+const fieldRows=fixtureRows.map(([id,type,service,maker,date,months])=>{const row=Array(33).fill('');for(const [h,v] of Object.entries({'NCシリアル番号':id,'契約タイプ':type,'サービス拠点':service,'機械メーカー':maker,'契約開始日':date,'契約期間（月）':months,'販売会社':'Sales A','輸出国':'JP'}))row[headers.indexOf(h)]=v;return row;});
+loadText(headers.join(',')+'\n'+fieldRows.map(r=>r.join(',')).join('\n'));
+const f=(name,values=[],extra={})=>({column:headers.indexOf(name),values,...extra});
+function filtered(filters,expected,query='',mode='standard'){
+ const result=send({type:'search',query,column:'all',mode,filters,sort:'original',page:1,pageSize:20}).find(m=>m.type==='page');
+ if(!result||result.entries.map(e=>e.values[0]).join(',')!==expected)throw Error('Field filtering mismatch: '+JSON.stringify(filters));
+}
+filtered([f('契約タイプ',['A','B'])],'QA1,QA2,QA3');
+filtered([f('契約タイプ',['A','B']),f('サービス拠点',['East'])],'QA1,QA2');
+filtered([f('契約タイプ',['B']),f('機械メーカー',['Maker A'])],'QA3');
+filtered([f('機械メーカー',['Maker'])],''); // Selected values never become partial/fuzzy matches.
+filtered([f('契約タイプ',[],{blank:true})],'QA4');
+filtered([f('契約タイプ',['A'],{blank:true})],'QA1,QA4');
+filtered([f('契約期間（月）',[],{min:'12',max:'24'})],'QA1,QA2');
+filtered([f('契約期間（月）',['36'],{min:'12',max:'12',blank:true})],'QA1,QA3,QA4');
+filtered([f('契約開始日',[],{min:'2024-01-01',max:'2024-06-30'})],'QA1,QA2');
+filtered([f('契約開始日',[],{min:'2025-01-01',blank:true})],'QA3,QA4');
+filtered([f('NCシリアル番号',['QA1','QA3'])],'QA1,QA3');
+filtered([f('NCシリアル番号',['QA5'])],'','QA5','fuzzy');
+filtered([f('サービス拠点',['East'])],'QA2','QA2 OR QA3');
+for(const bad of [f('契約期間（月）',[],{min:'24',max:'12'}),f('契約開始日',[],{min:'2024-02-30'}),{column:99,values:['A']}]){
+ if(!send({type:'search',query:'',filters:[bad]}).some(m=>m.type==='error'))throw Error('Invalid field filter accepted');
+ const retained=send({type:'page-request',page:1,pageSize:20}).find(m=>m.type==='page');
+ if(retained.entries[0].values[0]!=='QA2')throw Error('Invalid filter replaced results');
+}
+const options=send({type:'candidates',column:headers.indexOf('契約タイプ'),query:'',requestId:42}).find(m=>m.type==='candidates');
+if(options.distinct!==2||options.blankCount!==1||options.options.find(x=>x.value==='B').count!==2)throw Error('Candidate counts');
+const makerOptions=send({type:'candidates',column:headers.indexOf('機械メーカー'),query:'maker b',requestId:43}).find(m=>m.type==='candidates');
+if(makerOptions.total!==1||makerOptions.options[0].value!=='Maker B')throw Error('Candidate narrowing');
+loadText(headers.join(',')+'\n'+fieldRows[0].join(','));
+const refreshed=send({type:'candidates',column:headers.indexOf('契約タイプ'),query:'',requestId:44}).find(m=>m.type==='candidates');
+if(refreshed.distinct!==1||refreshed.options[0].count!==1)throw Error('Stale candidates after reload');
+console.log('PASS: field OR/AND, exact choices, blank, number/date ranges, ID text, keyword intersection, invalid-filter rollback, candidates and reload');
+
+const multi=fieldRows[0].slice();multi[0]='QA5';multi[headers.indexOf('契約開始日')]='2020/01/01, 2024/05/01';multi[headers.indexOf('契約期間（月）')]='12, 36';
+const csvCell=v=>/[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+loadText(headers.join(',')+'\n'+multi.map(csvCell).join(','));
+filtered([f('契約開始日',[],{min:'2024-01-01',max:'2024-12-31'}),f('契約期間（月）',[],{min:'36',max:'36'})],'QA5');
+filtered([f('契約開始日',[],{min:'2023-01-01',max:'2023-12-31'})],'');
+console.log('PASS: multi-valued date/month cells match any value within range');
