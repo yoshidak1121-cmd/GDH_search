@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..');
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.join(root,'index.html')).href);
  const count=n=>page.waitForFunction(n=>document.querySelector('#resultTitle').textContent===n+'件',n);
- const load=async buffer=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-seven.csv',mimeType:'text/csv',buffer});await count(5);};
+ const load=async buffer=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-seven.csv',mimeType:'text/csv',buffer});await page.waitForFunction(()=>!document.getElementById('fileBtn').disabled);await count(5);};
  const search=async n=>{await page.locator('#searchBtn').click();await count(n);};
  const card=name=>page.locator('.facet-card[data-field="'+name+'"]');
  const clear=async()=>{await page.locator('#resetBtn').click();await count(5);await page.locator('#advancedToggle').check();};
