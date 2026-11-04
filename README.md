@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1)の `GDH_Search_Setup_v1.8.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1-setup.1)の `GDH_Search_Setup_v1.8.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -82,6 +82,35 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 Before making changes, setup shows the planned storage folder, file placement, temporary folder, update backup, clipboard change, and opening the browser management page. Review the plan and press Enter to proceed, or Ctrl+C to cancel.
 At the end, it shows what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
 The BAT only prepares files. It does NOT install, register, or enable the extension in the browser, and does not inspect existing registration. Manual registration or reloading is still required.
+
+### 初回のクリック手順 / First-time click-by-click setup
+
+【初回：クリックする場所を順番に確認】
+1. Edgeの場合：右上の「…」（設定など）をクリック →「拡張機能」→「拡張機能の管理」をクリックします。
+   Chromeの場合：右上の「︙」（縦の3点）をクリック →「拡張機能」→「拡張機能を管理」をクリックします。
+   BATがすでに拡張機能管理画面を開いている場合、この操作は不要です。その画面のまま2へ進みます。
+2. 管理画面の「開発者モード」（Chromeでは「デベロッパー モード」）のスイッチをクリックし、オンにします。
+   Edgeでは画面左側、Chromeでは右上を探してください。表示位置はバージョンや画面幅により異なる場合があります。
+3. 「展開して読み込み」（Chromeでは「パッケージ化されていない拡張機能を読み込む」）をクリックします。
+4. フォルダー選択画面が開いたら、下部の「フォルダー」ボックスをクリックし、文字が入っていれば選択してからCtrl+Vでコピー済みのパスを貼り付けます。
+   フォルダーボックスがない場合は、画面上部のアドレス欄をクリック（またはCtrl+L）→Ctrl+V→Enterの順に操作します。
+5. 貼り付けた先が、末尾に「GDH_Search\Extension」と付くフォルダーであることを確認します。
+6. 右下の「フォルダーの選択」（表示によっては「フォルダーを選択」）をクリックします。
+7. 管理画面に「GDH 機械情報 拡張検索」が追加され、スイッチがオンになっていることを確認します。
+8. GDHの機械情報検索ページへ戻る → ページを再読み込み → 右下の「拡張検索」をクリックします。
+
+First-time setup: exactly where to click
+1. Edge: top-right ... (Settings and more) > Extensions > Manage extensions.
+   Chrome: top-right three-dot menu > Extensions > Manage extensions.
+   If the BAT already opened the extension management page, stay on that page and go to step 2.
+2. Turn on Developer mode. In Edge, look on the left; in Chrome, look at the top right. The position may vary by browser version or window width.
+3. Click Load unpacked.
+4. In the folder selection dialog, click the Folder box near the bottom. Select any existing text and press Ctrl+V to paste the copied path.
+   If there is no Folder box, click the address bar at the top (or press Ctrl+L), then press Ctrl+V and Enter.
+5. Check that the destination ends in GDH_Search\Extension.
+6. Click Select Folder at the bottom right (the wording may vary).
+7. Confirm that GDH 機械情報 拡張検索 is listed and its switch is on.
+8. Return to the GDH machine information search page, reload it, then click the extension search button at the bottom right.
 
 ### BAT実行後の詳しい設定 / Detailed steps after running the BAT
 
@@ -313,3 +342,5 @@ CSVはWorker内で処理し、外部サービス、localStorage、IndexedDBへ�
 
 GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
 Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.
+
+導入操作の参考 / Installation references: [Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/getting-started/extension-sideloading), [Google Chrome](https://support.google.com/chrome/answer/2664769?hl=en).

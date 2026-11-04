@@ -127,7 +127,12 @@ try {
     Start-Process -FilePath $exe -ArgumentList $url
     $browserOpened = $true
     Write-Host ''
-    Write-Host (T '【初回】開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択。' '[First install] Turn on Developer mode > Load unpacked > paste the path and select the folder.')
+    Write-Host (T '【初回1】Edge右上の「…」→ 拡張機能 → 拡張機能の管理（管理画面が開いていれば不要）。' '[First setup 1] Edge: top-right ... > Extensions > Manage extensions (skip if already open).')
+    Write-Host (T '【初回2】Chromeは右上の縦3点 → 拡張機能 → 拡張機能を管理。' '[First setup 2] Chrome: top-right three-dot menu > Extensions > Manage extensions.')
+    Write-Host (T '【初回3】管理画面の「開発者モード／デベロッパー モード」をオンにします。' '[First setup 3] Turn on Developer mode on the extension management page.')
+    Write-Host (T '【初回4】「展開して読み込み／パッケージ化されていない拡張機能を読み込む」をクリック。' '[First setup 4] Click Load unpacked.')
+    Write-Host (T '【初回5】下部の「フォルダー」ボックスへCtrl+Vでパスを貼り付け → 右下の「フォルダーの選択」をクリック。' '[First setup 5] Paste the copied path into the Folder box with Ctrl+V > click Select Folder at the bottom right.')
+    Write-Host (T 'フォルダーボックスがない場合：上部のアドレス欄（Ctrl+L）→ Ctrl+V → Enter → フォルダーの選択。' 'If there is no Folder box: top address bar (Ctrl+L) > Ctrl+V > Enter > Select Folder.')
     Write-Host (T '【更新】登録済み拡張機能の再読み込みボタンを押してください。' '[Update] Click Reload on the installed extension.')
     Write-Host (T '以前別の場所から登録した場合は、古い登録を削除して上記の読み込み先を登録してください。' 'If you previously loaded a different folder, remove that extension and load the folder shown above.')
     Write-Host (T 'GDHの機械情報検索画面も再読み込みし、右下の「拡張検索」を押してください。' 'Reload the GDH machine search page and click the extension search button at the bottom right.')

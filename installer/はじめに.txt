@@ -16,6 +16,20 @@ Before making changes, setup shows the planned storage folder, file placement, t
 At the end, it shows what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
 The BAT only prepares files. It does NOT install, register, or enable the extension in the browser, and does not inspect existing registration. Manual registration or reloading is still required.
 
+【初回：クリックする場所を順番に確認】
+1. Edgeの場合：右上の「…」（設定など）をクリック →「拡張機能」→「拡張機能の管理」をクリックします。
+   Chromeの場合：右上の「︙」（縦の3点）をクリック →「拡張機能」→「拡張機能を管理」をクリックします。
+   BATがすでに拡張機能管理画面を開いている場合、この操作は不要です。その画面のまま2へ進みます。
+2. 管理画面の「開発者モード」（Chromeでは「デベロッパー モード」）のスイッチをクリックし、オンにします。
+   Edgeでは画面左側、Chromeでは右上を探してください。表示位置はバージョンや画面幅により異なる場合があります。
+3. 「展開して読み込み」（Chromeでは「パッケージ化されていない拡張機能を読み込む」）をクリックします。
+4. フォルダー選択画面が開いたら、下部の「フォルダー」ボックスをクリックし、文字が入っていれば選択してからCtrl+Vでコピー済みのパスを貼り付けます。
+   フォルダーボックスがない場合は、画面上部のアドレス欄をクリック（またはCtrl+L）→Ctrl+V→Enterの順に操作します。
+5. 貼り付けた先が、末尾に「GDH_Search\Extension」と付くフォルダーであることを確認します。
+6. 右下の「フォルダーの選択」（表示によっては「フォルダーを選択」）をクリックします。
+7. 管理画面に「GDH 機械情報 拡張検索」が追加され、スイッチがオンになっていることを確認します。
+8. GDHの機械情報検索ページへ戻る → ページを再読み込み → 右下の「拡張検索」をクリックします。
+
 【初めて使う方：Install.batを押した後の設定】
 
 手順1　黒い画面でブラウザーを選びます
@@ -131,6 +145,19 @@ edge://extensions/ または chrome://extensions/ を開き、開発者モード
 English instructions
 
 First, right-click the ZIP, choose Extract All, and double-click Install.bat in the extracted folder. Administrator rights are not required.
+
+First-time setup: exactly where to click
+1. Edge: top-right ... (Settings and more) > Extensions > Manage extensions.
+   Chrome: top-right three-dot menu > Extensions > Manage extensions.
+   If the BAT already opened the extension management page, stay on that page and go to step 2.
+2. Turn on Developer mode. In Edge, look on the left; in Chrome, look at the top right. The position may vary by browser version or window width.
+3. Click Load unpacked.
+4. In the folder selection dialog, click the Folder box near the bottom. Select any existing text and press Ctrl+V to paste the copied path.
+   If there is no Folder box, click the address bar at the top (or press Ctrl+L), then press Ctrl+V and Enter.
+5. Check that the destination ends in GDH_Search\Extension.
+6. Click Select Folder at the bottom right (the wording may vary).
+7. Confirm that GDH 機械情報 拡張検索 is listed and its switch is on.
+8. Return to the GDH machine information search page, reload it, then click the extension search button at the bottom right.
 
 Detailed steps after double-clicking Install.bat
 
