@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.2)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.3)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -71,6 +71,137 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 **開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択**の操作は手動です。管理者権限は不要で、管理ポリシーやPCの恒久的な実行ポリシーは変更しません。導入用PowerShellのプロセスだけ実行を許可します。会社の管理ポリシーが優先されます。スクリプト実行が制限されているPCでは、以下の手動導入を使ってください。
 
 更新時も新しいパッケージのInstall.batを実行します。旧ファイルを同じ保存先のBackupフォルダーへ退避して配置します。最後に拡張機能とGDH画面を再読み込みしてください。以前別の場所から登録した場合は、古い登録を削除して新しい配置先を登録します。詳しくは同梱の「はじめに.txt」を参照してください。
+
+### BAT実行後の詳しい設定 / Detailed steps after running the BAT
+
+**初めて使う方：Install.batを押した後の設定**
+
+
+**手順1　黒い画面でブラウザーを選びます**
+
+- 「使用するブラウザーを選択してください（1: Edge / 2: Chrome）」と表示されます。
+- 普段GDHにログインしているブラウザーを選びます。
+- Edgeの場合はキーボードで半角の 1、Chromeの場合は半角の 2 を入力し、Enterキーを押します。
+- マウスで数字をクリックする操作ではありません。
+- ブラウザーの拡張機能管理画面が開きます。黒い画面は、設定が終わるまでそのまま残して構いません。
+- BATは配置先を自動的にコピーします。この後の貼り付けが終わるまで、ほかの文字やファイルをコピーしないでください。
+
+**手順2　「開発者モード」をオンにします**
+
+- Edgeでは「開発者モード」、Chromeでは「デベロッパー モード」と表示されることがあります。
+- 管理画面内のこの名前のスイッチを探し、オンにします。画面が狭い場合はブラウザーを最大化してください。
+- これはブラウザーの拡張機能管理画面にある設定です。Windowsの設定を開く必要はありません。
+- オンにすると「展開して読み込み」などのボタンが表示されます。
+- 本ツールをこの方式で使う間は、開発者モードをオンのままにします。
+
+**手順3　「展開して読み込み」を押します**
+
+- Edgeでは「展開して読み込み」、Chromeでは「パッケージ化されていない拡張機能を読み込む」などの名前です。
+- クリックすると、フォルダーを選ぶ小さな画面が開きます。
+- 「拡張機能を追加」「ストアを開く」「パッケージ化」などの別のボタンは使いません。
+
+**手順4　拡張機能のフォルダーを指定します**
+
+- フォルダー選択画面の上部にあるアドレス欄をクリックします。「ダウンロード」など、現在の場所が表示されている部分です。
+- 場所が分かりにくい場合は、フォルダー選択画面が手前にある状態で Ctrlキーを押しながら Lキーを押します。
+- Ctrlキーを押しながら Vキーを押します。BATがコピーした配置先が貼り付けられます。
+- Enterキーを押して、そのフォルダーを開きます。
+- コピー内容を失った場合は、代わりに次の1行をアドレス欄へ入力し、Enterキーを押してください。
+
+    %LOCALAPPDATA%\GDH_Search\Extension
+- 画面下部の「フォルダーの選択」「フォルダーを選択」などのボタンを押します。
+- manifest.jsonが入っているExtensionフォルダー自体を選びます。manifest.jsonファイルを開く操作は不要です。
+- フォルダー選択画面ではファイルが見えず、空に見えることがあります。その場合も配置先が正しければ選択できます。
+- ZIPファイルや、1つ上のGDH_Searchフォルダーを指定しないでください。
+
+**手順5　追加されたことを確認します**
+
+- 管理画面に「GDH 機械情報 拡張検索」が表示されれば、登録できています。
+- この拡張機能のスイッチがオンになっていることを確認します。
+- 同じ名前が複数ある場合は、以前別の場所から登録したものが残っていないか確認してください。
+- BATの黒い画面に戻り、Enterキーを押すと終了できます。閉じても登録した拡張機能は残ります。
+
+**手順6　GDHで検索画面を開きます**
+
+- 手順1で選んだブラウザーの、普段使うプロファイルでGDHにログインします。別のブラウザーや別のプロファイルには登録されません。
+- GDHの「機械情報検索」画面を開きます。
+- すでに開いていた場合も、画面上部の丸い矢印、またはCtrl+Rでページを再読み込みします。
+- GDHページ右下の「拡張検索」を押します。検索用の追加画面が開けば設定完了です。
+- 「GDHからデータ取得」でGDHのデータを取得します。「CSVファイルを出力します。よろしいですか？」の確認では内容を確認して決定します。
+- PCに保存済みのCSVを使う場合は「ローカルからデータ取得」を押し、CSVを選びます。
+- 取得が終わったら条件を選び、「この条件で検索」を押します。
+- 右上の「言語 / Language」から検索画面の日本語／英語を切り替えられます。
+
+**2回目以降・更新するとき**
+
+- 通常の利用時にInstall.batを毎回実行する必要はありません。GDHの機械情報検索画面で「拡張検索」を押します。
+- 新しい版へ更新するときだけ、新しいZIPをすべて展開してInstall.batを実行します。
+- 同じブラウザーを選び、管理画面にある「GDH 機械情報 拡張検索」の再読み込みボタン（丸い矢印）を押します。
+- 初回と同じ配置先から登録済みなら、「展開して読み込み」で追加し直す必要はありません。
+- GDHのページも再読み込みしてから「拡張検索」を開いてください。読み込んでいたCSVや入力条件は再読み込みで失われるため、再取得してください。
+
+**うまくいかないとき**
+
+- 管理画面が開かない：ブラウザーのアドレス欄へEdgeは edge://extensions/、Chromeは chrome://extensions/ を入力します。
+- フォルダーが見つからない：BATの画面に「配置完了」と出ているか確認してください。エラーの場合は表示内容を確認します。
+- 「マニフェストが見つからない」などの表示：フォルダーの選択先が違う可能性があります。手順4のExtensionフォルダーを選び直します。
+- 右下にボタンがない：同じブラウザー／プロファイルで開いているか、拡張機能がオンか、GDHの機械情報検索画面かを確認し、GDHページを再読み込みします。
+- 会社の制限で実行・登録できない：設定を無理に変更せず、NC戦略 吉田へ表示内容と使用ブラウザーを連絡してください。
+
+Detailed steps after double-clicking Install.bat
+
+**Step 1: Choose your browser in the console window.**
+
+When asked "Choose your browser (1: Edge / 2: Chrome)", type 1 for Edge or 2 for Chrome, then press Enter. Use the browser and profile you normally use for GDH. The number is typed on the keyboard, not clicked.
+The extension management page opens. You can leave the console window open until setup is finished. Setup has copied the installation path; avoid copying anything else until you paste it below.
+
+**Step 2: Turn on Developer mode.**
+
+Find the Developer mode switch on the browser extension management page and turn it on. Maximize the browser if needed. This is a browser setting; you do not need Windows Settings.
+A Load unpacked button appears. Keep Developer mode on while using this unpacked extension.
+
+**Step 3: Click Load unpacked.**
+
+A folder selection dialog opens. Do not choose Pack extension or open an extension store.
+
+**Step 4: Select the installation folder.**
+
+Click the address bar at the top of the folder selection dialog, where the current location is shown. Alternatively, press Ctrl+L while this dialog is in the foreground.
+Press Ctrl+V to paste the path copied by setup, then press Enter to open that folder.
+If the clipboard has changed, type this path instead and press Enter:
+
+    %LOCALAPPDATA%\GDH_Search\Extension
+Click Select Folder (the exact wording may vary).
+Select the Extension folder containing manifest.json, not the file itself. Files may be hidden in a folder-only dialog, so the folder can appear empty.
+Do not select the ZIP or the parent GDH_Search folder.
+
+**Step 5: Confirm registration.**
+
+The extension "GDH 機械情報 拡張検索" should now be listed. Make sure its switch is on. The registered extension name remains Japanese even when setup uses English.
+If multiple copies are listed, check whether an older copy was loaded from a different location.
+Return to the console and press Enter to close it. Closing the console does not remove the extension.
+
+**Step 6: Open the search screen in GDH.**
+
+Log in to GDH using the browser and profile you selected. Installation does not apply to other browsers or profiles.
+Open the GDH machine information search page. Reload it using the circular arrow button or Ctrl+R, even if it was already open.
+Click the extension search button at the bottom right of the GDH page. The added search screen should open.
+Choose Get data from GDH and accept the CSV export confirmation after checking it. Alternatively, choose Load local data and select a saved CSV file.
+After loading, set your filters and click the search button. The Language selector at the top right switches the search screen between Japanese and English.
+
+Everyday use and updates
+You do not need to run Install.bat every time. Open GDH and click the extension search button.
+For an update, extract the new ZIP, run Install.bat, and choose the same browser. On the extension management page, click Reload (the circular arrow) for this extension.
+If you already registered the same installation folder, do not add it again with Load unpacked.
+Reload the GDH page as well. Reloading clears the loaded CSV and filters, so retrieve the data again.
+
+Troubleshooting
+Management page did not open: type edge://extensions/ or chrome://extensions/ in the browser address bar.
+Folder not found: check the console for Installation complete or an error message.
+Manifest missing: select the Extension folder described in Step 4.
+No search button in GDH: check the browser/profile, ensure the extension is enabled, open the GDH machine information search page, and reload it.
+Blocked by company restrictions: do not force a settings change. Contact Yoshida, NC Strategy, with the displayed message and browser name.
+
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
