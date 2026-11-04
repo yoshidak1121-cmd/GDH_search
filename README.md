@@ -60,6 +60,14 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ## 導入
 
+### 導入支援BATを使う（Windows）
+
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.1)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+
+**開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択**の操作は手動です。管理者権限は不要で、管理ポリシーやPCの恒久的な実行ポリシーは変更しません。導入用PowerShellのプロセスだけ実行を許可します。会社の管理ポリシーが優先されます。スクリプト実行が制限されているPCでは、以下の手動導入を使ってください。
+
+更新時も新しいパッケージのInstall.batを実行します。旧ファイルを同じ保存先のBackupフォルダーへ退避して配置します。最後に拡張機能とGDH画面を再読み込みしてください。以前別の場所から登録した場合は、古い登録を削除して新しい配置先を登録します。詳しくは同梱の「はじめに.txt」を参照してください。
+
 ### 拡張機能を有効にする（Chrome / Edge）
 
 1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2)から **GDH_Search_Extension_v1.7.2.zip** をダウンロードします。
