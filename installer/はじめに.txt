@@ -199,7 +199,7 @@ Reload the GDH page as well. Reloading clears the loaded CSV and filters, so ret
 
 Troubleshooting
 Management page did not open: type edge://extensions/ or chrome://extensions/ in the browser address bar.
-Folder not found: check the console for Installation complete or an error message.
+Folder not found: check the console for File preparation complete or an error message.
 Manifest missing: select the Extension folder described in Step 4.
 No search button in GDH: check the browser/profile, ensure the extension is enabled, open the GDH machine information search page, and reload it.
 Blocked by company restrictions: do not force a settings change. Contact Yoshida, NC Strategy, with the displayed message and browser name.

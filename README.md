@@ -1,10 +1,10 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.7.2
+# CNC機械情報ビューア / GDH拡張検索 v1.8.0
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
 ## 検索画面
 
-検索項目は次の順序の7つに固定し、左に項目名、右に入力欄を並べます。行間と上部情報をコンパクトにし、「この条件で検索」はフォーム右上に配置しています。一致方法・説明・空欄指定は「詳細条件」を開いたときに表示します。
+検索項目は7つです。左列に機械シリアル、NCシリアル、機械メーカー、エンドユーザー、右列に契約タイプ、輸入国、輸出国を配置します。各項目は左に項目名、右に入力欄を並べ、「この条件で検索」は入力欄全体の下に配置しています。狭い画面では1列になります。一致方法・説明・空欄指定は「詳細条件」を開いたときに表示します。
 
 | 項目 | 操作 |
 |---|---|
@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.5)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.0)の `GDH_Search_Setup_v1.8.0.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -270,7 +270,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2)から **GDH_Search_Extension_v1.7.2.zip** をダウンロードします。
+1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.0)から **GDH_Search_Extension_v1.8.0.zip** をダウンロードします。
 2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
 3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
 4. **「開発者モード」または「デベロッパー モード」**をオンにします。
@@ -310,3 +310,6 @@ CSVはWorker内で処理し、外部サービス、localStorage、IndexedDBへ�
 `node tests/smoke.cjs` でWorkerの解析・検索を検証します。開発用Playwrightが利用可能な環境で `node tests/facets.cjs`、`node tests/extension.cjs`、`node tests/gdh-export.cjs` を実行できます。`TEST_BROWSER_CHANNEL=msedge`、拡張機能試験は `TEST_EXTENSION_CHANNEL=msedge` でEdgeを指定できます。アプリ本体に外部ライブラリは不要です。詳細は `RELEASE_CHECKLIST.md` を参照してください。
 
 画面上部に「この画面はベータ版で、動作保証はありません。」「画面に関する問い合わせは、NC戦略までお問い合わせください。」を表示します。
+
+GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
+Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.

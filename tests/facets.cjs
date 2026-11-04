@@ -17,6 +17,11 @@ const root=path.resolve(__dirname,'..');
  const clear=async()=>{await page.locator('#resetBtn').click();await count(5);await page.locator('#advancedToggle').check();};
  await load(bytes());await page.locator('#advancedToggle').check();assert.equal(await page.locator('.facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
  for(const name of ['工作機械シリアル番号','NCシリアル番号','エンドユーザー']){assert.ok((await card(name).locator('input[type=search]').boundingBox()).width>180,'Input width: '+name);}
+ const box=async name=>card(name).boundingBox();
+ const left=await box('工作機械シリアル番号'),right=await box('契約タイプ');assert.ok(right.x>left.x+left.width,'Contract is in the right column');
+ for(const name of ['NCシリアル番号','機械メーカー','エンドユーザー'])assert.equal((await box(name)).x,left.x);
+ for(const name of ['輸入国','輸出国'])assert.equal((await box(name)).x,right.x);
+ const searchBox=await page.locator('#searchBtn').boundingBox();for(const name of ['工作機械シリアル番号','NCシリアル番号','機械メーカー','エンドユーザー','契約タイプ','輸入国','輸出国']){const field=await box(name);assert.ok(searchBox.y>=field.y+field.height,'Search below '+name);}
  assert.equal(await card('機械メーカー').getByRole('option').count(),0); // Candidate menu closed until focus.
  await card('契約タイプ').getByLabel('A（2件）',{exact:true}).check();await card('契約タイプ').getByLabel('B（2件）',{exact:true}).check();await search(4);
  await card('機械メーカー').getByRole('combobox').fill('Maker A');await card('機械メーカー').getByRole('option',{name:'Maker A（3件）',exact:true}).click();await search(2);

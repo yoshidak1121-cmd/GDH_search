@@ -1,8 +1,8 @@
 # Chrome / Edge 拡張機能の導入
 
-Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.7.2.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「はじめに.txt」を参照してください。
+Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.8.0.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「はじめに.txt」を参照してください。
 
-配布ファイル：`GDH_Search_Extension_v1.7.2.zip`
+配布ファイル：`GDH_Search_Extension_v1.8.0.zip`
 
 1. ZIPを展開し、`GDH_Search_Extension` フォルダーを残します。
 2. Edgeは `edge://extensions`、Chromeは `chrome://extensions` を開き、開発者モード（デベロッパーモード）を有効にします。
@@ -15,7 +15,7 @@ ZIPをそのまま選択するのではなく、展開したフォルダーを�
 
 ## 7項目の検索
 
-機械シリアル、NCシリアル、契約タイプ、機械メーカー、エンドユーザー、輸出国、輸入国の順に、左が項目名・右が入力欄になるよう表示します。行間を詰めた表示で、検索ボタンはフォーム右上にあります。一致方法や空欄指定は「詳細条件」で開けます。候補はCSVを読み込むたびに更新します。同じ項目内はOR、項目同士はANDです。条件を設定して「この条件で検索」を押します。
+機械シリアル、NCシリアル、契約タイプ、機械メーカー、エンドユーザー、輸出国、輸入国の順に、左が項目名・右が入力欄になるよう表示します。行間を詰めた表示で、検索ボタンは入力欄の下にあります。一致方法や空欄指定は「詳細条件」で開けます。候補はCSVを読み込むたびに更新します。同じ項目内はOR、項目同士はANDです。条件を設定して「この条件で検索」を押します。
 
 エンドユーザーは、入力語で全半角・かな・空白・法人格略記を吸収する検索ができます。候補を選ぶとその元表記との完全一致になり、類似候補は自動で選択されません。元データの名寄せや書き換えはしません。
 
@@ -57,3 +57,6 @@ Edge 156の独立したテストプロファイルに実際のManifest V3パッ�
 参考：[Chrome公式の拡張機能読み込み手順](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)、[拡張機能のCSP](https://developer.chrome.com/docs/extensions/reference/manifest/content-security-policy)。
 
 画面上部に「この画面はベータ版で、動作保証はありません。」「画面に関する問い合わせは、NC戦略までお問い合わせください。」を表示します。
+
+GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
+Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.
