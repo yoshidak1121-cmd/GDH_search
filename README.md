@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.4)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.5)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -71,6 +71,17 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 **開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択**の操作は手動です。管理者権限は不要で、管理ポリシーやPCの恒久的な実行ポリシーは変更しません。導入用PowerShellのプロセスだけ実行を許可します。会社の管理ポリシーが優先されます。スクリプト実行が制限されているPCでは、以下の手動導入を使ってください。
 
 更新時も新しいパッケージのInstall.batを実行します。旧ファイルを同じ保存先のBackupフォルダーへ退避して配置します。最後に拡張機能とGDH画面を再読み込みしてください。以前別の場所から登録した場合は、古い登録を削除して新しい配置先を登録します。詳しくは同梱の「はじめに.txt」を参照してください。
+
+### 実行前・実行後の表示 / Before and after setup
+
+【実行前と実行後の表示 / Before and after running setup】
+最初に、これから作成する保存先、ファイル配置、一時フォルダー、更新前のバックアップ、クリップボード変更、管理画面を開くことを表示します。内容を確認し、Enterキーで配置を開始します。中止する場合はCtrl+Cを押します。
+最後に、この実行で実際に配置した場所、作成したフォルダー、バックアップ先、クリップボードの変更、ブラウザーを開く要求の結果を表示します。失敗時も分かる範囲の変更を表示します。
+このBATはファイルを配置するだけで、ブラウザーへの拡張機能のインストール・登録・有効化は行いません。既存の登録状態も判定しません。手動での登録または再読み込みが必要です。
+
+Before making changes, setup shows the planned storage folder, file placement, temporary folder, update backup, clipboard change, and opening the browser management page. Review the plan and press Enter to proceed, or Ctrl+C to cancel.
+At the end, it shows what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
+The BAT only prepares files. It does NOT install, register, or enable the extension in the browser, and does not inspect existing registration. Manual registration or reloading is still required.
 
 ### BAT実行後の詳しい設定 / Detailed steps after running the BAT
 

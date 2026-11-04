@@ -6,6 +6,16 @@ Setup automatically uses Japanese for Japanese Windows UI, and English for all o
 
 まず配布ZIPを右クリックして「すべて展開」し、展開したフォルダーのInstall.batをダブルクリックします。管理者として実行する必要はありません。
 
+
+【実行前と実行後の表示 / Before and after running setup】
+最初に、これから作成する保存先、ファイル配置、一時フォルダー、更新前のバックアップ、クリップボード変更、管理画面を開くことを表示します。内容を確認し、Enterキーで配置を開始します。中止する場合はCtrl+Cを押します。
+最後に、この実行で実際に配置した場所、作成したフォルダー、バックアップ先、クリップボードの変更、ブラウザーを開く要求の結果を表示します。失敗時も分かる範囲の変更を表示します。
+このBATはファイルを配置するだけで、ブラウザーへの拡張機能のインストール・登録・有効化は行いません。既存の登録状態も判定しません。手動での登録または再読み込みが必要です。
+
+Before making changes, setup shows the planned storage folder, file placement, temporary folder, update backup, clipboard change, and opening the browser management page. Review the plan and press Enter to proceed, or Ctrl+C to cancel.
+At the end, it shows what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
+The BAT only prepares files. It does NOT install, register, or enable the extension in the browser, and does not inspect existing registration. Manual registration or reloading is still required.
+
 【初めて使う方：Install.batを押した後の設定】
 
 手順1　黒い画面でブラウザーを選びます
