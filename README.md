@@ -62,7 +62,11 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.1)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.2)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+
+導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
+
+**English:** Extract the setup ZIP and double-click **Install.bat**. Setup uses Japanese for Japanese Windows UI and English otherwise. Choose Edge or Chrome, then manually enable **Developer mode**, click **Load unpacked**, and paste the copied folder path. Updates back up the previous files; reload the extension and GDH page afterwards. No administrator rights or management policies are required. See **START_HERE.txt** for bilingual instructions.
 
 **開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択**の操作は手動です。管理者権限は不要で、管理ポリシーやPCの恒久的な実行ポリシーは変更しません。導入用PowerShellのプロセスだけ実行を許可します。会社の管理ポリシーが優先されます。スクリプト実行が制限されているPCでは、以下の手動導入を使ってください。
 

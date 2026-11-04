@@ -1,4 +1,8 @@
-﻿GDH 拡張検索 導入支援（Windows / Chrome・Edge）
+﻿GDH 拡張検索 導入支援 / GDH Search Setup (Windows / Chrome, Edge)
+
+日本語 / English
+Windowsの表示言語が日本語の場合は日本語、それ以外は英語で導入を案内します。
+Setup automatically uses Japanese for Japanese Windows UI, and English for all other Windows UI languages.
 
 1. 配布ZIPを右クリックし「すべて展開」します。
 2. 展開先の Install.bat をダブルクリックします。管理者として実行する必要はありません。
@@ -26,3 +30,31 @@ edge://extensions/ または chrome://extensions/ を開き、開発者モード
 
 本ツールはNC戦略 吉田が作成したベータ版で、GDHの標準機能ではありません。動作保証はありません。
 拡張画面についてはGDHヘルプデスクではなく、NC戦略 吉田までお問い合わせください。
+
+
+English instructions
+
+1. Extract the entire distribution ZIP (Extract All).
+2. Double-click Install.bat. Administrator rights are not required.
+3. Enter 1 for Edge or 2 for Chrome.
+4. Turn on Developer mode and click Load unpacked in the browser.
+5. Paste the copied path with Ctrl+V and select the folder.
+6. Reload the GDH machine search page and click the extension search button at the bottom right.
+
+Installation folder: %LOCALAPPDATA%\GDH_Search\Extension
+Do not move or delete this folder after loading the extension.
+
+Updates: Extract the new package and run Install.bat again. Previous files are backed up in a Backup-* folder next to Extension. Click Reload on the extension management page, then reload the GDH page.
+If the previous extension was loaded from another folder, remove its registration and load the new installation folder.
+
+If scripts are blocked, install manually: open edge://extensions/ or chrome://extensions/, enable Developer mode, and load the included GDH_Search_Extension folder containing manifest.json. Keep that folder in place.
+Install.bat uses ExecutionPolicy Bypass only for the setup PowerShell process. It does not change the permanent execution policy. Company-managed restrictions take precedence.
+The installer does not change management policies, the registry, or browser profiles. Browser registration and enabling remain manual.
+To uninstall, remove the extension in the browser first, then delete the installation folder and any unwanted backups.
+
+To select the setup language manually, run from PowerShell:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -Language ja
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -Language en
+
+This is a beta tool created by Yoshida, NC Strategy. It is not a standard GDH feature and comes with no guarantee of operation. Contact Yoshida, NC Strategy, rather than the GDH Help Desk, about this extension.
+The extension search screen has its own Japanese / English language selector.
