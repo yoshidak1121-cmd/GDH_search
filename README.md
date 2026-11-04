@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.3)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.7.2-setup.4)の `GDH_Search_Setup_v1.7.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -202,6 +202,60 @@ Manifest missing: select the Extension folder described in Step 4.
 No search button in GDH: check the browser/profile, ensure the extension is enabled, open the GDH machine information search page, and reload it.
 Blocked by company restrictions: do not force a settings change. Contact Yoshida, NC Strategy, with the displayed message and browser name.
 
+
+### 最後の設定確認 / Final setup check
+
+【最後の確認：設定が正しくできたかチェック】
+
+次の項目を上から順に確認してください。
+□ 1. 拡張機能管理画面に「GDH 機械情報 拡張検索」があり、スイッチがオンになっている。
+□ 2. GDHを使うブラウザー・プロファイルに登録されている。
+□ 3. GDHの機械情報検索ページを再読み込みすると、右下に「拡張検索」が表示される。
+□ 4. 「拡張検索」を押すと検索画面が開き、閉じてからもう一度開ける。
+
+ここまで確認できれば、拡張機能の登録と画面表示の設定は完了です。
+続いて、実際のデータで動作を確認します。
+
+□ 5. 「GDHからデータ取得」を押し、CSV出力確認で決定すると、ダウンロードと画面への読み込みが完了する。
+      保存済みCSVを使う場合は「ローカルからデータ取得」で読み込みます。この場合、GDHからの取得動作は未確認です。
+□ 6. 画面の読込件数を確認する。0件の場合はGDH側の検索条件やCSVの内容を確認する。
+□ 7. 取り込んだデータにある機械シリアルまたはNCシリアルを1つ入力し、「この条件で検索」を押すと、該当する行が表示される。
+□ 8. 表示された行を押して詳細を開き、入力したシリアルとCSVの内容が一致していることを確認する。
+□ 9. 「条件クリア」で検索条件を解除でき、日本語／英語の切替もできる。
+
+確認結果の目安：
+・1～4がすべてOK：導入・画面表示の設定完了。
+・5～9もすべてOK：使用したCSVで基本動作を確認済み。
+・GDHからの取得を実施していない：ローカルCSVの読込・検索のみ確認済み。
+これは利用者が画面を見て行う確認です。BATがブラウザーの登録状態やGDHの動作を自動判定するものではなく、動作保証を意味するものでもありません。
+
+確認できない項目があった場合：
+上記の項目番号、拡張機能のバージョン、ブラウザー名、表示されたメッセージをNC戦略 吉田へ連絡してください。実CSVや顧客情報は添付せず、画面を送る場合も顧客名・シリアル番号などを隠してください。
+
+Final check: confirm that setup worked
+
+Check each item in order:
+[ ] 1. GDH 機械情報 拡張検索 is listed on the browser extension management page and its switch is on.
+[ ] 2. It is registered in the browser and profile you use for GDH.
+[ ] 3. Reloading the GDH machine information search page shows the extension search button at the bottom right.
+[ ] 4. The button opens the search screen; you can close it and open it again.
+
+If items 1–4 pass, registration and screen setup are complete. Next, check basic operation with real data:
+
+[ ] 5. Choose Get data from GDH, accept the CSV export confirmation, and confirm that the download and loading complete.
+        Alternatively, use Load local data with a saved CSV. This does not verify retrieval from GDH.
+[ ] 6. Check the loaded row count. If it is zero, check the GDH filters or CSV contents.
+[ ] 7. Enter a machine serial or NC serial known to be in the loaded CSV and search. Confirm that the expected row appears.
+[ ] 8. Open the row details and compare the serial and contents with the CSV.
+[ ] 9. Clear the filters and confirm that Japanese / English switching works.
+
+Results:
+Items 1–4 pass: installation and screen setup are complete.
+Items 5–9 also pass: basic operation has been checked with the CSV used.
+If you only used a local CSV, GDH retrieval has not been verified.
+These are checks performed by the user. The BAT does not automatically inspect browser registration or GDH operation. Passing these checks is not a guarantee of operation.
+
+If a check fails, contact Yoshida, NC Strategy, with the item number, extension version, browser name and displayed message. Do not attach actual CSV or customer data; hide customer names and serial numbers in screenshots.
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
