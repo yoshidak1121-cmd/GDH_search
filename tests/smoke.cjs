@@ -14,7 +14,7 @@ function search(query, mode = 'fuzzy') { return send({ type: 'search', query, mo
 const file = path.join(__dirname, 'synthetic.csv');
 const messages = send({ type: 'load', file: { path: file, name: 'synthetic.csv', size: fs.statSync(file).size } });
 const loaded = messages.find(msg => msg.type === 'loaded');
-if (!loaded || loaded.count !== 3 || loaded.headings.length !== 33) throw Error('CSV parse/count failed');
+if (!loaded || loaded.count !== 3 || loaded.headings.length !== 22) throw Error('CSV parse/count failed');
 if (search('M800V', 'standard').total !== 2) throw Error('Whitespace normalization failed');
 if (search('M800W', 'fuzzy').total !== 3) throw Error('Fuzzy model lookup failed');
 if (search('X1001').total !== 1) throw Error('Identifier exact lookup failed');
@@ -170,3 +170,20 @@ const duplicateSecond=send({type:'page-request',page:2,pageSize:1}).find(m=>m.ty
 if(duplicateFirst.total!==3||!duplicateSecond.entries[0].duplicate||duplicateSecond.entries[0].index!==1)throw Error('Duplicate-only paging');
 if(send({type:'search',query:'',duplicatesOnly:false}).find(m=>m.type==='page').total!==4)throw Error('Duplicate-only clearing');
 console.log('PASS: duplicate-only AND filtering, keyword/fuzzy exclusion, paging and clearing');
+
+// Validate suffix removal after parsing; keep identifiers not ending in ID and serial numbers.
+{
+ const source='NCシリアル番号,CustomerID,契約ｉｄ,ID名称,工作機械シリアル番号,機械メーカー\nN1,SECRET-A,SECRET-B,KEEP-ID-NAME,S1,Maker';
+ const binary=Buffer.from(source);const originalReader=context.FileReaderSync;
+ context.FileReaderSync=class {readAsArrayBuffer(){return binary.buffer.slice(binary.byteOffset,binary.byteOffset+binary.length);}};
+ try {
+  const messages=send({type:'load',file:{name:'synthetic-id-columns.csv',size:binary.length}});
+  const loaded=messages.find(m=>m.type==='loaded');
+  if(!loaded||loaded.headings.join(',')!=='NCシリアル番号,ID名称,工作機械シリアル番号,機械メーカー')throw Error('ID suffix pruning failed');
+  const row=send({type:'row-request',index:0}).find(m=>m.type==='row');
+  if(row.values.join(',')!=='N1,KEEP-ID-NAME,S1,Maker')throw Error('Column alignment after ID removal failed');
+  if(booleanSearch('SECRET-A','AND','all-columns','standard').find(m=>m.type==='page').total!==0)throw Error('Dropped ID value still searchable');
+  if(search('S1','standard').total!==1)throw Error('Serial removed with IDs');
+  console.log('PASS: ID-suffix columns excluded from stored rows, search and detail; fullwidth/case handling; serials retained');
+ } finally {context.FileReaderSync=originalReader;}
+}

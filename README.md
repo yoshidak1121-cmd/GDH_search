@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.8.1
+# CNC機械情報ビューア / GDH拡張検索 v1.8.2
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1-setup.2)の `GDH_Search_Setup_v1.8.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.2)の `GDH_Search_Setup_v1.8.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -299,7 +299,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1)から **GDH_Search_Extension_v1.8.1.zip** をダウンロードします。
+1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.2)から **GDH_Search_Extension_v1.8.2.zip** をダウンロードします。
 2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
 3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
 4. **「開発者モード」または「デベロッパー モード」**をオンにします。
@@ -344,3 +344,6 @@ GDHからの取得中のメッセージは取得ボタン直下に表示しま�
 Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.
 
 導入操作の参考 / Installation references: [Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/getting-started/extension-sideloading), [Google Chrome](https://support.google.com/chrome/answer/2664769?hl=en).
+
+列名の末尾がID（半角／全角・大小文字を含む）の列は、取り込み時に検索用データから除外します。現在の33列CSVでは11列を除外し、22列を保持します。詳細表示・全項目検索からも除外します。機械シリアル・NCシリアルは保持します。元CSV・GDHからダウンロードするファイルは書き換えません。
+Columns whose names end in ID (case-insensitive, including fullwidth characters) are excluded from imported search data and record details. The current 33-column CSV retains 22 columns. Machine and NC serial numbers are retained. Original CSV files and GDH downloads are unchanged.
