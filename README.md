@@ -62,7 +62,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1-setup.1)の `GDH_Search_Setup_v1.8.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.8.1-setup.2)の `GDH_Search_Setup_v1.8.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -76,11 +76,11 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 【実行前と実行後の表示 / Before and after running setup】
 最初に、これから作成する保存先、ファイル配置、一時フォルダー、更新前のバックアップ、クリップボード変更、管理画面を開くことを表示します。内容を確認し、Enterキーで配置を開始します。中止する場合はCtrl+Cを押します。
-最後に、この実行で実際に配置した場所、作成したフォルダー、バックアップ先、クリップボードの変更、ブラウザーを開く要求の結果を表示します。失敗時も分かる範囲の変更を表示します。
+ブラウザーで設定・動作確認を終え、この黒い画面に戻ってEnterキーを押すと、この実行で実際に配置した場所、作成したフォルダー、バックアップ先、クリップボードの変更、ブラウザーを開く要求の結果を表示します。失敗時も分かる範囲の変更を表示します。
 このBATはファイルを配置するだけで、ブラウザーへの拡張機能のインストール・登録・有効化は行いません。既存の登録状態も判定しません。手動での登録または再読み込みが必要です。
 
 Before making changes, setup shows the planned storage folder, file placement, temporary folder, update backup, clipboard change, and opening the browser management page. Review the plan and press Enter to proceed, or Ctrl+C to cancel.
-At the end, it shows what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
+After completing setup and checks in the browser, return to the console and press Enter to see what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
 The BAT only prepares files. It does NOT install, register, or enable the extension in the browser, and does not inspect existing registration. Manual registration or reloading is still required.
 
 ### 初回のクリック手順 / First-time click-by-click setup
@@ -159,7 +159,7 @@ First-time setup: exactly where to click
 - 管理画面に「GDH 機械情報 拡張検索」が表示されれば、登録できています。
 - この拡張機能のスイッチがオンになっていることを確認します。
 - 同じ名前が複数ある場合は、以前別の場所から登録したものが残っていないか確認してください。
-- BATの黒い画面に戻り、Enterキーを押すと終了できます。閉じても登録した拡張機能は残ります。
+- 手順6と最後の確認を終えてからBATの黒い画面に戻り、Enterキーを押してください。変更内容のまとめが表示されます。内容を確認し、もう一度Enterキーを押すと終了します。閉じても登録した拡張機能は残ります。
 
 **手順6　GDHで検索画面を開きます**
 
@@ -219,7 +219,7 @@ Do not select the ZIP or the parent GDH_Search folder.
 
 The extension "GDH 機械情報 拡張検索" should now be listed. Make sure its switch is on. The registered extension name remains Japanese even when setup uses English.
 If multiple copies are listed, check whether an older copy was loaded from a different location.
-Return to the console and press Enter to close it. Closing the console does not remove the extension.
+After Step 6 and the final checks, return to the console and press Enter to display the change summary. Review it, then press Enter again to close. Closing the console does not remove the extension.
 
 **Step 6: Open the search screen in GDH.**
 

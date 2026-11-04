@@ -137,8 +137,9 @@ try {
     Write-Host (T '以前別の場所から登録した場合は、古い登録を削除して上記の読み込み先を登録してください。' 'If you previously loaded a different folder, remove that extension and load the folder shown above.')
     Write-Host (T 'GDHの機械情報検索画面も再読み込みし、右下の「拡張検索」を押してください。' 'Reload the GDH machine search page and click the extension search button at the bottom right.')
     Write-Host (T '保存先のExtensionフォルダーは移動・削除しないでください。' 'Do not move or delete the installed Extension folder.')
+    Read-Host (T 'ブラウザーで拡張機能の設定・動作確認を終えたら、この画面に戻ってEnterキーを押してください' 'After completing extension setup and checks in the browser, return here and press Enter') | Out-Null
     Show-ChangeSummary
-    Read-Host (T 'Enterキーで終了' 'Press Enter to close') | Out-Null
+    Read-Host (T '変更内容を確認したら、Enterキーで終了' 'Review the changes above, then press Enter to close') | Out-Null
     exit 0
 } catch {
     Write-Host (T "導入を完了できませんでした：$($_.Exception.Message)" "Setup could not complete: $($_.Exception.Message)") -ForegroundColor Red
