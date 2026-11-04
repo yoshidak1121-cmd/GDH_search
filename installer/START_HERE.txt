@@ -124,8 +124,8 @@ edge://extensions/ または chrome://extensions/ を開き、開発者モード
 登録や有効化は自動では行いません。管理ポリシー・レジストリ・ブラウザープロファイルは変更しません。
 削除する場合は、先にブラウザーの拡張機能管理画面で本拡張機能を削除し、その後に配置先と不要なバックアップを削除してください。
 
-本ツールはNC戦略 吉田が作成したベータ版で、GDHの標準機能ではありません。動作保証はありません。
-拡張画面についてはGDHヘルプデスクではなく、NC戦略 吉田までお問い合わせください。
+本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。
+同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。
 
 
 English instructions
@@ -219,5 +219,5 @@ To select the setup language manually, run from PowerShell:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -Language ja
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -Language en
 
-This is a beta tool created by Yoshida, NC Strategy. It is not a standard GDH feature and comes with no guarantee of operation. Contact Yoshida, NC Strategy, rather than the GDH Help Desk, about this extension.
+This screen is a personally developed extension, not a standard GDH feature. It is a beta version; no guarantee of operation or support is provided. If you would like to develop a similar extension screen independently, please consult Yoshida, NC Strategy.
 The extension search screen has its own Japanese / English language selector.
