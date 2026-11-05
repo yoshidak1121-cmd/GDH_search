@@ -36,6 +36,7 @@ const other=r.groups[2].find(g=>g.kind==='other');assert.deepEqual(other.values,
 assert.equal(dashboard({2:{kind:'blank'}}).total,1);
 load(csv(header.filter(h=>h!=='エンドユーザー'),expand(sample).map(row=>row.filter((_,i)=>header[i]!=='エンドユーザー'))));r=dashboard();assert.equal(r.any,null);assert.equal(r.missingCounts[4],null);assert.deepEqual(r.absent,['エンドユーザー']);assert.equal(r.repeated,2);
 load('機械メーカー,輸入国\nMaker,CN');r=dashboard();assert.equal(r.repeated,null);assert.equal(r.groups[2],null);assert.equal(r.groups[3][0].count,1);
+assert.ok(r.groups[3].every(g=>g.count>0));
 const many=Array.from({length:41},(_,i)=>['NC'+i,'M','X','CN','EU']);load(csv(header,expand(many)));r=dashboard();assert.equal(r.entries.length,20);const page=send({type:'dashboard-page',datasetVersion:version,requestId:++requestId,page:3})[0];assert.equal(page.entries[0].index,40);assert.equal(page.entries.length,1);
 const qualityRows=[['01','Maker A','X','CN','EU'],['01','Maker A','X','CN','EU'],['02','Ｍａｋｅｒ Ａ','X','CN','EU']];load(csv(header,expand(qualityRows)));r=dashboard();assert.equal(r.exactCount,2);assert.equal(r.variantCount,3);assert.equal(dashboard({quality:'exact'}).total,2);assert.equal(dashboard({quality:'variant'}).total,3);assert.equal(dashboard({1:choice('Maker A')}).total,2);for(const key of [1,3,4,5,6])assert.equal(r.groups[key].reduce((n,g)=>n+g.count,0),3);
 console.log('PASS Worker: AC-01/03–09/11/12, full cells, strict IDs, stable source indexes, fixed Other set, independent pages');

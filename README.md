@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.10.0
+# CNC機械情報ビューア / GDH拡張検索 v1.10.1
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -70,7 +70,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.10.0)の `GDH_Search_Setup_v1.10.0.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.10.1)の `GDH_Search_Setup_v1.10.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。説明書は日本語／英語を併記し、`START_HERE.txt` からも確認できます。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -307,7 +307,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.10.0)から **GDH_Search_Extension_v1.10.0.zip** をダウンロードします。
+1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.10.1)から **GDH_Search_Extension_v1.10.1.zip** をダウンロードします。
 2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
 3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
 4. **「開発者モード」または「デベロッパー モード」**をオンにします。

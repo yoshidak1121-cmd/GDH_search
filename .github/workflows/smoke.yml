@@ -11,6 +11,7 @@ jobs:
         with:
           node-version: '24'
       - run: node tests/smoke.cjs
+      - run: node tests/countries.cjs
 
   extension:
     runs-on: ubuntu-latest

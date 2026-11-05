@@ -108,7 +108,7 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.10.0 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.10.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
@@ -268,11 +268,11 @@ function candidateOptions(column,query,requestId){
  if(!facetCache.has(index)){
   const counts=new Map();let blankCount=0;
   for(const row of rows){const parts=new Set(cellParts(row[index]));if(!parts.size)blankCount++;for(const value of parts)counts.set(value,(counts.get(value)||0)+1);}
-  const values=Array.from(counts,([value,count])=>({value,count})).sort((a,b)=>facetCompare(a.value,b.value));
+  const values=Array.from(counts,([value,count])=>({value,count})).sort((a,b)=>b.count-a.count||facetCompare(a.value,b.value));
   facetCache.set(index,{values,blankCount});
  }
  const nameMode=facetKind(headings[index])==='name',key=nameMode?nameKey:normalized;
- const {values,blankCount}=facetCache.get(index),needle=key(query),limit=['checkbox','select'].includes(facetKind(headings[index]))?1000:30;
+ const {values,blankCount}=facetCache.get(index),needle=key(query),limit=['輸入国','輸出国'].includes(headings[index])?values.length:['checkbox','select'].includes(facetKind(headings[index]))?1000:30;
  let matches=needle?values.filter(x=>key(x.value).includes(needle)):values;
  if(nameMode&&needle.length>=4&&matches.length<10){
   const exact=new Set(matches.map(x=>x.value)),bound=needle.length>=9?2:1;
@@ -380,7 +380,7 @@ function dashboardGroup(counts,blank,total){
  const values=[...counts].sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
  const groups=values.slice(0,5).map(([value,count])=>({kind:'value',value,count}));
  if(values.length>5)groups.push({kind:'other',values:values.slice(5).map(x=>x[0]),count:values.slice(5).reduce((n,x)=>n+x[1],0)});
- groups.push({kind:'blank',count:blank});return groups;
+ if(blank>0)groups.push({kind:'blank',count:blank});return groups;
 }
 function runDashboard(m){
  if(m.datasetVersion!==datasetVersion)return;
@@ -474,7 +474,7 @@ const english={
  '条件なし':'No filters','条件なし：すべての機械':'No filters: all machines','条件なし：すべての機械を表示':'No filters: showing all machines','重複のみ':'Duplicates only','重複ありのみ':'Duplicates only','重複あり':'Duplicate data','空欄':'Blank','完全一致':'Exact match','前方一致':'Starts with','部分一致':'Contains','表記揺れを吸収':'Name variations','完全一致：':'Exact: ','前方一致：':'Starts with: ','含む：':'Contains: ','元の表記：':'Original: ','元のCSV値':'Original CSV value','原本データ':'Source data',' · 類似候補':' · Similar suggestion','入力語をOR条件に追加':'Add another OR term','候補を選択してください。':'Choose a suggestion.',
  '会社名の一部を入力。表記揺れも検索できます':'Type part of a company name; variations are supported','番号の一部、または番号全体を入力':'Enter all or part of the serial number','全半角・かな・空白・(株)等を吸収。候補を選ぶと元の表記で完全一致。':'Normalizes character width, kana, spaces and company abbreviations. Selecting a suggestion matches its original spelling.','ハイフンを保持して検索します。':'Hyphens are kept when matching serial numbers.','このCSVではすべて空欄です。':'This column is empty in the CSV.','候補はありません。入力した語で表記揺れ検索できます。':'No suggestions. You can search name variations using the entered term.','候補がありません。別の語でお試しください。':'No suggestions. Try another term.','このCSVに対応する列がありません。':'This column is missing from the CSV.',
  '条件を変更しました。「この条件で検索」で反映します。':'Filters changed. Select Search to apply them.','検索データがまだありません':'No data loaded','GDHと接続するか、CSVを読み込んでください。':'Connect to GDH or open a CSV file.','一致する機械情報がありません':'No matching machines','入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。':'Change the filters. Use the End user field to search name variations.','レコード詳細を表示':'Show record details','検索結果の行を選択すると、':'Select a result row','機械情報の詳細を表示します。':'to view all record details.','機械情報':'Machine information','表示内容は元CSVの値です。':'Values are shown as stored in the CSV.','カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。':'Comma-separated values are shown individually. Relationships between fields are not inferred.','複数値を含むセル、または同一NCシリアルの複数行があります':'Contains multiple values or shares an NC serial with another row',
- '検索データはブラウザ内だけで処理します':'Search data is processed only in your browser','CSVをGitHubや外部サービスに送信しません':'CSV data is not uploaded to GitHub or other services','v1.10.0 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要':'v1.10.0 · Multi-value search / Duplicate indicators · GDH setup required',
+ '検索データはブラウザ内だけで処理します':'Search data is processed only in your browser','CSVをGitHubや外部サービスに送信しません':'CSV data is not uploaded to GitHub or other services','v1.10.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要':'v1.10.1 · Multi-value search / Duplicate indicators · GDH setup required',
  '「GDHからデータ取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。':'Use Get data from GDH or Load local data to load records. Suggestions are rebuilt from the CSV.',
  'GDH接続設定、またはCSVの選択が必要です':'Connect to GDH or select a CSV file','CSVファイル選択':'Select a CSV file','先頭ページ':'First page','前ページ':'Previous page','次ページ':'Next page','最終ページ':'Last page',
  '検索しています…':'Searching…','結果を読み込んでいます…':'Loading results…','CSV形式のファイルを指定してください。':'Choose a CSV file.','CSVを解析しています。大容量ファイルでは少し時間がかかります。':'Reading CSV. Large files may take a moment.','CSVファイルを読み込み、検索用データを準備しています…':'Loading CSV and preparing search data…','検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。':'Search failed. Reload the page and open the CSV again.','GDHから機械情報CSVを取得しています…':'Retrieving the machine CSV from GDH…','GDH自動取得の接続先が未設定です。GDH内の追加画面として組み込み、検索フォームと出力アダプターを接続してください。ローカルでは「ローカルからデータ取得」をご利用ください。':'GDH retrieval is not configured. Connect the search form and export adapter, or use Load local data locally.','GDH連携アダプターがCSV Blobを返していません。':'The GDH adapter did not return a CSV Blob.','空のCSVファイルが返されました。':'An empty CSV file was returned.','GDHとの接続がタイムアウトしました。':'The connection to GDH timed out.','GDHからCSVデータを受け取れませんでした。':'No CSV data was received from GDH.','CSV取得中です。完了までお待ちください。':'CSV retrieval is in progress. Please wait.',
@@ -609,6 +609,7 @@ function setFacetNote(f,text){f.note.dataset.ja=text;f.note.textContent=tr(text)
 function renderCandidates(m){
  const f=facetStates.get(m.column);if(!f||f.requestId!==m.requestId)return;f.lastMessage=m;
  f.blankText.textContent=tr('空欄')+(m.blankCount?optionSuffix(m.blankCount):'');
+ f.blank.closest('label').hidden=!m.blankCount;
  f.count.textContent=tr(formatNum(m.distinct)+'種類');
  if(f.kind==='checkbox'){
   f.options.replaceChildren();
@@ -700,7 +701,7 @@ function renderMetadata(m){
 function applyLanguage(){
  const dirty=filtersDirty,savedStatus=lastStatus,detail=lastDetailRecord;
  document.documentElement.lang=uiLanguage;document.title=uiLanguage==='en'?'CNC Machine Viewer | G-DataHub':'CNC機械情報ビューア | G-DataHub';$('languageSelect').value=uiLanguage;
- const labels=[['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','CNC機械情報ビューア'],['#fetchBtn','GDHからデータ取得'],['#fileBtn','ローカルからデータ取得'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','データ取得日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.10.0 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
+ const labels=[['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','CNC機械情報ビューア'],['#fetchBtn','GDHからデータ取得'],['#fileBtn','ローカルからデータ取得'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','データ取得日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.10.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
  for(const [selector,text] of labels)setUiLabel(document.querySelector(selector),text);
  const footer=document.querySelector('.footer>div:first-child');const tail=Array.from(footer.childNodes).find(n=>n.nodeType===3&&n.textContent.includes('｜'));if(tail)tail.textContent=' ｜ '+tr('CSVをGitHubや外部サービスに送信しません');
  const attrs=[['.nav','aria-label','メインメニュー'],['.intro','aria-label','ページ概要'],['.metrics','aria-label','データ概要'],['.searchpanel','aria-label','検索条件'],['#fetchBtn','title','GDH内の検索フォーム連携後に利用できます'],['#csvFile','aria-label','CSVファイル選択'],['#firstPage','aria-label','先頭ページ'],['#prevPage','aria-label','前ページ'],['#nextPage','aria-label','次ページ'],['#lastPage','aria-label','最終ページ']];for(const [selector,key,text] of attrs)document.querySelector(selector)?.setAttribute(key,tr(text));
