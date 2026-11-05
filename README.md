@@ -355,3 +355,9 @@ Retrieval status appears below Get data from GDH. Retrieval usually takes 30 sec
 
 IDで終わる列を含め、CSVの全項目を保持します。現在の33列CSVは33列すべてを読み込み、詳細表示・全項目検索でも利用できます。元CSVは変更しません。
 All CSV columns, including those ending in ID, are retained. All 33 columns in the current CSV remain available for record details and all-column search. Original CSV files are unchanged.
+
+## ダッシュボードの2画面化
+
+機械情報検索のダッシュボード内で「機械統計」「データ保守」を切り替えます。統計は輸出国・輸入国・機械メーカー・エンドユーザー・契約タイプのレコード件数／構成比を表示し、棒から一覧へ絞り込めます。各分類とサービス拠点の複合条件も利用できます。画面切替時は条件を解除します。
+
+データ保守は既存の5重要項目の欠損・NCシリアル再登場に加え、全セルの原文が一致する完全重複行（先頭行を含む）と、名称・国・契約タイプのNFKC／大小文字／空白の差による表記揺れ候補を表示します。候補率の分母は絞込後の行数、候補グループ一覧はCSV全体の最大100組です。識別子は正規化せず、自動修正・統合は行いません。

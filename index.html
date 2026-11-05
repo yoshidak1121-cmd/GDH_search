@@ -80,10 +80,10 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
 
  <div class="view-tabs" role="tablist" aria-label="表示 / View"><button id="searchTab" class="btn" role="tab" aria-selected="true" aria-controls="searchView">機械情報検索</button><button id="dashboardTab" class="btn" role="tab" aria-selected="false" aria-controls="dashboard" tabindex="-1">登録機械情報・確認対象</button></div>
  <section id="dashboard" role="tabpanel" aria-labelledby="dashboardTab" hidden>
-  <h2 id="dashTitle"></h2><div id="dashMeta" class="dash-meta"></div><p id="dashNote" class="dash-note"></p>
-  <form id="dashFilters" class="panel dash-filters"><label><span id="dashServiceLabel"></span><select id="dashService"></select></label><label><span id="dashCountryLabel"></span><select id="dashCountry"></select></label><label><span id="dashMissingLabel"></span><select id="dashMissing"></select></label><label class="dash-check"><input type="checkbox" id="dashRepeat"><span id="dashRepeatLabel"></span></label><button id="dashApply" type="submit" class="btn primary"></button><button id="dashClear" type="button" class="btn"></button></form>
+  <div class="view-tabs" role="tablist" aria-label="ダッシュボード"><button id="statsTab" type="button" class="btn" role="tab" aria-selected="true">機械統計</button><button id="qualityTab" type="button" class="btn" role="tab" aria-selected="false">データ保守</button></div><h2 id="dashTitle"></h2><div id="dashMeta" class="dash-meta"></div><p id="dashNote" class="dash-note"></p>
+  <form id="dashFilters" class="panel dash-filters"><label><span id="dashServiceLabel"></span><select id="dashService"></select></label><label><span id="dashCountryLabel"></span><select id="dashCountry"></select></label><label><span id="dashMakerLabel"></span><select id="dashMaker"></select></label><label><span id="dashExportLabel"></span><select id="dashExport"></select></label><label><span id="dashEndUserLabel"></span><select id="dashEndUser"></select></label><label><span id="dashContractLabel"></span><select id="dashContract"></select></label><label data-quality-control><span id="dashMissingLabel"></span><select id="dashMissing"></select></label><label data-quality-control class="dash-check"><input type="checkbox" id="dashRepeat"><span id="dashRepeatLabel"></span></label><button id="dashApply" type="submit" class="btn primary"></button><button id="dashClear" type="button" class="btn"></button></form>
   <div id="dashState" class="dash-state" role="status" aria-live="polite"></div><div id="dashApplied" class="dash-state"></div>
-  <div id="dashCards" class="dash-cards"></div><div id="dashCharts" class="dash-charts"></div>
+  <div id="qualitySummary" class="dash-cards"></div><p id="qualityRule" class="dash-note" hidden></p><div id="dashCards" class="dash-cards"></div><div id="dashCharts" class="dash-charts"></div>
   <section id="dashList" class="panel" tabindex="-1"><div class="resultshead"><h3 id="dashListTitle"></h3><label><span id="dashSortLabel"></span> <select id="dashSort"><option value="original"></option><option value="nc"></option></select></label></div><div class="tablewrap"><table class="dash-table"><thead id="dashHead"></thead><tbody id="dashBody"></tbody></table></div><div class="tablebottom"><span id="dashPageInfo"></span><div class="paging"><button id="dashPrev" type="button"></button><span id="dashPage"></span><button id="dashNext" type="button"></button></div></div></section>
  </section>
  <section class="metrics" aria-label="データ概要">
@@ -356,19 +356,23 @@ function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[],
 
 // Whole trimmed cells only: dashboard semantics are independent of search.
 let datasetVersion=0,dashboardCache=null,dashboardIndexes=[],dashboardResult=null;
-const dashboardFields=['NCシリアル番号','機械メーカー','サービス拠点','輸入国','エンドユーザー'];
+const dashboardFields=['NCシリアル番号','機械メーカー','サービス拠点','輸入国','エンドユーザー','輸出国','契約タイプ'];
 function dashboardColumns(){return dashboardFields.map(name=>headings.findIndex(h=>h===name||({'NCシリアル':'NCシリアル番号','機械メーカ':'機械メーカー','エンドユーザ':'エンドユーザー'})[h]===name));}
 function dashboardData(){
  if(dashboardCache)return dashboardCache;
  const columns=dashboardColumns(),counts=new Map(),nc=columns[0];
  if(nc>=0)for(const row of rows){const value=String(row[nc]??'').trim();if(value)counts.set(value,(counts.get(value)||0)+1);}
- const missing=new Uint8Array(rows.length),repeat=new Uint8Array(rows.length),choices={2:new Set(),3:new Set()};
+ const missing=new Uint8Array(rows.length),repeat=new Uint8Array(rows.length),choices=Object.fromEntries([1,2,3,4,5,6].map(k=>[k,new Set()]));
  for(let i=0;i<rows.length;i++){
   const row=rows[i];for(let j=0;j<5;j++)if(columns[j]>=0&&!String(row[columns[j]]??'').trim())missing[i]|=1<<j;
   if(nc>=0){const value=String(row[nc]??'').trim();repeat[i]=value&&(counts.get(value)||0)>1?1:0;}
-  for(const key of [2,3])if(columns[key]>=0){const value=String(row[columns[key]]??'').trim();if(value)choices[key].add(value);}
+  for(const key of [1,2,3,4,5,6])if(columns[key]>=0){const value=String(row[columns[key]]??'').trim();if(value)choices[key].add(value);}
  }
- dashboardCache={columns,missing,repeat,choices:Object.fromEntries(Object.entries(choices).map(([key,set])=>[key,[...set].sort()]))};
+ const exact=new Uint8Array(rows.length),variant=new Uint8Array(rows.length),rowCounts=new Map(),variantMaps={};
+ for(const row of rows){const key=JSON.stringify(row);rowCounts.set(key,(rowCounts.get(key)||0)+1);}
+ for(const key of [1,2,3,4,5,6])if(columns[key]>=0){const map=new Map();for(const row of rows){const value=String(row[columns[key]]??'').trim();if(!value)continue;const norm=value.normalize('NFKC').toLocaleLowerCase().replace(/\s+/g,'');if(!map.has(norm))map.set(norm,new Set());map.get(norm).add(value);}variantMaps[key]=map;}
+ for(let i=0;i<rows.length;i++){exact[i]=rowCounts.get(JSON.stringify(rows[i]))>1?1:0;for(const key of [1,2,3,4,5,6])if(variantMaps[key]){const value=String(rows[i][columns[key]]??'').trim();if(value&&variantMaps[key].get(value.normalize('NFKC').toLocaleLowerCase().replace(/\s+/g,''))?.size>1)variant[i]=1;}}
+ dashboardCache={exact,variant,variantMaps,columns,missing,repeat,choices:Object.fromEntries(Object.entries(choices).map(([key,set])=>[key,[...set].sort()]))};
  return dashboardCache;
 }
 function dashboardGroup(counts,blank,total){
@@ -380,28 +384,29 @@ function dashboardGroup(counts,blank,total){
 }
 function runDashboard(m){
  if(m.datasetVersion!==datasetVersion)return;
- const {columns,missing,repeat,choices}=dashboardData(),f=m.filters||{},absent=dashboardFields.filter((_,j)=>columns[j]<0);
- for(const key of [2,3])if(f[key]&&f[key].kind!=='all'&&columns[key]<0)throw Error('Dashboard column unavailable');
+ const {columns,missing,repeat,choices,exact,variant,variantMaps}=dashboardData(),f=m.filters||{},absent=dashboardFields.slice(0,5).filter((_,j)=>columns[j]<0);
+ for(const key of [1,2,3,4,5,6])if(f[key]&&f[key].kind!=='all'&&columns[key]<0)throw Error('Dashboard column unavailable');
  if(f.missing==='any'&&absent.length||Number.isInteger(f.missing)&&columns[f.missing]<0||f.repeat&&columns[0]<0)throw Error('Dashboard column unavailable');
- const result=[],missingCounts=columns.map(c=>c<0?null:0),counts={2:new Map(),3:new Map()},blanks={2:0,3:0};let any=0,repeated=0;
- const sets={};for(const key of [2,3])if(f[key]?.kind==='other')sets[key]=new Set(f[key].values);
+ const result=[],missingCounts=columns.map(c=>c<0?null:0),counts=Object.fromEntries([1,2,3,4,5,6].map(k=>[k,new Map()])),blanks=Object.fromEntries([1,2,3,4,5,6].map(k=>[k,0]));let any=0,repeated=0,exactCount=0,variantCount=0;
+ const sets={};for(const key of [1,2,3,4,5,6])if(f[key]?.kind==='other')sets[key]=new Set(f[key].values);
  for(let i=0;i<rows.length;i++){
   const row=rows[i];let pass=true;
-  for(const key of [2,3])if(f[key]&&f[key].kind!=='all'){const value=String(row[columns[key]]??'').trim();if(sets[key]?!sets[key].has(value):f[key].kind==='blank'?value!=='':value!==f[key].value){pass=false;break;}}
+  for(const key of [1,2,3,4,5,6])if(f[key]&&f[key].kind!=='all'){const value=String(row[columns[key]]??'').trim();if(sets[key]?!sets[key].has(value):f[key].kind==='blank'?value!=='':value!==f[key].value){pass=false;break;}}
+  if(f.quality==='exact'&&!exact[i]||f.quality==='variant'&&!variant[i])continue;
   if(!pass||f.repeat&&!repeat[i]||f.missing==='any'&&!missing[i]||Number.isInteger(f.missing)&&!(missing[i]&(1<<f.missing)))continue;
-  result.push(i);if(missing[i])any++;repeated+=repeat[i];
+  result.push(i);if(missing[i])any++;repeated+=repeat[i];exactCount+=exact[i];variantCount+=variant[i];
   for(let j=0;j<5;j++)if(columns[j]>=0&&(missing[i]&(1<<j)))missingCounts[j]++;
-  for(const key of [2,3])if(columns[key]>=0){const value=String(row[columns[key]]??'').trim();if(value)counts[key].set(value,(counts[key].get(value)||0)+1);else blanks[key]++;}
+  for(const key of [1,2,3,4,5,6])if(columns[key]>=0){const value=String(row[columns[key]]??'').trim();if(value)counts[key].set(value,(counts[key].get(value)||0)+1);else blanks[key]++;}
  }
  if(m.sort==='nc'&&columns[0]>=0)result.sort((a,b)=>{const x=String(rows[a][columns[0]]??'').trim(),y=String(rows[b][columns[0]]??'').trim();return x<y?-1:x>y?1:a-b;});
  dashboardIndexes=result;
- dashboardResult={filters:f,sort:m.sort||'original',total:result.length,loaded:rows.length,any:absent.length?null:any,repeated:columns[0]<0?null:repeated,missingCounts,absent,columns,choices,groups:{2:columns[2]<0?null:dashboardGroup(counts[2],blanks[2],result.length),3:columns[3]<0?null:dashboardGroup(counts[3],blanks[3],result.length)},headings};
+ dashboardResult={exactCount,variantCount,variantGroups:Object.entries(variantMaps).flatMap(([key,map])=>[...map.values()].filter(v=>v.size>1).map(v=>({key:Number(key),values:[...v]}))).slice(0,100),filters:f,sort:m.sort||'original',total:result.length,loaded:rows.length,any:absent.length?null:any,repeated:columns[0]<0?null:repeated,missingCounts,absent,columns,choices,groups:Object.fromEntries([1,2,3,4,5,6].map(k=>[k,columns[k]<0?null:dashboardGroup(counts[k],blanks[k],result.length)])),headings};
  outputDashboardPage(m);
 }
 function outputDashboardPage(m){
  if(m.datasetVersion!==datasetVersion||!dashboardResult)return;
- const {columns,missing,repeat}=dashboardData(),totalPages=Math.max(1,Math.ceil(dashboardIndexes.length/20)),page=Math.max(1,Math.min(totalPages,m.page||1));
- const entries=dashboardIndexes.slice((page-1)*20,page*20).map(index=>({index,values:rows[index],missing:dashboardFields.filter((_,j)=>columns[j]>=0&&(missing[index]&(1<<j))),repeat:!!repeat[index]}));
+ const {columns,missing,repeat,exact,variant}=dashboardData(),totalPages=Math.max(1,Math.ceil(dashboardIndexes.length/20)),page=Math.max(1,Math.min(totalPages,m.page||1));
+ const entries=dashboardIndexes.slice((page-1)*20,page*20).map(index=>({index,values:rows[index],missing:dashboardFields.filter((_,j)=>columns[j]>=0&&(missing[index]&(1<<j))),repeat:!!repeat[index],exact:!!exact[index],variant:!!variant[index]}));
  postMessage({type:'dashboard',...dashboardResult,datasetVersion,requestId:m.requestId,page,totalPages,entries});
 }
 
@@ -723,15 +728,15 @@ $('languageSelect').onchange=event=>setUiLanguage(event.target.value);
 new MutationObserver(()=>{const button=$('fetchBtn'),expected=tr('GDHからデータ取得');if(button&&button.textContent.trim()!==expected)setUiLabel(button,'GDHからデータ取得');}).observe(document.querySelector('.actions'),{childList:true,subtree:true});
 
 // Dashboard keeps drafts, applied filters, pages and requests separate from search.
-const dashboardState={active:false,version:0,requestId:0,rowRequestId:0,result:null,applied:{},draft:{},pending:null,busy:false,failed:false,dirty:false,sort:'original',focusList:false};
-const dashNames=['NCシリアル番号','機械メーカー','サービス拠点','輸入国','エンドユーザー'];
+const dashboardState={mode:'stats',active:false,version:0,requestId:0,rowRequestId:0,result:null,applied:{},draft:{},pending:null,busy:false,failed:false,dirty:false,sort:'original',focusList:false};
+const dashNames=['NCシリアル番号','機械メーカー','サービス拠点','輸入国','エンドユーザー','輸出国','契約タイプ'];
 const d=(ja,en)=>uiLanguage==='en'?en:ja;
 const dashName=i=>tr(dashNames[i]);
 const dashClone=value=>JSON.parse(JSON.stringify(value));
 const dashRate=(n,total)=>n==null||!total?'—':(100*n/total).toFixed(1)+'%';
 function dashboardFailure(){dashboardState.failed=true;renderDashboardState();}
 function dashChoiceLabel(choice){return !choice||choice.kind==='all'?d('すべて','All'):choice.kind==='blank'?d('値なし','No value'):choice.kind==='other'?d('その他（'+choice.values.length+'分類）','Other ('+choice.values.length+' categories)'):choice.value;}
-function dashDescription(f){const parts=[];for(const key of [2,3])if(f[key]&&f[key].kind!=='all')parts.push(dashName(key)+': '+dashChoiceLabel(f[key]));if(f.missing==='any')parts.push(d('5項目いずれかに値なし','Any of five fields has no value'));else if(Number.isInteger(f.missing))parts.push(dashName(f.missing)+': '+d('値なし','No value'));if(f.repeat)parts.push(d('NCシリアル再登場のみ','Recurring NC serial only'));return parts.join(' / ')||d('指定なし','None');}
+function dashDescription(f){const parts=[];for(const key of [1,2,3,4,5,6])if(f[key]&&f[key].kind!=='all')parts.push(dashName(key)+': '+dashChoiceLabel(f[key]));if(f.missing==='any')parts.push(d('5項目いずれかに値なし','Any of five fields has no value'));else if(Number.isInteger(f.missing))parts.push(dashName(f.missing)+': '+d('値なし','No value'));if(f.quality)parts.push(f.quality==='exact'?d('完全重複','Exact duplicates'):d('表記揺れ候補','Spelling variants'));if(f.repeat)parts.push(d('NCシリアル再登場のみ','Recurring NC serial only'));return parts.join(' / ')||d('指定なし','None');}
 function renderDashboardState(){
  const a=dashboardState;
  $('dashState').textContent=a.failed?d('再取得/読込失敗、前回データ表示中','Retrieval/load failed. Showing previous data.'):a.busy?d('集計中：','Calculating: ')+dashDescription(a.pending||a.applied):!a.version?d('CSVを読み込んでください。','Load a CSV to begin.'):a.dirty?d('条件変更未適用。「適用」で反映します。','Changes not applied. Select Apply.'):a.result?.total===0?d('対象は0件です。条件を解除できます。','No records. Clear filters to reset.'):d('集計完了','Calculation complete');
@@ -740,19 +745,19 @@ function renderDashboardState(){
  for(const el of $('dashFilters').querySelectorAll('button,select,input'))el.disabled=!a.version||a.busy||current.busy||el.dataset.unavailable==='true';
  $('dashSort').disabled=!a.version||a.busy||current.busy;
  $('dashSort').options[1].disabled=!!a.result&&a.result.columns[0]<0;
- for(const el of document.querySelectorAll('#dashCards button,#dashCharts button'))el.disabled=a.busy||current.busy||el.dataset.unavailable==='true';
+ for(const el of document.querySelectorAll('#dashCards button,#dashCharts button,#qualitySummary button'))el.disabled=!a.version||a.busy||current.busy||el.dataset.unavailable==='true';
  $('dashPrev').disabled=!a.result||a.busy||current.busy||a.result.page<=1;$('dashNext').disabled=!a.result||a.busy||current.busy||a.result.page>=a.result.totalPages;
 }
 function dashboardControls(){
  const a=dashboardState,r=a.result,f=a.draft;
- for(const [id,key] of [['dashService',2],['dashCountry',3]]){
+ for(const [id,key] of [['dashService',2],['dashCountry',3],['dashMaker',1],['dashExport',5],['dashEndUser',4],['dashContract',6]]){
   const el=$(id),choices=[{kind:'all'},{kind:'blank'},...(r?.choices[key]||[]).map(value=>({kind:'value',value}))];
   if(f[key]?.kind==='other')choices.push(f[key]);el.replaceChildren();
   for(const choice of choices){const op=document.createElement('option');op.value=JSON.stringify(choice);op.textContent=dashChoiceLabel(choice);el.appendChild(op);}
   el.value=JSON.stringify(f[key]||{kind:'all'});el.dataset.unavailable=String(!!r&&r.columns[key]<0);
  }
  const el=$('dashMissing');el.replaceChildren();
- for(const [value,label,unavailable] of [['none',d('絞込なし','No filter'),false],['any',d('5項目いずれか','Any of five fields'),!!r?.absent.length],...dashNames.map((_,i)=>[String(i),dashName(i),!!r&&r.columns[i]<0])]){const op=document.createElement('option');op.value=value;op.textContent=label+(unavailable?d('（列なし）',' (column missing)'):'');op.disabled=unavailable;el.appendChild(op);}
+ for(const [value,label,unavailable] of [['none',d('絞込なし','No filter'),false],['any',d('5項目いずれか','Any of five fields'),!!r?.absent.length],...dashNames.slice(0,5).map((_,i)=>[String(i),dashName(i),!!r&&r.columns[i]<0])]){const op=document.createElement('option');op.value=value;op.textContent=label+(unavailable?d('（列なし）',' (column missing)'):'');op.disabled=unavailable;el.appendChild(op);}
  el.value=String(f.missing??'none');$('dashRepeat').checked=!!f.repeat;$('dashRepeat').dataset.unavailable=String(!!r&&r.columns[0]<0);
  $('dashSort').value=a.sort;
 }
@@ -766,10 +771,10 @@ function dashDrill(change){const filters=dashClone(dashboardState.applied);Objec
 function dashUnavailable(names){return d('算定不可。不足列：','Unavailable. Missing columns: ')+names.map(name=>tr(name)).join(', ');}
 function renderDashboard(){
  const a=dashboardState,r=a.result;
- $('searchTab').textContent=d('機械情報検索','Machine search');$('dashboardTab').textContent=$('dashTitle').textContent=d('登録機械情報・確認対象','Registered machine information · Review records');
+ $('searchTab').textContent=d('機械情報検索','Machine search');$('dashboardTab').textContent=d('ダッシュボード','Dashboard');$('dashTitle').textContent=a.mode==='stats'?d('機械統計','Machine statistics'):d('データ保守','Data maintenance');$('statsTab').textContent=d('機械統計','Machine statistics');$('qualityTab').textContent=d('データ保守','Data maintenance');for(const [id,mode] of [['statsTab','stats'],['qualityTab','quality']])$(id).setAttribute('aria-selected',String(a.mode===mode));for(const el of document.querySelectorAll('[data-quality-control]'))el.hidden=a.mode!=='quality';$('dashCards').hidden=a.mode!=='quality';$('dashListTitle').textContent=a.mode==='stats'?d('対象レコード一覧','Records'):d('確認対象レコード一覧','Review records');$('qualityRule').hidden=a.mode!=='quality';
  $('dashNote').textContent=d('登録レコード数を表示しています。稼働設備台数・世界全体の台数を示すものではありません。','Counts represent registered CSV records, not operating machines or a worldwide installed base.');
  $('dashMeta').textContent=d('対象：読込CSVの範囲 | 元データ更新日時：不明','Scope: loaded CSV only | Source data updated: unknown')+(lastMetadata?' | '+lastMetadata.fileName+' | '+d('読込日時：','Loaded: ')+new Date(lastMetadata.loadedAt).toLocaleString(uiLanguage==='en'?'en-US':'ja-JP',{timeZoneName:'short'}):'');
- for(const [id,text] of Object.entries({dashServiceLabel:dashName(2),dashCountryLabel:dashName(3),dashMissingLabel:d('値なし対象','Missing value filter'),dashRepeatLabel:d('NCシリアル再登場のみ','Recurring NC serial only'),dashApply:d('適用','Apply'),dashClear:d('解除','Clear'),dashListTitle:d('対象レコード一覧','Review records'),dashSortLabel:d('並び順','Sort'),dashPrev:d('前ページ','Previous page'),dashNext:d('次ページ','Next page')}))$(id).textContent=text;
+ for(const [id,text] of Object.entries({dashMakerLabel:dashName(1),dashExportLabel:dashName(5),dashEndUserLabel:dashName(4),dashContractLabel:dashName(6),dashServiceLabel:dashName(2),dashCountryLabel:dashName(3),dashMissingLabel:d('値なし対象','Missing value filter'),dashRepeatLabel:d('NCシリアル再登場のみ','Recurring NC serial only'),dashApply:d('適用','Apply'),dashClear:d('解除','Clear'),dashListTitle:a.mode==='stats'?d('対象レコード一覧','Records'):d('確認対象レコード一覧','Review records'),dashSortLabel:d('並び順','Sort'),dashPrev:d('前ページ','Previous page'),dashNext:d('次ページ','Next page')}))$(id).textContent=text;
  $('dashSort').options[0].textContent=d('CSV元順','CSV order');$('dashSort').options[1].textContent=d('NCシリアル昇順','NC serial ascending');dashboardControls();
  const labels=[d('読込レコード数','Loaded records'),d('対象レコード数','Filtered records'),d('重要項目に値なし','Important fields with no value'),d('NCシリアル再登場','Recurring NC serial')];
  const values=r?[r.loaded,r.total,r.any,r.repeated]:[null,null,null,null];
@@ -778,20 +783,24 @@ function renderDashboard(){
  $('dashCharts').replaceChildren();
  function chart(title){const box=document.createElement('section');box.className='panel dash-chart';const h=document.createElement('h3');h.textContent=title;box.appendChild(h);$('dashCharts').appendChild(box);return box;}
  function bar(box,label,count,action){const button=document.createElement('button');button.type='button';button.className='dash-bar';const text=document.createElement('span');text.textContent=label+' — '+formatNum(count)+' / '+dashRate(count,r.total);const fill=document.createElement('i');fill.style.width=(r.total?count/r.total*100:0)+'%';button.append(text,fill);button.onclick=action;box.appendChild(button);}
- for(const key of [2,3]){const box=chart(dashName(key)+d('別の分布',' distribution'));if(!r||r.groups[key]===null||!r.total){const p=document.createElement('p');p.textContent=r?.groups[key]===null?dashUnavailable([dashNames[key]]):d('対象データなし','No records');box.appendChild(p);}else for(const group of r.groups[key])bar(box,dashChoiceLabel(group),group.count,()=>dashDrill({[key]:group.kind==='other'?{kind:'other',values:group.values}:group.kind==='blank'?{kind:'blank'}:{kind:'value',value:group.value}}));}
- const box=chart(d('重要項目の値なし（項目間は重複）','Missing values (fields may overlap)'));
+ for(const key of (a.mode==='stats'?[5,3,1,4,6]:[2,3])){const box=chart(dashName(key)+d('別の分布',' distribution'));if(!r||r.groups[key]===null||!r.total){const p=document.createElement('p');p.textContent=r?.groups[key]===null?dashUnavailable([dashNames[key]]):d('対象データなし','No records');box.appendChild(p);}else for(const group of r.groups[key])bar(box,dashChoiceLabel(group),group.count,()=>dashDrill({[key]:group.kind==='other'?{kind:'other',values:group.values}:group.kind==='blank'?{kind:'blank'}:{kind:'value',value:group.value}}));}
+ if(a.mode==='quality'){const box=chart(d('重要項目の値なし（項目間は重複）','Missing values (fields may overlap)'));
  if(r)for(let j=0;j<5;j++){if(r.missingCounts[j]===null){const p=document.createElement('p');p.textContent=dashUnavailable([dashNames[j]]);box.appendChild(p);}else if(r.total)bar(box,dashName(j),r.missingCounts[j],()=>dashDrill({missing:j}));}if(r&&!r.total){const empty=document.createElement('p');empty.textContent=d('対象データなし','No records');box.appendChild(empty);}
+ }
+ $('qualitySummary').innerHTML=a.mode==='stats'?'<div class="panel dash-card">'+d('対象レコード数','Filtered records')+'<strong>'+(r?formatNum(r.total):'—')+'</strong></div>':[['exact',d('完全重複の行数','Exact duplicate rows'),r?.exactCount],['variant',d('表記揺れ候補の行数','Rows with spelling variants'),r?.variantCount]].map(([key,label,n])=>'<button type="button" class="panel dash-card" data-quality="'+key+'">'+label+'<strong>'+(n==null?'—':formatNum(n))+'</strong><small>'+dashRate(n,r?.total)+'</small></button>').join('');for(const el of $('qualitySummary').querySelectorAll('button')){el.disabled=!r||a.busy||current.busy;el.onclick=()=>dashDrill({quality:el.dataset.quality});}
+ $('qualityRule').textContent=d('分母：対象レコード数。完全重複＝CSVの全項目が一致する行（先頭行を含む）。表記揺れ候補＝名称・国・契約タイプの全半角、大小文字、空白の違い。NCシリアルは正規化しません。候補は自動修正しません。','Denominator: filtered records. Exact duplicates match all original cells, including first occurrences. Variant candidates differ by width, letter case or whitespace in names, countries or contract types. Serial IDs are never normalized. No automatic corrections.');if(a.mode==='quality'&&r)for(const group of r.variantGroups||[]){const box=chart(dashName(group.key)+d('：CSV全体の表記揺れ候補（最大100組）',': CSV-wide variant candidates (up to 100 groups)'));const p=document.createElement('p');p.textContent=group.values.join(' / ');box.appendChild(p);}
  $('dashHead').innerHTML='<tr>'+[d('確認項目','Review fields'),dashName(1),dashName(0),dashName(2),dashName(3),d('詳細','Details')].map(x=>'<th scope="col">'+escapeHTML(x)+'</th>').join('')+'</tr>';
  $('dashBody').replaceChildren();
- if(r?.entries.length)for(const entry of r.entries){const row=document.createElement('tr');row.dataset.dashboardIndex=entry.index;row.tabIndex=0;const notes=entry.missing.map(name=>tr(name)+': '+d('値なし','No value'));if(entry.repeat)notes.push(d('NC再登場','Recurring NC'));for(const value of [notes.join(' / ')||'—',...[1,0,2,3].map(j=>r.columns[j]<0?d('列なし','Column missing'):String(entry.values[r.columns[j]]??'').trim()||d('値なし','No value'))]){const td=document.createElement('td');td.textContent=value;row.appendChild(td);}const td=document.createElement('td'),button=document.createElement('button');button.className='btn sm';button.textContent=d('開く','Open');td.appendChild(button);row.appendChild(td);const select=()=>{if(a.busy||current.busy)return;a.rowRequestId++;worker.postMessage({type:'dashboard-row',datasetVersion:a.version,requestId:a.rowRequestId,index:entry.index});};row.onclick=select;row.onkeydown=e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select();}};$('dashBody').appendChild(row);}
+ if(r?.entries.length)for(const entry of r.entries){const row=document.createElement('tr');row.dataset.dashboardIndex=entry.index;row.tabIndex=0;const notes=entry.missing.map(name=>tr(name)+': '+d('値なし','No value'));if(entry.exact)notes.push(d('完全重複','Exact duplicate'));if(entry.variant)notes.push(d('表記揺れ候補','Variant candidate'));if(entry.repeat)notes.push(d('NC再登場','Recurring NC'));for(const value of [notes.join(' / ')||'—',...[1,0,2,3].map(j=>r.columns[j]<0?d('列なし','Column missing'):String(entry.values[r.columns[j]]??'').trim()||d('値なし','No value'))]){const td=document.createElement('td');td.textContent=value;row.appendChild(td);}const td=document.createElement('td'),button=document.createElement('button');button.className='btn sm';button.textContent=d('開く','Open');td.appendChild(button);row.appendChild(td);const select=()=>{if(a.busy||current.busy)return;a.rowRequestId++;worker.postMessage({type:'dashboard-row',datasetVersion:a.version,requestId:a.rowRequestId,index:entry.index});};row.onclick=select;row.onkeydown=e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select();}};$('dashBody').appendChild(row);}
  else{const row=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.className='dash-empty';td.textContent=d('対象データなし。CSV読込または条件解除を行ってください。','No records. Load a CSV or clear filters.');row.appendChild(td);$('dashBody').appendChild(row);}
  $('dashPageInfo').textContent=r?formatNum(r.total)+d('件 / 20件ずつ表示',' records / 20 per page'):'—';$('dashPage').textContent=r?r.page+' / '+r.totalPages:'— / —';renderDashboardState();
 }
 function setDashboardTab(active){const a=dashboardState;a.active=active;a.rowRequestId++;document.body.classList.toggle('dashboard-active',active);$('dashboard').hidden=!active;$('searchTab').setAttribute('aria-selected',String(!active));$('dashboardTab').setAttribute('aria-selected',String(active));$('searchTab').tabIndex=active?-1:0;$('dashboardTab').tabIndex=active?0:-1;detailPlaceholder();}
+for(const [id,mode] of [['statsTab','stats'],['qualityTab','quality']]){$(id).onclick=()=>{dashboardState.mode=mode;renderDashboard();requestDashboard({});};$(id).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();$(id==='statsTab'?'qualityTab':'statsTab').click();$(id==='statsTab'?'qualityTab':'statsTab').focus();}};}
 $('searchTab').onclick=()=>setDashboardTab(false);$('dashboardTab').onclick=()=>setDashboardTab(true);
 for(const id of ['searchTab','dashboardTab'])$(id).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const active=e.key==='Home'?false:e.key==='End'?true:!dashboardState.active;setDashboardTab(active);$(active?'dashboardTab':'searchTab').focus();}};
 $('dashFilters').onsubmit=e=>{e.preventDefault();requestDashboard();};$('dashClear').onclick=()=>requestDashboard({});
-for(const [id,key] of [['dashService',2],['dashCountry',3]])$(id).onchange=()=>{dashboardState.draft[key]=JSON.parse($(id).value);dashboardState.dirty=true;renderDashboardState();};
+for(const [id,key] of [['dashService',2],['dashCountry',3],['dashMaker',1],['dashExport',5],['dashEndUser',4],['dashContract',6]])$(id).onchange=()=>{dashboardState.draft[key]=JSON.parse($(id).value);dashboardState.dirty=true;renderDashboardState();};
 $('dashMissing').onchange=()=>{const value=$('dashMissing').value;dashboardState.draft.missing=value==='none'?null:value==='any'?'any':Number(value);dashboardState.dirty=true;renderDashboardState();};
 $('dashRepeat').onchange=()=>{dashboardState.draft.repeat=$('dashRepeat').checked;dashboardState.dirty=true;renderDashboardState();};
 $('dashSort').onchange=()=>{dashboardState.sort=$('dashSort').value;requestDashboard(dashboardState.applied);};
