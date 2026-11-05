@@ -143,7 +143,7 @@ try {
     exit 0
 } catch {
     Write-Host (T "導入を完了できませんでした：$($_.Exception.Message)" "Setup could not complete: $($_.Exception.Message)") -ForegroundColor Red
-    Write-Host (T '手動で導入する場合は、同梱の「はじめに.txt」を参照してください。' 'For manual installation, see the included START_HERE.txt (Japanese / English).')
+    Write-Host (T '手動で導入する場合は、同梱のREADME_ja.txtを参照してください。' 'For manual installation, see the included README_en.txt.')
     Show-ChangeSummary
     exit 1
 }

@@ -1,3 +1,31 @@
+# GDH Machine Search - Manual installation / 手動導入
+
+## English quick start
+
+For Windows, Microsoft Edge or Google Chrome. This is the manual extension package.
+For guided file preparation, use `GDH_Search_Setup_v1.11.1.zip` and read `START_HERE.txt`.
+
+1. Extract the ZIP and keep `GDH_Search_Extension` in a permanent location.
+2. Open `edge://extensions/` or `chrome://extensions/` in the browser/profile you use for GDH.
+3. Enable **Developer mode**, click **Load unpacked**, and select the folder containing `manifest.json`.
+4. Confirm that **GDH 機械情報 拡張検索** is enabled. Its registered name is Japanese.
+5. Reload the GDH machine information search page and click **Search** / **拡張検索** at the bottom right.
+6. Select English in the search screen. Use **Get data from GDH** or **Load local data**, then **Search**.
+
+Updates: replace files in the same folder, click **Reload** for the extension, check the version,
+then reload GDH and retrieve the data again. Downloading the ZIP alone does not update it.
+
+Supported environment: `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/`.
+Separate regional GDH URLs are not supported. GDH access is required; company policies may restrict installation.
+CSV values are not translated. CSV data is processed locally; downloaded CSV files remain on the PC.
+This is a personally developed beta extension, not a standard GDH feature. No guarantee of operation or support is provided.
+For independent development of a similar extension, consult Yoshida, NC Strategy.
+
+## 日本語
+
+手順案内付きの配布ZIPは `GDH_Search_Setup_v1.11.1.zip` です。`START_HERE.txt` から開始します。
+手動導入は以下を参照してください。海外拠点の別URLには対応していません。
+
 # Chrome / Edge 拡張機能の導入
 
 Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.10.0.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「はじめに.txt」を参照してください。

@@ -1,0 +1,27 @@
+CNC Machine Viewer - Start here / はじめに
+Standalone CSV viewer / 単独CSVビューア
+
+English
+1. Extract the ZIP and open index.html in Microsoft Edge or Google Chrome.
+2. Select English at the top right, then use Load local data to open your GDH CSV.
+3. Enter or select filters and click Search. Select a row to see the original data.
+4. Dashboard provides Machine statistics and Data maintenance, including blank rates.
+
+This ZIP is for local CSV use. To add search to the GDH page and retrieve CSV from GDH,
+use GDH_Search_Setup instead and follow its START_HERE.txt.
+The standalone viewer has no configured GDH connection by default.
+CSV values are not translated. CSV data is processed in the browser and is not sent to GitHub or external services.
+This is a personally developed beta tool, not a standard GDH feature. No guarantee of operation or support is provided.
+For independent development of a similar tool, consult Yoshida, NC Strategy.
+
+日本語
+1. ZIPをすべて展開し、EdgeまたはChromeでindex.htmlを開きます。
+2. 「ローカルからデータ取得」でGDHのCSVを選びます。
+3. 条件を入力・選択して「この条件で検索」を押します。行を選ぶと元データを確認できます。
+4. ダッシュボードで機械統計とデータ保守（空欄率など）を確認できます。
+
+このZIPはローカルCSV用です。GDH画面への追加・GDHからの取得にはGDH_Search_Setupを使用し、
+そちらのSTART_HERE.txtを参照してください。単独ビューアのGDH接続先は初期設定されていません。
+CSV内の値は翻訳されません。CSVはブラウザー内で処理し、GitHubや外部サービスへ送信しません。
+本ツールは個人が作成したベータ版で、GDHの標準機能ではありません。動作保証およびサポートは提供していません。
+同様のツールの独自制作は、NC戦略 吉田までご相談ください。

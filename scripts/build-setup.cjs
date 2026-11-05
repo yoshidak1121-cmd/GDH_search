@@ -9,6 +9,6 @@ const dest=path.join(root,'dist','GDH_Search_Setup');
 if(fs.existsSync(dest))throw Error('Setup output already exists; use a fresh build directory.');
 fs.mkdirSync(dest,{recursive:true});
 fs.cpSync(path.join(root,'dist','GDH_Search_Extension'),path.join(dest,'GDH_Search_Extension'),{recursive:true});
-for(const name of ['Install.bat','Setup.ps1','はじめに.txt','START_HERE.txt'])fs.copyFileSync(path.join(root,'installer',name),path.join(dest,name));
+for(const name of ['Install.bat','Setup.ps1','START_HERE.txt','README_ja.txt','README_en.txt'])fs.copyFileSync(path.join(root,'installer',name),path.join(dest,name));
 console.log('Setup package: '+dest);
 
