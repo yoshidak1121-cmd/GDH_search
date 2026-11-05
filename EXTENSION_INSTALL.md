@@ -1,8 +1,8 @@
 # Chrome / Edge 拡張機能の導入
 
-Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.9.0.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「はじめに.txt」を参照してください。
+Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.10.0.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「はじめに.txt」を参照してください。
 
-配布ファイル：`GDH_Search_Extension_v1.9.0.zip`
+配布ファイル：`GDH_Search_Extension_v1.10.0.zip`
 
 1. ZIPを展開し、`GDH_Search_Extension` フォルダーを残します。
 2. Edgeは `edge://extensions`、Chromeは `chrome://extensions` を開き、開発者モード（デベロッパーモード）を有効にします。
