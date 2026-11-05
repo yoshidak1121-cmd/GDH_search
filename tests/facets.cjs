@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'..');
  const search=async n=>{await page.locator('#searchBtn').click();await count(n);};
  const card=name=>page.locator('.facet-card[data-field="'+name+'"]');
  const clear=async()=>{await page.locator('#resetBtn').click();await count(5);await page.locator('#advancedToggle').check();};
- await load(bytes());await page.locator('#advancedToggle').check();assert.equal(await page.locator('.facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
+ await load(bytes());await page.locator('#advancedToggle').check();assert.equal(await page.locator('#facetFields .facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
  for(const name of ['工作機械シリアル番号','NCシリアル番号','エンドユーザー']){assert.ok((await card(name).locator('input[type=search]').boundingBox()).width>180,'Input width: '+name);}
  const box=async name=>card(name).boundingBox();
  const left=await box('工作機械シリアル番号'),right=await box('契約タイプ');assert.ok(right.x>left.x+left.width,'Contract is in the right column');

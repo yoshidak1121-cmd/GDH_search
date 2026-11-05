@@ -24,6 +24,7 @@ jobs:
       - run: npm install --no-save --no-package-lock playwright@1.64.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/build-extension.cjs
+      - run: node tests/reference.cjs
       - run: node tests/facets.cjs
       - run: node tests/duplicates.cjs
       - run: node tests/i18n.cjs
