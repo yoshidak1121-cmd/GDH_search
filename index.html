@@ -104,22 +104,58 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
  <div id="status" class="statusline" role="status" aria-live="polite"></div>
  <div class="content">
   <section class="panel resultspanel">
-   <div class="resultshead"><h2>検索結果 <span id="resultTitle" class="count">—</span></h2><div class="results-tools"><label for="sortOrder">並び順</label><select id="sortOrder"><option value="original">CSV順</option><option value="nc">NCシリアル番号順</option></select><label for="pageSize">表示数</label><select id="pageSize"><option>20</option><option>50</option><option>100</option></select></div></div>
+   <div class="resultshead"><h2>検索結果 <span id="resultTitle" class="count">—</span></h2><div class="results-tools"><button id="exportResults" type="button" class="btn sm" disabled title="検索条件を適用後、検索結果の全件・全列を出力します。">検索結果をCSV出力</button><label for="sortOrder">並び順</label><select id="sortOrder"><option value="original">CSV順</option><option value="nc">NCシリアル番号順</option></select><label for="pageSize">表示数</label><select id="pageSize"><option>20</option><option>50</option><option>100</option></select></div></div>
    <div class="tablewrap" id="tableWrap"><table class="data-table"><thead><tr><th>機械メーカー</th><th>機械シリアル</th><th>NCシリアル</th><th>エンドユーザー</th><th>輸入国</th><th>輸出国</th><th>契約タイプ</th></tr></thead><tbody id="resultsBody"><tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr></tbody></table></div>
    <div class="tablebottom"><span id="pageInfo">0件</span><div class="paging"><button id="firstPage" aria-label="先頭ページ">«</button><button id="prevPage" aria-label="前ページ">‹</button><span id="pageIndicator" style="padding:0 9px">— / —</span><button id="nextPage" aria-label="次ページ">›</button><button id="lastPage" aria-label="最終ページ">»</button></div></div>
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
  </div>
- <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.11.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
+ <footer class="footer"><div><span class="offline">検索データはブラウザ内だけで処理します</span> ｜ CSVをGitHubや外部サービスに送信しません</div><div>v1.11.2 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要</div></footer>
 </main>
 </div>
 <script id="worker-source" type="text/plain">
 'use strict';
-let headings = [], rows = [], corpus = [], preferred = [], resultIndexes = [], lastQuery = '', lastColumn = 'all', lastMode = 'fuzzy';
+let sourceHeadings = [], headings = [], rows = [], corpus = [], preferred = [], resultIndexes = [], lastQuery = '', lastColumn = 'all', lastMode = 'fuzzy';
 let rowScores = new Map(), currentSort = 'relevance';
 const identifierRE = /シリアル|(?:^|\b)ID\b|番号|製番|serial/i;
 const isIdentifier = header => !/モデル|型名|シリーズ|期間/.test(header) && identifierRE.test(header);
 const preferredRE = /NCシリアル|NCシステム|工作機械シリアル|工作機械モデル|機械メーカー|サービス拠点|契約番号|契約タイプ|契約者名|販売会社|機械代理店$|輸出国|輸入国|エンドユーザー$/;
+// Official GDH English headers map to the existing internal field names. CSV values and downloaded bytes stay unchanged.
+const englishHeaders = new Map([
+ ["NC Serial No.","NCシリアル番号"],
+ ["NC Series Name","NCシリーズ名"],
+ ["NC System Model Name","NCシステム型名"],
+ ["Machine Tool Serial No.","工作機械シリアル番号"],
+ ["Machine Tool Model No.","工作機械モデル番号"],
+ ["Machinery Vendor","機械メーカー"],
+ ["Service Center","サービス拠点"],
+ ["Contract No.","契約番号"],
+ ["Contract Type","契約タイプ"],
+ ["Contract Period(Month)","契約期間（月）"],
+ ["Contract Start Date","契約開始日"],
+ ["Contract End Date","契約終了日"],
+ ["Contract From Center","契約元拠点"],
+ ["Contractor","契約者名"],
+ ["Sales Date","販売日"],
+ ["Sales Office Code","販売会社"],
+ ["Machine Dealer","機械代理店"],
+ ["Export Country","輸出国"],
+ ["Import Country","輸入国"],
+ ["Machine Shipping Date","機械出荷日"],
+ ["Installation Date","設置日"],
+ ["End user","エンドユーザー"],
+ ["NC Model ID","NCモデルID"],
+ ["Machine Tool ID","工作機械ID"],
+ ["Contract ID","契約ID"],
+ ["Contractor ID","契約者ID"],
+ ["Sales ID","販売ID"],
+ ["Machine Dealer ID","機械代理店ID"],
+ ["Machine Dealer Address ID","機械代理店住所ID"],
+ ["Shipping ID","出荷ID"],
+ ["End user ID","エンドユーザーID"],
+ ["Installation Address ID","設置先住所ID"],
+ ["Installation ID","設置ID"]
+]);
 const cap = s => String(s ?? '').trim();
 function normalized(s, strict=false){
  let x = cap(s).normalize('NFKC').toLowerCase();
@@ -414,7 +450,7 @@ function outputDashboardPage(m){
 }
 
 function handleLoad(file){
- const previous={headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState};
+ const previous={sourceHeadings,headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState};
  try{
   postMessage({type:'progress',message:'CSVファイルを読み込み、検索用データを準備しています…'});
   const buffer=new FileReaderSync().readAsArrayBuffer(file);
@@ -422,7 +458,8 @@ function handleLoad(file){
   try{source=new TextDecoder('utf-8',{fatal:true}).decode(buffer);}catch(e){source=new TextDecoder('shift_jis').decode(buffer);}
   if(source.charCodeAt(0)===0xfeff)source=source.slice(1);
   const parsed=parseCSV(source);if(parsed.length<2)throw new Error('CSVにヘッダーとデータ行がありません。');
-  const hdr=parsed.shift().map(h=>cap(h));
+  const originalHeaders=parsed.shift();
+  const hdr=originalHeaders.map(h=>{const name=cap(h);return englishHeaders.get(name)||name;});
   if(hdr.length<2||hdr.some(h=>h===''))throw new Error('CSVヘッダーを読み取れません。');
   if(new Set(hdr).size!==hdr.length)throw new Error('CSVヘッダーに重複した列名があります。');
   const problem=parsed.findIndex(r=>r.length!==hdr.length);
@@ -432,11 +469,18 @@ function handleLoad(file){
   if(!main.length)throw new Error('主要項目が判別できません。ヘッダー定義を確認してください。');
   const idx=parsed.map(r=>main.map(i=>normalized(r[i],isIdentifier(hdr[i]))).join('\u0001'));
   const duplicates=buildDuplicateState(parsed,hdr);
-  headings=hdr;rows=parsed;duplicateState=duplicates;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();facetCache=new Map();
+  sourceHeadings=originalHeaders;headings=hdr;rows=parsed;duplicateState=duplicates;corpus=idx;preferred=main;resultIndexes=[];rowScores=new Map();facetCache=new Map();
   datasetVersion++;dashboardCache=null;dashboardIndexes=[];dashboardResult=null;
   postMessage({type:'loaded',datasetVersion,count:rows.length,duplicateCount:rows.reduce((n,_,i)=>n+(duplicateMeta(i).duplicate?1:0),0),headings,facets:headings.map((name,index)=>({name,index,kind:facetKind(name)})),preferred:main.map(i=>headings[i]),fileName:file.name||'GDH_machine_export.csv',fileSize:file.size,loadedAt:new Date().toISOString()});
   runSearch('','all','fuzzy','original',1,20);
- }catch(err){({headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
+ }catch(err){({sourceHeadings,headings,rows,corpus,preferred,resultIndexes,rowScores,duplicateState}=previous);postMessage({type:'error',message:'CSV読込エラー：'+(err?.message||String(err))});}
+}
+function exportResultsCSV(){
+ if(!rows.length||!resultIndexes.length)throw new Error('出力する検索結果がありません。');
+ // Quote every cell to preserve commas, quotes, newlines, spaces and empty values.
+ const record=values=>values.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',');
+ const csv='\ufeff'+[record(sourceHeadings),...resultIndexes.map(index=>record(rows[index]))].join('\r\n')+'\r\n';
+ postMessage({type:'export-results',csv,count:resultIndexes.length});
 }
 onmessage=event=>{
  const m=event.data;
@@ -445,6 +489,7 @@ onmessage=event=>{
   else if(m.type==='dashboard')runDashboard(m);
   else if(m.type==='dashboard-page')outputDashboardPage(m);
   else if(m.type==='dashboard-row'&&m.datasetVersion===datasetVersion&&rows[m.index])postMessage({type:'dashboard-row',datasetVersion,requestId:m.requestId,index:m.index,values:rows[m.index],headings});
+  else if(m.type==='export-results')exportResultsCSV();
   else if(m.type==='search')runSearch(m.query||'',m.column||'all',m.mode||'fuzzy',m.sort||'relevance',m.page||1,m.pageSize||20,m.join||'AND',m.filters||[],m.duplicatesOnly===true);
   else if(m.type==='candidates')candidateOptions(m.column,m.query||'',m.requestId);
   else if(m.type==='page-request')outputPage(m.page||1,m.pageSize||20);
@@ -472,12 +517,12 @@ const english={
  "添付CSVを読み取れませんでした。":"The supplied CSV could not be read.",
  'GDHからデータ取得':'Get data from GDH','ローカルからデータ取得':'Load local data','GDH内の検索フォーム連携後に利用できます':'Available after connecting the GDH search form',
  'CNC機械情報ビューア':'CNC Machine Viewer',
- 'ローカル処理 / サーバー送信なし':'Local processing / No server upload','取込レコード数':'Records','検索結果':'Results','データ取得日時':'Loaded at','検索元ファイル':'Source file','未取得':'Not loaded','未読み込み':'Not loaded','機械を検索':'Search machines','条件をクリア':'Clear','データ取得には通常30秒〜1分かかります。':'Data retrieval usually takes 30 seconds to 1 minute.','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。':'If there is no activity for more than 5 minutes, download the CSV manually from GDH and select Load local data to open it.','この条件で検索':'Search','詳細条件':'Advanced options','重複ありのみ表示':'Show duplicates only','並び順':'Sort by','CSV順':'CSV order','NCシリアル番号順':'NC serial number','表示数':'Rows per page','選択レコード詳細':'Record details','閉じる':'Close',
+ 'ローカル処理 / サーバー送信なし':'Local processing / No server upload','取込レコード数':'Records','検索結果':'Results','データ取得日時':'Loaded at','検索元ファイル':'Source file','未取得':'Not loaded','未読み込み':'Not loaded','機械を検索':'Search machines','条件をクリア':'Clear','データ取得には通常30秒〜1分かかります。':'Data retrieval usually takes 30 seconds to 1 minute.','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。':'If there is no activity for more than 5 minutes, download the CSV manually from GDH and select Load local data to open it.','この条件で検索':'Search','検索結果をCSV出力':'Export results as CSV','検索条件を適用後、検索結果の全件・全列を出力します。':'Apply search conditions, then export all matching rows and columns.','出力する検索結果がありません。':'There are no search results to export.','詳細条件':'Advanced options','重複ありのみ表示':'Show duplicates only','並び順':'Sort by','CSV順':'CSV order','NCシリアル番号順':'NC serial number','表示数':'Rows per page','選択レコード詳細':'Record details','閉じる':'Close',
  '機械メーカー':'Machine manufacturer','機械メーカ':'Machine manufacturer','工作機械名（モデル番号）':'Machine name (model number)','値の一部、または値全体を入力':'Enter part or all of a value','工作機械シリアル番号':'Machine serial number','機械シリアル':'Machine serial','機械シリアル番号':'Machine serial number','NCシリアル番号':'NC serial number','NCシリアル':'NC serial','エンドユーザー':'End user','エンドユーザ':'End user','輸入国':'Import country','輸出国':'Export country','契約タイプ':'Contract type','NCシリーズ名':'NC series','NCシステム型名':'NC system model','工作機械モデル番号':'Machine model','サービス拠点':'Service location','契約番号':'Contract number','契約期間（月）':'Contract duration (months)','契約開始日':'Contract start date','契約終了日':'Contract end date','契約元拠点':'Contract location','契約者名':'Contract holder','販売日':'Sale date','販売会社':'Sales company','機械代理店':'Machine distributor','機械出荷日':'Shipment date','設置日':'Installation date','NCモデルID':'NC model ID','工作機械ID':'Machine ID','契約ID':'Contract ID','契約者ID':'Contract holder ID','販売ID':'Sale ID','機械代理店ID':'Distributor ID','機械代理店住所ID':'Distributor address ID','出荷ID':'Shipment ID','エンドユーザーID':'End user ID','設置先住所ID':'Installation address ID','設置ID':'Installation ID',
  '条件なし':'No filters','条件なし：すべての機械':'No filters: all machines','条件なし：すべての機械を表示':'No filters: showing all machines','重複のみ':'Duplicates only','重複ありのみ':'Duplicates only','重複あり':'Duplicate data','空欄':'Blank','完全一致':'Exact match','前方一致':'Starts with','部分一致':'Contains','表記揺れを吸収':'Name variations','完全一致：':'Exact: ','前方一致：':'Starts with: ','含む：':'Contains: ','元の表記：':'Original: ','元のCSV値':'Original CSV value','原本データ':'Source data',' · 類似候補':' · Similar suggestion','入力語をOR条件に追加':'Add another OR term','候補を選択してください。':'Choose a suggestion.',
  '会社名の一部を入力。表記揺れも検索できます':'Type part of a company name; variations are supported','番号の一部、または番号全体を入力':'Enter all or part of the serial number','全半角・かな・空白・(株)等を吸収。候補を選ぶと元の表記で完全一致。':'Normalizes character width, kana, spaces and company abbreviations. Selecting a suggestion matches its original spelling.','ハイフンを保持して検索します。':'Hyphens are kept when matching serial numbers.','このCSVではすべて空欄です。':'This column is empty in the CSV.','候補はありません。入力した語で表記揺れ検索できます。':'No suggestions. You can search name variations using the entered term.','候補がありません。別の語でお試しください。':'No suggestions. Try another term.','このCSVに対応する列がありません。':'This column is missing from the CSV.',
  '条件を変更しました。「この条件で検索」で反映します。':'Filters changed. Select Search to apply them.','検索データがまだありません':'No data loaded','GDHと接続するか、CSVを読み込んでください。':'Connect to GDH or open a CSV file.','一致する機械情報がありません':'No matching machines','入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。':'Change the filters. Use the End user field to search name variations.','レコード詳細を表示':'Show record details','検索結果の行を選択すると、':'Select a result row','機械情報の詳細を表示します。':'to view all record details.','機械情報':'Machine information','表示内容は元CSVの値です。':'Values are shown as stored in the CSV.','カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。':'Comma-separated values are shown individually. Relationships between fields are not inferred.','複数値を含むセル、または同一NCシリアルの複数行があります':'Contains multiple values or shares an NC serial with another row',
- '検索データはブラウザ内だけで処理します':'Search data is processed only in your browser','CSVをGitHubや外部サービスに送信しません':'CSV data is not uploaded to GitHub or other services','v1.11.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要':'v1.11.1 · Multi-value search / Duplicate indicators · GDH setup required',
+ '検索データはブラウザ内だけで処理します':'Search data is processed only in your browser','CSVをGitHubや外部サービスに送信しません':'CSV data is not uploaded to GitHub or other services','v1.11.2 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要':'v1.11.2 · Multi-value search / Duplicate indicators · GDH setup required',
  '「GDHからデータ取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。':'Use Get data from GDH or Load local data to load records. Suggestions are rebuilt from the CSV.',
  'GDH接続設定、またはCSVの選択が必要です':'Connect to GDH or select a CSV file','CSVファイル選択':'Select a CSV file','先頭ページ':'First page','前ページ':'Previous page','次ページ':'Next page','最終ページ':'Last page',
  '検索しています…':'Searching…','結果を読み込んでいます…':'Loading results…','CSV形式のファイルを指定してください。':'Choose a CSV file.','CSVを解析しています。大容量ファイルでは少し時間がかかります。':'Reading CSV. Large files may take a moment.','CSVファイルを読み込み、検索用データを準備しています…':'Loading CSV and preparing search data…','検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。':'Search failed. Reload the page and open the CSV again.','GDHから機械情報CSVを取得しています…':'Retrieving the machine CSV from GDH…','GDH自動取得の接続先が未設定です。GDH内の追加画面として組み込み、検索フォームと出力アダプターを接続してください。ローカルでは「ローカルからデータ取得」をご利用ください。':'GDH retrieval is not configured. Connect the search form and export adapter, or use Load local data locally.','GDH連携アダプターがCSV Blobを返していません。':'The GDH adapter did not return a CSV Blob.','空のCSVファイルが返されました。':'An empty CSV file was returned.','GDHとの接続がタイムアウトしました。':'The connection to GDH timed out.','GDHからCSVデータを受け取れませんでした。':'No CSV data was received from GDH.','CSV取得中です。完了までお待ちください。':'CSV retrieval is in progress. Please wait.',
@@ -527,11 +572,12 @@ function highlight(value,query){const s=String(value??'').trim();const terms=(qu
  const escaped=escapeHTML(s);for(const term of terms){const i=escaped.toLowerCase().indexOf(escapeHTML(term).toLowerCase());if(i>=0)return escaped.slice(0,i)+'<mark>'+escaped.slice(i,i+escapeHTML(term).length)+'</mark>'+escaped.slice(i+escapeHTML(term).length);}
  return escaped||'—';
 }
-let fetchingFromGdh=false;
+let fetchingFromGdh=false,exportingResults=false,searchPending=false;
+function updateExportButton(){const button=$('exportResults');button.disabled=current.busy||!current.loaded||current.total===0||filtersDirty||searchPending||exportingResults;button.title=tr('検索条件を適用後、検索結果の全件・全列を出力します。');}
 function status(message,style='',target=fetchingFromGdh?'fetchStatus':'status'){if(style==='err'&&current.loaded&&(/CSV|GDH/.test(message)))dashboardFailure();const el=$(target);el.className='statusline show '+style;lastStatus={message,style,target};el.innerHTML=localizeMarkup(message);}
 function clearStatus(){lastStatus=null;for(const id of ['status','fetchStatus']){const el=$(id);el.className='statusline';el.textContent='';}}
-function setBusy(value){current.busy=value;if(typeof dashboardState!=='undefined')renderDashboardState();$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value||!current.loaded;}
-function requestSearch(page=1){if(!current.loaded || current.busy)return;const pending=pendingChoice();if(pending){status(escapeHTML(pending.label)+'は候補から選択してください。','err');pending.input.focus();return;}const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,duplicatesOnly:$('duplicatesOnly').checked,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
+function setBusy(value){current.busy=value;updateExportButton();if(typeof dashboardState!=='undefined')renderDashboardState();$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value||!current.loaded;}
+function requestSearch(page=1){if(!current.loaded || current.busy)return;const pending=pendingChoice();if(pending){status(escapeHTML(pending.label)+'は候補から選択してください。','err');pending.input.focus();return;}searchPending=true;updateExportButton();const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,duplicatesOnly:$('duplicatesOnly').checked,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
 function requestPage(page){if(!current.loaded || current.busy)return;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
 function loadFile(file){if(!file){setBusy(false);return;}if(!/\.csv$/i.test(file.name||'')){setBusy(false);status('CSV形式のファイルを指定してください。','err');return;}
  setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
@@ -549,7 +595,7 @@ function showDetail(record){lastDetailRecord=record;document.querySelector('.con
  $('detailBody').innerHTML=`<div class="detailtop">${duplicateBadge(record)}<span class="tag">${record.score==null?tr('原本データ'):record.score+'%'}</span><strong>${escapeHTML(title||'機械情報')}</strong><small>${record.ncRows>1?tr('同一NCシリアルがCSV内に'+record.ncRows+'行あります。 '):''}${record.multiColumns?.length?tr('カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。'):tr('表示内容は元CSVの値です。')}</small></div><div class="detailrows">${rows}</div>`;
  document.querySelectorAll('#resultsBody tr[data-index]').forEach(tr=>tr.classList.toggle('selected',Number(tr.dataset.index)===record.index));
 }
-function renderPage(m){filtersDirty=false;lastPageMessage=m;clearStatus();current.query=m.query||'';const summary=$('searchSummary');if(summary)summary.textContent=filterDescription()+'：'+recordCount(m.total);current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
+function renderPage(m){searchPending=false;filtersDirty=false;lastPageMessage=m;clearStatus();current.query=m.query||'';const summary=$('searchSummary');if(summary)summary.textContent=filterDescription()+'：'+recordCount(m.total);current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
  $('matchedCount').innerHTML=`${formatNum(m.total)}<span>${uiLanguage==='en'?'records':'件'}</span>`;$('resultTitle').textContent=recordCount(m.total);
  const tbody=$('resultsBody');
  if(!m.entries.length){tbody.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>一致する機械情報がありません</strong>入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。</div></td></tr>');}
@@ -562,7 +608,7 @@ function renderPage(m){filtersDirty=false;lastPageMessage=m;clearStatus();curren
  $('pageInfo').textContent=`${formatNum(start)}–${formatNum(end)} / ${formatNum(m.total)} ${uiLanguage==='en'?(m.total===1?'record':'records'):'件'}`;$('pageIndicator').textContent=`${m.page} / ${m.totalPages}`;
  $('firstPage').disabled=$('prevPage').disabled=m.page<=1;
  $('nextPage').disabled=$('lastPage').disabled=m.page>=m.totalPages;
- $('tableWrap').scrollTop=0;detailPlaceholder();
+ $('tableWrap').scrollTop=0;detailPlaceholder();updateExportButton();
 }
 worker.onmessage=event=>{
  const m=event.data;
@@ -573,11 +619,12 @@ worker.onmessage=event=>{
    status(`${formatNum(m.count)}件のCSV読込が完了しました。検索できます。`,'ok');fetchingFromGdh=false;setTimeout(()=>{if($('status').classList.contains('ok')||$('fetchStatus').classList.contains('ok'))clearStatus()},7000);
  }
  else if(m.type==='page')renderPage(m);
+ else if(m.type==='export-results'){exportingResults=false;const blob=new Blob([m.csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='GDH_search_results_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),20000);updateExportButton();}
  else if(m.type==='row'&&!dashboardState.active)showDetail(m);
  else if(m.type==='candidates')renderCandidates(m);
- else if(m.type==='error'){setBusy(false);status(escapeHTML(m.message),'err');fetchingFromGdh=false;}
+ else if(m.type==='error'){exportingResults=false;searchPending=false;setBusy(false);status(escapeHTML(m.message),'err');fetchingFromGdh=false;}
 };
-worker.onerror=()=>{setBusy(false);status('検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。','err');fetchingFromGdh=false;};
+worker.onerror=()=>{exportingResults=false;searchPending=false;setBusy(false);status('検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。','err');fetchingFromGdh=false;};
 let facetDefinitions=[],facetStates=new Map(),facetSequence=0;
 const searchFields=[
  {name:'工作機械シリアル番号',label:'機械シリアル',kind:'text',aliases:['機械シリアル番号','機械シリアル']},
@@ -602,7 +649,7 @@ function collectFilters(){
 }
 function activeFilterCount(){return collectFilters().filter(f=>f.values.length||f.queries.length||f.blank).length;}
 function filterDescription(){const count=activeFilterCount(),dup=$('duplicatesOnly').checked;return (count?tr(count+'項目の条件をANDで組み合わせ'):dup?'':tr('条件なし：すべての機械'))+(dup?(count?'・':'')+tr('重複ありのみ'):'');}
-function updateFacetCount(){filtersDirty=true;const n=activeFilterCount(),dup=$('duplicatesOnly').checked;$('facetCount').textContent=(n?tr(n+'項目を指定'):dup?'':tr('条件なし'))+(dup?(n?'・':'')+tr('重複のみ'):'');$('searchSummary').textContent=n||dup?tr('条件を変更しました。「この条件で検索」で反映します。'):tr('条件なし：すべての機械を表示');}
+function updateFacetCount(){filtersDirty=true;updateExportButton();const n=activeFilterCount(),dup=$('duplicatesOnly').checked;$('facetCount').textContent=(n?tr(n+'項目を指定'):dup?'':tr('条件なし'))+(dup?(n?'・':'')+tr('重複のみ'):'');$('searchSummary').textContent=n||dup?tr('条件を変更しました。「この条件で検索」で反映します。'):tr('条件なし：すべての機械を表示');}
 
 function pendingChoice(){return Array.from(facetStates.values()).find(f=>f.kind==='suggest'&&f.input.value.trim());}
 function requestCandidates(f){f.requestId=++facetSequence;worker.postMessage({type:'candidates',column:f.index,query:f.input?.value||'',requestId:f.requestId});}
@@ -694,6 +741,7 @@ $('fetchBtn').addEventListener('click',async()=>{
   loadFile(file);
  }catch(e){setBusy(false);status('GDH CSV取得に失敗しました：'+escapeHTML(e.message||String(e)),'err');fetchingFromGdh=false;}
 });
+$('exportResults').addEventListener('click',()=>{if($('exportResults').disabled)return;exportingResults=true;updateExportButton();worker.postMessage({type:'export-results'});});
 $('searchBtn').addEventListener('click',()=>requestSearch());
 $('keyword').addEventListener('keydown',e=>{if(e.key==='Enter')requestSearch();});
 $('resetBtn').addEventListener('click',()=>{clearFacetValues();$('keyword').value='';$('columnSelect').value='all';$('queryJoin').value='AND';document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;requestSearch();});
@@ -713,7 +761,7 @@ function renderMetadata(m){
 function applyLanguage(){
  const dirty=filtersDirty,savedStatus=lastStatus,detail=lastDetailRecord;
  document.documentElement.lang=uiLanguage;document.title=uiLanguage==='en'?'CNC Machine Viewer | G-DataHub':'CNC機械情報ビューア | G-DataHub';$('languageSelect').value=uiLanguage;
- const labels=[['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','CNC機械情報ビューア'],['#fetchBtn','GDHからデータ取得'],['#fileBtn','ローカルからデータ取得'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','データ取得日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.11.1 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
+ const labels=[['#exportResults','検索結果をCSV出力'],['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','CNC機械情報ビューア'],['#fetchBtn','GDHからデータ取得'],['#fileBtn','ローカルからデータ取得'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','データ取得日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.11.2 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
  for(const [selector,text] of labels)setUiLabel(document.querySelector(selector),text);
  const footer=document.querySelector('.footer>div:first-child');const tail=Array.from(footer.childNodes).find(n=>n.nodeType===3&&n.textContent.includes('｜'));if(tail)tail.textContent=' ｜ '+tr('CSVをGitHubや外部サービスに送信しません');
  const attrs=[['.nav','aria-label','メインメニュー'],['.intro','aria-label','ページ概要'],['.metrics','aria-label','データ概要'],['.searchpanel','aria-label','検索条件'],['#fetchBtn','title','GDH内の検索フォーム連携後に利用できます'],['#csvFile','aria-label','CSVファイル選択'],['#firstPage','aria-label','先頭ページ'],['#prevPage','aria-label','前ページ'],['#nextPage','aria-label','次ページ'],['#lastPage','aria-label','最終ページ']];for(const [selector,key,text] of attrs)document.querySelector(selector)?.setAttribute(key,tr(text));
@@ -733,7 +781,7 @@ function applyLanguage(){
  if(lastMetadata)renderMetadata(lastMetadata);else{$('totalCount').innerHTML='—<span>'+(uiLanguage==='en'?'records':'件')+'</span>';$('matchedCount').innerHTML=$('totalCount').innerHTML;setUiLabel($('loadTime'),'未取得');setUiLabel($('filename'),'未読み込み');setUiLabel($('fileMeta'),'GDH接続設定、またはCSVの選択が必要です');}
  if(lastPageMessage){renderPage(lastPageMessage);if(detail)showDetail(detail);}
  else{const empty=$('resultsBody');empty.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr>');const awaiting=document.querySelector('.search-await');if(awaiting)awaiting.textContent=tr('「GDHからデータ取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。');detailPlaceholder();$('pageInfo').textContent=recordCount(0);updateFacetCount();}
- filtersDirty=dirty;if(dirty)$('searchSummary').textContent=tr('条件を変更しました。「この条件で検索」で反映します。');
+ filtersDirty=dirty;updateExportButton();if(dirty)$('searchSummary').textContent=tr('条件を変更しました。「この条件で検索」で反映します。');
  if(savedStatus)status(savedStatus.message,savedStatus.style,savedStatus.target);
 }
 function setUiLanguage(language){if(!['ja','en'].includes(language))return;uiLanguage=language;applyLanguage();try{const url=new URL(location.href);url.searchParams.set('lang',language);history.replaceState(null,'',url);}catch{}window.dispatchEvent(new CustomEvent('gdh-language-changed',{detail:language}));}

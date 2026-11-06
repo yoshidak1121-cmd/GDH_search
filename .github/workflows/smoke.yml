@@ -10,6 +10,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: node tests/export-results.cjs
+      - run: node tests/english-headers.cjs
       - run: node tests/smoke.cjs
       - run: node tests/countries.cjs
 
@@ -28,4 +30,8 @@ jobs:
       - run: node tests/facets.cjs
       - run: node tests/duplicates.cjs
       - run: node tests/i18n.cjs
+      - run: node tests/english-headers-browser.cjs
+      - run: node tests/export-results-browser.cjs
+      - run: node tests/dashboard.cjs
+      - run: node tests/gdh-export.cjs
       - run: node tests/extension.cjs

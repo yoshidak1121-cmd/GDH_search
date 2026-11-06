@@ -45,9 +45,9 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>lastPrompt),'CSVファイルを出力します。よろしいですか？');
  for(const mode of ['html','zip','empty','forbidden','redirect']){
   await page.evaluate(mode=>document.getElementById('frmmain').elements.mockMode.value=mode,mode);
-  await frame.locator('#fetchBtn').click();await frame.locator('#status.err').waitFor();assert.equal(await frame.locator('#resultTitle').textContent(),'3件');
+  await frame.locator('#fetchBtn').click();await frame.locator('#fetchStatus.err').waitFor();assert.equal(await frame.locator('#resultTitle').textContent(),'3件');
  }
- const beforeCancel=requests.length;await page.evaluate(()=>{confirmAnswer=false;});await frame.locator('#fetchBtn').click();await frame.locator('#status.err').waitFor();assert.equal(requests.length,beforeCancel);
+ const beforeCancel=requests.length;await page.evaluate(()=>{confirmAnswer=false;});await frame.locator('#fetchBtn').click();await frame.locator('#fetchStatus.err').waitFor();assert.equal(requests.length,beforeCancel);
  await page.evaluate(()=>{confirmAnswer=true;document.getElementById('frmmain').elements.mockMode.value='slow';});
  const busy=await page.evaluate(async()=>{const p=adapter();let blocked=false;try{await adapter();}catch{blocked=true;}await p;return blocked;});assert.equal(busy,true);
  const timeout=await page.evaluate(async()=>{try{await createGdhCsvExportAdapter({timeoutMs:20})();return false;}catch(e){return e.message.includes('タイムアウト');}});assert.equal(timeout,true);
