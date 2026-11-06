@@ -1,0 +1,35 @@
+name: Package release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag
+        required: true
+        default: v1.11.2
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check version and draft destination
+        run: |
+          test "$RELEASE_TAG" = "v$(node -p "require('./extension/manifest.json').version")"
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+      - run: node tests/english-headers.cjs
+      - run: node tests/export-results.cjs
+      - run: node tests/smoke.cjs
+      - run: python3 scripts/package-release.py
+      - name: Verify checksums
+        working-directory: dist/release
+        run: sha256sum -c "SHA256SUMS_${RELEASE_TAG}.txt"
+      - name: Attach packages to draft
+        run: gh release upload "$RELEASE_TAG" dist/release/*.zip "dist/release/SHA256SUMS_${RELEASE_TAG}.txt" --clobber
