@@ -13,6 +13,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   duplicateRows[0][duplicateHeader.indexOf('機械メーカー')]='TEST MANUFACTURER, EXTRA MAKER';duplicateRows[0][duplicateHeader.indexOf('工作機械シリアル番号')]='S-001, S-009';
   const quote=v=>/[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
   const duplicateFixture=Buffer.from([duplicateHeader,...duplicateRows].map(r=>r.map(quote).join(',')).join('\n'));
+  const englishFixture=Buffer.from(require('./english-headers.json').join(',')+'\n'+fixtureLines.slice(1).join('\n'));
   let mode='csv';const posts=[];const blocked=[];
   const hostHtml=`<!doctype html><html><head><base href="${origin}/cncservice/"></head><body><h1>テスト専用GDH機械情報画面</h1><form id="frmmain" method="post"><input name="dataview_cd" value="synthetic-view"><input name="iszip" value="original"><input name="pdf" value="original"><input name="downloadToken" value="original"><input name="form_submit" value="true"><input name="keyword" value="first"><input name="keyword" value="second"></form></body></html>`;
   await context.route(/^https?:/,async route=>{
@@ -21,7 +22,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
    if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list_csv'){
     posts.push({method:req.method(),fields:new URLSearchParams(req.postData())});
     if(mode==='error')return route.fulfill({status:403,body:'Forbidden'});
-    return route.fulfill({contentType:'text/csv',headers:{'Content-Disposition':'attachment; filename="synthetic.csv"'},body:mode==='large'?largeFixture:mode==='duplicate'?duplicateFixture:fixture});
+    return route.fulfill({contentType:'text/csv',headers:{'Content-Disposition':'attachment; filename="synthetic.csv"'},body:mode==='large'?largeFixture:mode==='duplicate'?duplicateFixture:mode==='english'?englishFixture:fixture});
    }
    blocked.push(req.url());return route.abort();
   });
@@ -34,6 +35,8 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   const downloadPromise=page.waitForEvent('download');await frame.locator('#fetchBtn').click();
   const download=await downloadPromise;assert.equal(download.suggestedFilename(),'synthetic.csv');assert.deepEqual(fs.readFileSync(await download.path()),fixture);
   await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  mode='english';const englishDownload=page.waitForEvent('download');await frame.locator('#fetchBtn').click();assert.deepEqual(fs.readFileSync(await (await englishDownload).path()),englishFixture);await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  const resultsDownload=page.waitForEvent('download');await frame.locator('#exportResults').click();const resultsFile=await resultsDownload;assert.match(resultsFile.suggestedFilename(),/^GDH_search_results_.*\.csv$/);const resultsCSV=fs.readFileSync(await resultsFile.path(),'utf8');assert.ok(resultsCSV.startsWith('\ufeff'+require('./english-headers.json').map(h=>'"'+h+'"').join(',')));assert.match(resultsCSV,/"X1001"/);mode='csv';
   await frame.locator('#dashboardTab').click();await frame.locator('#dashBody tr[data-dashboard-index]').first().waitFor();
   assert.equal(await frame.locator('#dashBody tr[data-dashboard-index]').count(),3);
   await frame.locator('#dashBody tr[data-dashboard-index]').first().getByRole('button').click();await frame.locator('.detailrow').first().waitFor();assert.equal(await frame.locator('.detailrow').count(),33);
