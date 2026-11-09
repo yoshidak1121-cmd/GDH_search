@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.11.2
+# CNC機械情報ビューア / GDH拡張検索 v1.12.0
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -70,11 +70,17 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 棒・カードは適用済み条件から該当条件を置換します。値なし対象の置換で対象範囲が広がる場合は、選択前の棒件数と選択後件数が異なります（依頼者確認済み）。検証・性能条件と未確認事項は [DASHBOARD_VALIDATION.md](DASHBOARD_VALIDATION.md) に記録しています。関連試験は `node tests/dashboard.cjs`、性能試験も行う場合は `DASHBOARD_PERF=1` を指定します。開発用Playwrightのみを使用し、アプリの依存追加はありません。
 
+## 営業ダッシュボード
+
+ダッシュボード内の「営業」から、同じ読込CSVの顧客未登録レコードを確認できます。輸入国・機械メーカー・機械モデルを選び「適用」で反映すると、エンドユーザーが空欄の元行を20行ずつ表示します。候補と条件は前後空白を除いたセル全体の完全一致です。件数は元CSVの行数で、機械台数ではありません。検索・既存ダッシュボードとは条件とページを分離し、行から既存の全列詳細を開けます。
+
+現行33項目には輸出日・設置国・設置先会社・代理店の輸出入区分の確定した対応がありません。有効契約の判定仕様も未確認のため、要求された6つの営業KPIと月別輸出・設置国ランキングは理由付きで「算定不可」と表示します。機械出荷日や輸入国で代用せず、契約終了日などは原データの表示に限定します。自社販社限定の認可、本番GDH接続は未検証です。画面は自社全体の輸出実績や全フォロー対象を網羅しません。項目対応と確認記録は [DASHBOARD_VALIDATION.md](DASHBOARD_VALIDATION.md) を参照してください。
+
 ## 導入
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.11.2)の `GDH_Search_Setup_v1.11.2.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.12.0)の `GDH_Search_Setup_v1.12.0.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを選ぶと、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。`START_HERE.txt` が入口です。日本語は `README_ja.txt`、英語は `README_en.txt` を参照してください。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
@@ -311,7 +317,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.11.2)から **GDH_Search_Extension_v1.11.2.zip** をダウンロードします。
+1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.12.0)から **GDH_Search_Extension_v1.12.0.zip** をダウンロードします。
 2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
 3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
 4. **「開発者モード」または「デベロッパー モード」**をオンにします。

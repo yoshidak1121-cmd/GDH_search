@@ -39,13 +39,31 @@ load('機械メーカー,輸入国\nMaker,CN');r=dashboard();assert.equal(r.repe
 assert.ok(r.groups[3].every(g=>g.count>0));
 const many=Array.from({length:41},(_,i)=>['NC'+i,'M','X','CN','EU']);load(csv(header,expand(many)));r=dashboard();assert.equal(r.entries.length,20);const page=send({type:'dashboard-page',datasetVersion:version,requestId:++requestId,page:3})[0];assert.equal(page.entries[0].index,40);assert.equal(page.entries.length,1);
 const qualityRows=[['01','Maker A','X','CN','EU'],['01','Maker A','X','CN','EU'],['02','Ｍａｋｅｒ Ａ','X','CN','EU']];load(csv(header,expand(qualityRows)));r=dashboard();assert.equal(r.exactCount,2);assert.equal(r.variantCount,3);assert.equal(dashboard({quality:'exact'}).total,2);assert.equal(dashboard({quality:'variant'}).total,3);assert.equal(dashboard({1:choice('Maker A')}).total,2);for(const key of [1,3,4,5,6])assert.equal(r.groups[key].reduce((n,g)=>n+g.count,0),3);
-console.log('PASS Worker: AC-01/03–09/11/12, full cells, strict IDs, stable source indexes, fixed Other set, independent pages');
+// Sales deliberately counts source rows, never inferred machines or active contracts.
+function sales(filters={},sort='original',page=1){return send({type:'sales',datasetVersion:version,requestId:++requestId,filters,sort,page}).find(m=>m.type==='sales');}
+const salesHeads=['工作機械シリアル番号','機械メーカー','工作機械モデル番号','輸入国','エンドユーザー','契約番号','契約終了日'];
+const salesRows=[['001','Maker','Model','CN','','C-1','not-a-date'],['001','Maker','Model','CN','EU','C-1','2026-12-01'],['1','Maker','Model','US','NULL','',''],['Ａ','Other','Other','US','0','',''],['a','Maker, Other','Model','CN','STOCK','',''],['A','<img src=x onerror=alert(1)>','Other','US',' ','C-1, C-2','2026-12-01, 2027-01-01'],['S-1, S-2','Maker','Model','CN','','','']];
+load(csv(salesHeads,salesRows));r=sales();assert.equal(r.loaded,7);assert.equal(r.filtered,7);assert.equal(r.total,3);assert.deepEqual(r.entries.map(e=>e.index),[0,5,6]);assert.equal(r.reviewAvailable,true);assert(!('exportCount' in r));
+assert.equal(sales({maker:choice('Maker')}).total,2);assert.equal(sales({country:choice('US')}).total,1);assert.equal(sales({model:choice('Other')}).total,1);assert.equal(sales({country:choice('absent')}).total,0);
+assert.equal(sales({maker:choice('Other')}).filtered,1); // Whole cell equality, no inferred multi-value pairs.
+assert.deepEqual(sales({},'serial').entries.map(e=>e.index),[0,5,6]);
+assert.equal(send({type:'sales-row',datasetVersion:version,requestId:42,index:5})[0].values[0],'A');
+for(const type of ['sales','sales-page','sales-row'])assert.equal(send({type,datasetVersion:version-1,requestId:42,index:0,sort:'original'}).length,0);
+assert.equal(send({type:'sales',datasetVersion:version,requestId:42,filters:{exportDate:choice('2026-01-01')},sort:'original'})[0].type,'sales-error');
+load('機械メーカー,輸入国\nMaker,CN');r=sales();assert.equal(r.reviewAvailable,false);assert.equal(r.filtered,1);assert.equal(r.total,0);assert.equal(r.columns.endUser,-1);
+assert.equal(send({type:'sales',datasetVersion:version,requestId:42,filters:{model:choice('M')},sort:'original'})[0].type,'sales-error');
+const enSales=['Machine Tool Serial No.','Machinery Vendor','Machine Tool Model No.','Import Country','End user','Contract No.','Contract End Date'];
+load(csv(enSales.slice().reverse(),salesRows.map(row=>row.slice().reverse())));r=sales();assert.equal(r.total,3);assert.equal(r.columns.serial,6);const salesVersion=version;
+assert(load('機械メーカー,輸入国\nM').some(m=>m.type==='error'));assert.equal(version,salesVersion);assert.equal(sales().total,3);
+load(csv(salesHeads,Array.from({length:41},(_,i)=>['S'+i,'M','X','CN','','',''])));r=sales();assert.equal(r.entries.length,20);r=send({type:'sales-page',datasetVersion:version,requestId:++requestId,page:3})[0];assert.equal(r.entries[0].index,40);assert.equal(r.entries.length,1);assert.equal(dashboard().total,41);assert.equal(sales({},'serial',1).page,1);
+console.log('PASS Worker: existing dashboard plus sales row scope, blank vs missing columns, strict whole-cell filters, source indexes, unsupported filters, English/reordered headers, rollback, paging and stale generations');
 
 async function browserTests(){
  const {chromium}=require('playwright');const b=await chromium.launch({headless:true,...(process.env.TEST_BROWSER_CHANNEL?{channel:process.env.TEST_BROWSER_CHANNEL}:{})});
  try{
-  const p=await b.newPage({viewport:{width:1440,height:1100}}),errors=[],requests=[];p.on('pageerror',e=>errors.push(e.message));p.on('request',req=>{if(/^https?:/.test(req.url()))requests.push(req.url());});
-  await p.goto(pathToFileURL(path.join(root,'index.html')).href);
+  const viewerUrl=process.env.TEST_VIEWER_URL||pathToFileURL(path.join(root,'index.html')).href;
+  const p=await b.newPage({viewport:{width:1440,height:1100}}),errors=[],requests=[];p.on('pageerror',e=>errors.push(e.message));p.on('request',req=>{if(/^https?:/.test(req.url())&&req.url()!==viewerUrl)requests.push(req.url());});
+  await p.goto(viewerUrl);
   const upload=async value=>{await p.locator('#csvFile').setInputFiles({name:'synthetic-dashboard.csv',mimeType:'text/csv',buffer:Buffer.from(value)});await p.waitForFunction(()=>!current.busy&&!dashboardState.busy);};
   const total=async n=>p.waitForFunction(n=>dashboardState.result?.total===n&&!dashboardState.busy,n);
   const clear=async()=>{await p.locator('#dashClear').click();await total(6);};
@@ -71,9 +89,44 @@ async function browserTests(){
   await upload(csv(header,expand(many)));await total(41);await p.locator('#dashNext').click();await p.waitForFunction(()=>dashboardState.result.page===2);assert.equal(await p.locator('#dashBody tr').count(),20);assert.equal(await p.locator('#dashBody tr').first().getAttribute('data-dashboard-index'),'20');await p.locator('#searchTab').click();assert.equal(await p.locator('#pageIndicator').textContent(),'1 / 3');await p.locator('#dashboardTab').click();assert.equal(await p.locator('#dashPage').textContent(),'2 / 3');
   await p.setViewportSize({width:320,height:844});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,JSON.stringify(await p.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&getComputedStyle(e).display!=='none').slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right]))));await p.locator('#dashboardTab').focus();await p.keyboard.press('ArrowLeft');assert.equal(await p.locator('#searchTab').getAttribute('aria-selected'),'true');await p.keyboard.press('ArrowRight');assert.equal(await p.locator('#dashboardTab').getAttribute('aria-selected'),'true');
   await p.locator('#languageSelect').selectOption('en');assert.equal(await p.locator('#dashPage').textContent(),'2 / 3');assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,JSON.stringify(await p.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&getComputedStyle(e).display!=='none').slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right]))));
+  // Sales uses the same Worker/detail, with independent applied filters and pages.
+  await p.setViewportSize({width:1440,height:1100});await p.locator('#languageSelect').selectOption('ja');
+  await p.locator('#qualityTab').focus();await p.keyboard.press('ArrowRight');assert.equal(await p.locator('#salesTab').getAttribute('aria-selected'),'true');
+  const salesTotal=async n=>p.waitForFunction(n=>salesState.result?.total===n&&!salesState.busy,n);
+  const salesUpload=async value=>{await upload(value);await p.waitForFunction(()=>!salesState.busy&&salesState.result?.datasetVersion===salesState.version);};
+  await salesTotal(0);assert.equal(await p.locator('#dashboardStandard').isVisible(),false);
+  await salesUpload(csv(salesHeads,salesRows));await salesTotal(3);
+  assert.equal(await p.locator('[data-sales-kpi=unavailable]').count(),6);assert.equal(await p.locator('#salesCharts h3').count(),2);assert.equal(await p.locator('#salesCharts .dash-bar').count(),0);
+  assert.match(await p.locator('#salesNote').innerText(),/認可/);assert.match(await p.locator('#salesRule').innerText(),/全フォロー対象を網羅しません/);
+  for(const id of ['from','to','country','dealer'])assert.equal(await p.locator('#salesUnavailable-'+id).isDisabled(),true);
+  assert.match(await p.locator('#salesApplied').innerText(),/輸出期間による絞込なし/);assert.equal(await p.locator('#salesBody img').count(),0);assert.match(await p.locator('#salesBody').innerText(),/<img src=x/);
+  await p.locator('#salesFilter-country').selectOption(JSON.stringify(choice('US')));assert.equal(await p.evaluate(()=>salesState.result.total),3);assert.match(await p.locator('#salesState').innerText(),/未適用/);
+  await p.locator('#salesApply').focus();await p.keyboard.press('Enter');await salesTotal(1);assert.equal(await p.evaluate(()=>salesState.result.filtered),3);
+  await p.locator('#salesBody tr').focus();await p.keyboard.press('Enter');await p.waitForSelector('.detailrow');assert.equal(await p.locator('.detailrow').count(),7);assert.match(await p.locator('#detailBody').innerText(),/C-1\s+C-2/);
+  const salesDetail=await p.evaluate(()=>({type:'sales-row',datasetVersion:salesState.version,requestId:salesState.rowRequestId,index:5,values:salesState.result.entries[0].values,headings:salesState.result.headings}));
+  await p.locator('#statsTab').click();await p.waitForFunction(()=>!dashboardState.busy);await p.evaluate(m=>worker.dispatchEvent(new MessageEvent('message',{data:m})),salesDetail);assert.equal(await p.locator('.detailrow').count(),0);
+  await p.locator('#salesTab').click();assert.equal(await p.locator('#salesFilter-country').inputValue(),JSON.stringify(choice('US')));assert.equal(await p.evaluate(()=>salesState.result.total),1);
+  const oldSales=await p.evaluate(()=>salesState.result);
+  await p.evaluate(m=>{worker.dispatchEvent(new MessageEvent('message',{data:{...m,datasetVersion:m.datasetVersion-1,total:999}}));worker.dispatchEvent(new MessageEvent('message',{data:{...m,requestId:m.requestId-1,total:888}}));},oldSales);assert.equal(await p.evaluate(()=>salesState.result.total),1);
+  await salesUpload('機械メーカー,輸入国\nM');assert.equal(await p.evaluate(()=>salesState.result.total),1);assert.match(await p.locator('#salesState').innerText(),/前回データ表示中/);
+  await p.locator('#languageSelect').selectOption('en');assert.match(await p.locator('#salesState').innerText(),/Showing previous data/);assert.match(await p.locator('#salesApplied').innerText(),/Import country: US/);assert.match(await p.locator('#salesCards').innerText(),/Unavailable/);assert.equal(await p.locator('#searchTab').innerText(),'Machine search');assert.equal(await p.locator('#dashboardTab').innerText(),'Dashboard');
+  await p.locator('#fetchBtn').click();await p.waitForFunction(()=>!current.busy);assert.match(await p.locator('#salesState').innerText(),/Showing previous data/);
+  await salesUpload('機械メーカー,輸入国\nMaker,CN');assert.equal(await p.locator('#salesFilter-model').isDisabled(),true,JSON.stringify(await p.evaluate(()=>({version:salesState.version,result:salesState.result,control:$('salesFilter-model').outerHTML}))));assert.equal(await p.locator('#salesSort option[value=serial]').evaluate(e=>e.disabled),true);assert.match(await p.locator('#salesBody').innerText(),/end user column missing/);assert.equal(await p.locator('#salesPageInfo').innerText(),'—');
+  await salesUpload(csv(enSales,salesRows));await salesTotal(3);assert.equal(await p.locator('#salesFilter-country').inputValue(),'{"kind":"all"}');
+  await p.evaluate(()=>requestSales({exportDate:{kind:'value',value:'2026-01-01'}}));await p.waitForFunction(()=>!salesState.busy);assert.match(await p.locator('#salesState').innerText(),/Calculation failed/);assert.equal(await p.evaluate(()=>salesState.result.total),3);
+  await p.locator('#salesClear').click();await salesTotal(3);assert.match(await p.locator('#salesState').innerText(),/Calculation complete/);
+  assert.equal(await p.locator('#salesFilter-model option').filter({hasText:'absent'}).count(),0);
+  await p.locator('#salesFilter-maker').selectOption(JSON.stringify(choice('Other')));await p.locator('#salesApply').click();await salesTotal(0);assert.equal(await p.locator('#salesBody tr[data-sales-index]').count(),0);assert.match(await p.locator('#salesCards').innerText(),/Unavailable/);
+  await salesUpload(csv(salesHeads,Array.from({length:41},(_,i)=>['S'+i,'M','X','CN','','',''])));await salesTotal(41);await p.locator('#salesNext').click();await p.waitForFunction(()=>salesState.result.page===2&&!salesState.busy);assert.equal(await p.locator('#salesBody tr').count(),20);assert.equal(await p.locator('#salesBody tr').first().getAttribute('data-sales-index'),'20');
+  await p.locator('#salesSort').selectOption('serial');await p.waitForFunction(()=>salesState.result.sort==='serial'&&!salesState.busy);assert.equal(await p.locator('#salesPage').innerText(),'1 / 3');
+  await p.locator('#salesNext').click();await p.waitForFunction(()=>salesState.result.page===2&&!salesState.busy);await p.locator('#searchTab').click();assert.equal(await p.locator('#pageIndicator').innerText(),'1 / 3');await p.locator('#dashboardTab').click();assert.equal(await p.locator('#salesPage').innerText(),'2 / 3');
+  for(const lang of ['ja','en']){await p.locator('#languageSelect').selectOption(lang);await p.setViewportSize({width:320,height:844});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await p.locator('#salesPage').innerText(),'2 / 3');}
+  await p.locator('#salesTab').focus();await p.keyboard.press('Home');assert.equal(await p.locator('#statsTab').getAttribute('aria-selected'),'true');await p.keyboard.press('End');assert.equal(await p.locator('#salesTab').getAttribute('aria-selected'),'true');
+  console.log('PASS sales UI: unavailable KPIs/graphs, supported filters, source detail, independent tabs/pages, stale responses, failed retrieval/load/calculation, missing columns, English headers, ja/en, 320px, keyboard and escaped CSV');
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   console.log('PASS UI: AC-02/07–14, draft/apply/drilldown, detail, tabs/pages, stale replies, load/retrieval rollback, ja/en, 320px, keyboard, escaped CSV, no HTTP');
   if(process.env.DASHBOARD_PERF){
+   await p.locator('#qualityTab').click();await p.waitForFunction(()=>!dashboardState.busy);
    await p.setViewportSize({width:1440,height:1100});
    // 200,000 x 33 columns, approximately 60 MB. IDs remain synthetic.
    const perfRows=Array.from({length:200000},(_,i)=>header.map(h=>h==='NCシリアル番号'?'SYN-'+String(i).padStart(6,'0'):h==='サービス拠点'?'Site '+i%12:h==='輸入国'?'Country '+i%9:h==='機械メーカー'?'Synthetic maker':h==='エンドユーザー'?(i%5?'Synthetic user':''):'TESTDATA'));

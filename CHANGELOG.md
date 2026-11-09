@@ -1,3 +1,14 @@
+## v1.12.0 — 2026-11-09 営業フォロー確認
+
+- ダッシュボードに「営業」を追加。輸入国・機械メーカー・機械モデルで絞り込み、エンドユーザーが空欄の元CSV行を20行ずつ確認できます。契約原文と既存の全列詳細、日英切替に対応します。
+- 件数は元レコード数です。輸出日・設置国・設置先会社・代理店区分・有効契約の仕様が不足しているため、6つの営業KPIと2つのグラフは理由付きの「算定不可」です。設置先未登録・契約終了予定のフォローと、自社販社限定の認可は未対応です。
+- 更新用：GDH_Search_Setup_v1.12.0.zip をすべて展開してInstall.batを実行。手動導入用はGDH_Search_Extension_v1.12.0.zip、ローカルCSV用はCNC_Machine_Viewer_v1.12.0.zipです。SHA256SUMS_v1.12.0.txtで照合できます。
+- 更新後はEdge／Chromeの拡張機能管理画面で再読み込みし、GDH画面も再読み込みしてください。
+- 合成データによる画面・Worker・既存検索・日英・320px表示と拡張機能ビルドを確認。本番GDH・実CSV・販社認可・大容量性能は今回未検証です。配布物に実CSVやreferenceは含めません。
+- リリース処理はmainのmanifestバージョン更新でテスト・ZIP生成・チェックサム照合後に公開します。手動実行は既存ドラフトへの添付のみです。
+
+English: Added a Sales tab to review source CSV rows with a blank end user, using import country, manufacturer and model filters. Counts are source rows, not exported machines. Export/installation KPIs and charts remain unavailable until their data definitions are confirmed. Company-specific authorization and production GDH have not been verified. Extract the setup ZIP, run Install.bat, reload the extension and then GDH.
+
 ## v1.11.2 — 2026-11-06
 
 - 検索結果をCSV出力するボタンを追加。全ページの一致行を現在の並び順で、元の全列・列名・値を保持してUTF-8 BOM付きCSVに出力。
