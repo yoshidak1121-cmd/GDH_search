@@ -1,29 +1,41 @@
 name: Package release
 on:
+  push:
+    branches: [main]
+    paths: [extension/manifest.json]
   workflow_dispatch:
     inputs:
       tag:
         description: Existing draft release tag
         required: true
-        default: v1.11.2
+        default: v1.12.0
 permissions:
   contents: write
+concurrency:
+  group: package-release
+  cancel-in-progress: false
 jobs:
   package:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      RELEASE_TAG: ${{ inputs.tag }}
+      REQUESTED_TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Check version and draft destination
+      - name: Resolve version
         run: |
-          test "$RELEASE_TAG" = "v$(node -p "require('./extension/manifest.json').version")"
-          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          version=$(node -p "require('./extension/manifest.json').version")
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          tag="v$version"
+          test -z "$REQUESTED_TAG" || test "$REQUESTED_TAG" = "$tag"
+          echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
       - run: node tests/english-headers.cjs
       - run: node tests/export-results.cjs
       - run: node tests/smoke.cjs
@@ -31,5 +43,21 @@ jobs:
       - name: Verify checksums
         working-directory: dist/release
         run: sha256sum -c "SHA256SUMS_${RELEASE_TAG}.txt"
+      - name: Prepare release notes
+        run: python3 -c "from pathlib import Path; Path('dist/release-notes.md').write_text(Path('CHANGELOG.md').read_text().split('\n## ', 1)[0] + '\n')"
+      - name: Create draft for a version update
+        if: github.event_name == 'push'
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "$RELEASE_TAG" --notes-file dist/release-notes.md --draft
+          fi
+      - name: Check draft destination and source commit
+        run: |
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          git fetch --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"
       - name: Attach packages to draft
         run: gh release upload "$RELEASE_TAG" dist/release/*.zip "dist/release/SHA256SUMS_${RELEASE_TAG}.txt" --clobber
+      - name: Publish version update
+        if: github.event_name == 'push'
+        run: gh release edit "$RELEASE_TAG" --draft=false --latest
