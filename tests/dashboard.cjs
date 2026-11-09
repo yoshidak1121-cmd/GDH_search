@@ -56,10 +56,34 @@ const enSales=['Machine Tool Serial No.','Machinery Vendor','Machine Tool Model 
 load(csv(enSales.slice().reverse(),salesRows.map(row=>row.slice().reverse())));r=sales();assert.equal(r.total,3);assert.equal(r.columns.serial,6);const salesVersion=version;
 assert(load('機械メーカー,輸入国\nM').some(m=>m.type==='error'));assert.equal(version,salesVersion);assert.equal(sales().total,3);
 load(csv(salesHeads,Array.from({length:41},(_,i)=>['S'+i,'M','X','CN','','',''])));r=sales();assert.equal(r.entries.length,20);r=send({type:'sales-page',datasetVersion:version,requestId:++requestId,page:3})[0];assert.equal(r.entries[0].index,40);assert.equal(r.entries.length,1);assert.equal(dashboard().total,41);assert.equal(sales({},'serial',1).page,1);
-console.log('PASS Worker: existing dashboard plus sales row scope, blank vs missing columns, strict whole-cell filters, source indexes, unsupported filters, English/reordered headers, rollback, paging and stale generations');
+const exportHeads=['契約開始日','機械出荷日','設置日','販売日','輸入国','輸出国','エンドユーザー','機械メーカー'];
+const jp='JP : Japan',us='US : United States of America (the)',bq='BQ : Bonaire, Sint Eustatius and Saba';
+const exportRows=[
+ ['2024-02-29','2025-01-01','2026-01-01','2027-01-01',jp+', '+us+', '+jp,bq+', '+jp,'','Maker'],
+ ['2025-02-29','2025/03/01','','',us,jp,'EU','Maker'],
+ ['invalid','','2026年04月02日','2027-01-01',bq,jp,'','Other'],
+ ['','','invalid','2027-05-03T23:30:00-12:00',jp,jp,'','Maker'],
+ ['2026-01-01 invalid','','','',jp,jp,'','Maker'],
+ ['','','','',jp,jp,'','Maker']
+];
+load(csv(exportHeads,exportRows));r=sales();
+assert.equal(r.loaded,6);assert.equal(r.filtered,6);assert.equal(r.noDate,2);
+assert.deepEqual(r.entries.map(e=>[e.date.value,e.date.source]),[[20240229,'contractStart'],[20260402,'installation'],[20270503,'sale'],[null,null],[null,null]]);
+assert.deepEqual(r.choices.country,[bq,jp,us].sort());
+assert.equal(r.groups.country.find(g=>g.value===jp).count,4);
+assert.equal(r.groups.exportCountry.find(g=>g.value===bq).count,1);
+assert.equal(r.groups.country.reduce((n,g)=>n+g.count,0),7);
+assert.equal(sales({country:choice(us)}).filtered,2);
+assert.deepEqual(sales({country:choice(us)}).entries.map(e=>e.index),[0]);
+assert.equal(sales({country:choice(us),maker:choice('Other')}).filtered,0);
+r=sales({from:'2025-03-01',to:'2025-03-01'});assert.equal(r.filtered,1);assert.equal(r.noDate,0);assert.equal(r.groups.year[0].value,'2025');
+assert.equal(sales({from:'2027-05-03',to:'2027-05-03'}).filtered,1);
+assert.equal(sales({from:'2025-02-29'})?.filtered,undefined);
+assert.deepEqual(sales().entries[0].values,exportRows[0]);
+console.log('PASS Worker: existing dashboard/search scope plus export date priority, invalid/undated rows, timezone independence, country splitting/deduplication, name commas, AND filters and unchanged source rows');
 
 async function browserTests(){
- const {chromium}=require('playwright');const b=await chromium.launch({headless:true,...(process.env.TEST_BROWSER_CHANNEL?{channel:process.env.TEST_BROWSER_CHANNEL}:{})});
+ const {chromium}=require('playwright');const b=await chromium.launch({headless:true,...(process.env.TEST_BROWSER_EXECUTABLE?{executablePath:process.env.TEST_BROWSER_EXECUTABLE}:process.env.TEST_BROWSER_CHANNEL?{channel:process.env.TEST_BROWSER_CHANNEL}:{})});
  try{
   const viewerUrl=process.env.TEST_VIEWER_URL||pathToFileURL(path.join(root,'index.html')).href;
   const p=await b.newPage({viewport:{width:1440,height:1100}}),errors=[],requests=[];p.on('pageerror',e=>errors.push(e.message));p.on('request',req=>{if(/^https?:/.test(req.url())&&req.url()!==viewerUrl)requests.push(req.url());});
@@ -80,7 +104,7 @@ async function browserTests(){
   await upload('NCシリアル番号,機械メーカー\nA');assert.equal(await p.evaluate(()=>dashboardState.result.total),1);assert.equal(await p.evaluate(()=>lastMetadata.loadedAt),state.loadedAt);assert.match(await p.locator('#dashState').innerText(),/前回データ表示中/);
   await p.locator('#languageSelect').selectOption('en');assert.match(await p.locator('#dashState').innerText(),/Showing previous data/);assert.match(await p.locator('#dashApplied').innerText(),/Recurring NC/);assert.equal(await p.locator('#dashRepeat').isChecked(),true);
   await p.evaluate(()=>window.GDH_CSV_EXPORT_ADAPTER=async()=>{throw Error('Synthetic failure');});await p.locator('#fetchBtn').click();await p.waitForFunction(()=>!current.busy);assert.match(await p.locator('#dashState').innerText(),/Showing previous data/);assert.equal(await p.evaluate(()=>dashboardState.result.total),1);
-  await p.locator('#languageSelect').selectOption('ja');await clear();await p.locator('#dashCountry').selectOption(JSON.stringify(choice('CN')));await p.locator('#dashMissing').selectOption('3');await p.locator('#dashApply').click();await total(0);assert.equal(await p.locator('.dash-bar').count(),0);assert.equal(await p.locator('#dashBody tr').count(),1);assert.match(await p.locator('#dashCards').innerText(),/—/);
+  await p.locator('#languageSelect').selectOption('ja');await clear();await p.locator('#dashCountry').selectOption(JSON.stringify(choice('CN')));await p.locator('#dashMissing').selectOption('3');await p.locator('#dashApply').click();await total(0);assert.equal(await p.locator('#dashCharts .dash-bar').count(),0);assert.equal(await p.locator('#dashBody tr').count(),1);assert.match(await p.locator('#dashCards').innerText(),/—/);
   await upload(csv(header,expand(special)));await total(8);const otherButton=p.locator('.dash-chart').first().getByRole('button',{name:/その他（2分類）/});await otherButton.focus();await p.keyboard.press('Enter');await total(2);assert.match(await p.locator('#dashApplied').innerText(),/その他（2分類）/);assert.equal(await p.locator('#dashService option:checked').textContent(),'その他（2分類）');
   await p.locator('#dashBody tr').nth(1).getByRole('button').click();await p.waitForSelector('.detailrow');assert.match(await p.locator('#detailBody').innerText(),/NC-1/);
   // Literal CSV HTML is displayed as text and never executes.
@@ -96,12 +120,13 @@ async function browserTests(){
   const salesUpload=async value=>{await upload(value);await p.waitForFunction(()=>!salesState.busy&&salesState.result?.datasetVersion===salesState.version);};
   await salesTotal(0);assert.equal(await p.locator('#dashboardStandard').isVisible(),false);
   await salesUpload(csv(salesHeads,salesRows));await salesTotal(3);
-  assert.equal(await p.locator('[data-sales-kpi=unavailable]').count(),6);assert.equal(await p.locator('#salesCharts h3').count(),2);assert.equal(await p.locator('#salesCharts .dash-bar').count(),0);
+  assert.equal(await p.locator('[data-sales-kpi=unavailable]').count(),6);assert.equal(await p.locator('#salesCharts h3').count(),4);
+  assert.equal(await p.locator('#salesTab').innerText(),'輸出');assert.equal(await p.locator('#salesTitle').innerText(),'輸出ダッシュボード');
   assert.match(await p.locator('#salesNote').innerText(),/認可/);assert.match(await p.locator('#salesRule').innerText(),/全フォロー対象を網羅しません/);
-  for(const id of ['from','to','country','dealer'])assert.equal(await p.locator('#salesUnavailable-'+id).isDisabled(),true);
-  assert.match(await p.locator('#salesApplied').innerText(),/輸出期間による絞込なし/);assert.equal(await p.locator('#salesBody img').count(),0);assert.match(await p.locator('#salesBody').innerText(),/<img src=x/);
-  await p.locator('#salesFilter-country').selectOption(JSON.stringify(choice('US')));assert.equal(await p.evaluate(()=>salesState.result.total),3);assert.match(await p.locator('#salesState').innerText(),/未適用/);
-  await p.locator('#salesApply').focus();await p.keyboard.press('Enter');await salesTotal(1);assert.equal(await p.evaluate(()=>salesState.result.filtered),3);
+  for(const id of ['country','dealer'])assert.equal(await p.locator('#salesUnavailable-'+id).isDisabled(),true);
+  for(const id of ['from','to'])assert.equal(await p.locator('#salesDate-'+id).isDisabled(),false);
+  assert.match(await p.locator('#salesApplied').innerText(),/指定なし/);assert.equal(await p.locator('#salesBody img').count(),0);assert.match(await p.locator('#salesBody').innerText(),/<img src=x/);
+  await p.locator('#salesFilter-country').selectOption(JSON.stringify(choice('US')));await salesTotal(1);assert.equal(await p.evaluate(()=>salesState.result.filtered),3);
   await p.locator('#salesBody tr').focus();await p.keyboard.press('Enter');await p.waitForSelector('.detailrow');assert.equal(await p.locator('.detailrow').count(),7);assert.match(await p.locator('#detailBody').innerText(),/C-1\s+C-2/);
   const salesDetail=await p.evaluate(()=>({type:'sales-row',datasetVersion:salesState.version,requestId:salesState.rowRequestId,index:5,values:salesState.result.entries[0].values,headings:salesState.result.headings}));
   await p.locator('#statsTab').click();await p.waitForFunction(()=>!dashboardState.busy);await p.evaluate(m=>worker.dispatchEvent(new MessageEvent('message',{data:m})),salesDetail);assert.equal(await p.locator('.detailrow').count(),0);
@@ -122,7 +147,21 @@ async function browserTests(){
   await p.locator('#salesNext').click();await p.waitForFunction(()=>salesState.result.page===2&&!salesState.busy);await p.locator('#searchTab').click();assert.equal(await p.locator('#pageIndicator').innerText(),'1 / 3');await p.locator('#dashboardTab').click();assert.equal(await p.locator('#salesPage').innerText(),'2 / 3');
   for(const lang of ['ja','en']){await p.locator('#languageSelect').selectOption(lang);await p.setViewportSize({width:320,height:844});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await p.locator('#salesPage').innerText(),'2 / 3');}
   await p.locator('#salesTab').focus();await p.keyboard.press('Home');assert.equal(await p.locator('#statsTab').getAttribute('aria-selected'),'true');await p.keyboard.press('End');assert.equal(await p.locator('#salesTab').getAttribute('aria-selected'),'true');
-  console.log('PASS sales UI: unavailable KPIs/graphs, supported filters, source detail, independent tabs/pages, stale responses, failed retrieval/load/calculation, missing columns, English headers, ja/en, 320px, keyboard and escaped CSV');
+  await p.locator('#languageSelect').selectOption('ja');await p.setViewportSize({width:1440,height:1000});
+  await salesUpload(csv(exportHeads,exportRows));await salesTotal(5);
+  assert.equal(await p.locator('#salesFilter-country option').count(),5);
+  assert.match(await p.locator('#salesFilter-country option').first().innerText(),/すべての国/);
+  assert.match(await p.locator('#salesRule').innerText(),/合計は対象レコード数を超える/);
+  assert.match(await p.locator('#salesBody tr').first().innerText(),/2024-02-29/);
+  await p.locator('#salesFilter-country').selectOption(JSON.stringify(choice(us)));await salesTotal(1);
+  assert.equal(await p.evaluate(()=>salesState.result.filtered),2);
+  assert.match(await p.locator('#salesSummary').innerText(),/2/);
+  assert.match(await p.locator('#salesCharts').innerText(),/2025-03/);
+  assert.equal(await p.locator('#salesBody tr[data-sales-index]').count(),1);
+  await p.locator('#salesDate-from').fill('2025-03-01');await p.locator('#salesDate-to').fill('2025-03-01');await p.locator('#salesApply').click();await salesTotal(0);
+  assert.equal(await p.evaluate(()=>salesState.result.filtered),1);
+  await p.locator('#salesClear').click();await salesTotal(5);assert.equal(await p.evaluate(()=>salesState.result.loaded),6);
+  console.log('PASS export UI: renamed title/menu, split country options, immediate KPI/chart/list filtering, date range, deduplicated rows, reset, existing tabs/search/load and source details');
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   console.log('PASS UI: AC-02/07–14, draft/apply/drilldown, detail, tabs/pages, stale replies, load/retrieval rollback, ja/en, 320px, keyboard, escaped CSV, no HTTP');
   if(process.env.DASHBOARD_PERF){
@@ -145,3 +184,4 @@ async function browserTests(){
  }finally{await b.close();}
 }
 browserTests().catch(e=>{console.error(e);process.exitCode=1;});
+
