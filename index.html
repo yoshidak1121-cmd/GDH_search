@@ -82,7 +82,7 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
 
  <div class="view-tabs" role="tablist" aria-label="表示 / View"><button id="searchTab" class="btn" role="tab" aria-selected="true" aria-controls="searchView">機械情報検索</button><button id="dashboardTab" class="btn" role="tab" aria-selected="false" aria-controls="dashboard" tabindex="-1">登録機械情報・確認対象</button></div>
  <section id="dashboard" role="tabpanel" aria-labelledby="dashboardTab" hidden>
-  <div class="view-tabs" id="dashboardModes" role="tablist" aria-label="ダッシュボード"><button id="statsTab" type="button" class="btn" role="tab" aria-selected="true" aria-controls="dashboardStandard">機械統計</button><button id="qualityTab" type="button" class="btn" role="tab" aria-selected="false" aria-controls="dashboardStandard" tabindex="-1">データ保守</button><button id="salesTab" type="button" class="btn" role="tab" aria-selected="false" aria-controls="salesView" tabindex="-1">営業</button></div><div id="dashboardStandard" role="tabpanel" aria-labelledby="statsTab"><h2 id="dashTitle"></h2><div id="dashMeta" class="dash-meta"></div><p id="dashNote" class="dash-note"></p>
+  <div class="view-tabs" id="dashboardModes" role="tablist" aria-label="ダッシュボード"><button id="statsTab" type="button" class="btn" role="tab" aria-selected="true" aria-controls="dashboardStandard">機械統計</button><button id="qualityTab" type="button" class="btn" role="tab" aria-selected="false" aria-controls="dashboardStandard" tabindex="-1">データ保守</button><button id="salesTab" type="button" class="btn" role="tab" aria-selected="false" aria-controls="salesView" tabindex="-1">輸出</button></div><div id="dashboardStandard" role="tabpanel" aria-labelledby="statsTab"><h2 id="dashTitle"></h2><div id="dashMeta" class="dash-meta"></div><p id="dashNote" class="dash-note"></p>
   <form id="dashFilters" class="panel dash-filters"><label><span id="dashServiceLabel"></span><select id="dashService"></select></label><label><span id="dashCountryLabel"></span><select id="dashCountry"></select></label><label><span id="dashMakerLabel"></span><select id="dashMaker"></select></label><label><span id="dashExportLabel"></span><select id="dashExport"></select></label><label><span id="dashEndUserLabel"></span><select id="dashEndUser"></select></label><label><span id="dashContractLabel"></span><select id="dashContract"></select></label><label data-quality-control><span id="dashMissingLabel"></span><select id="dashMissing"></select></label><label data-quality-control class="dash-check"><input type="checkbox" id="dashRepeat"><span id="dashRepeatLabel"></span></label><button id="dashApply" type="submit" class="btn primary"></button><button id="dashClear" type="button" class="btn"></button></form>
   <div id="dashState" class="dash-state" role="status" aria-live="polite"></div><div id="dashApplied" class="dash-state"></div>
   <div id="qualitySummary" class="dash-cards"></div><p id="qualityRule" class="dash-note" hidden></p><div id="dashCards" class="dash-cards"></div><div id="dashCharts" class="dash-charts"></div>
@@ -461,12 +461,29 @@ function outputDashboardPage(m){
 
 // Sales reviews source rows only. No export/installation/company-role mapping is inferred.
 let salesCache=null,salesIndexes=[],salesResult=null;
-const salesFields={serial:['工作機械シリアル番号','機械シリアル番号','機械シリアル'],maker:['機械メーカー','機械メーカ'],model:['工作機械モデル番号'],country:['輸入国'],endUser:['エンドユーザー','エンドユーザ'],contract:['契約番号'],contractType:['契約タイプ'],contractStart:['契約開始日'],contractEnd:['契約終了日'],contractMonths:['契約期間（月）']};
+const salesFields={serial:['工作機械シリアル番号','機械シリアル番号','機械シリアル'],maker:['機械メーカー','機械メーカ'],model:['工作機械モデル番号'],country:['輸入国'],exportCountry:['輸出国'],shipment:['機械出荷日'],installation:['設置日'],sale:['販売日'],endUser:['エンドユーザー','エンドユーザ'],contract:['契約番号'],contractType:['契約タイプ'],contractStart:['契約開始日'],contractEnd:['契約終了日'],contractMonths:['契約期間（月）']};
 const salesFilterKeys=['country','maker','model'];
+// Split only before the next country code; commas within names remain intact.
+function salesCountries(value){
+ const seen=new Set();return cap(value).split(/,\s*(?=[A-Z]{2}\s*:)/).map(cap).filter(value=>{
+  if(!value)return false;const code=value.match(/^([A-Z]{2})\s*:/)?.[1]||value;
+  if(seen.has(code))return false;seen.add(code);return true;
+ });
+}
+function salesDate(row,columns){
+ for(const key of ['contractStart','shipment','installation','sale']){
+  const text=columns[key]>=0?cap(row[columns[key]]).normalize('NFKC'):'';
+  const valid=/^\d{4}[-/年]\d{1,2}[-/月]\d{1,2}日?(?:[ T](?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/.test(text);
+  const value=valid?dateValue(text):null;
+  if(value!==null)return {value,source:key};
+ }
+ return {value:null,source:null};
+}
+function salesDateText(value){const s=String(value).padStart(8,'0');return s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6);}
 function salesData(){
  if(salesCache)return salesCache;
  const columns=Object.fromEntries(Object.entries(salesFields).map(([key,names])=>[key,headings.findIndex(h=>names.includes(h))]));
- const choices={};for(const key of salesFilterKeys){const set=new Set();if(columns[key]>=0)for(const row of rows){const value=cap(row[columns[key]]);if(value)set.add(value);}choices[key]=[...set].sort();}
+ const choices={};for(const key of salesFilterKeys){const set=new Set();if(columns[key]>=0)for(const row of rows){const value=cap(row[columns[key]]);if(key==='country')salesCountries(value).forEach(country=>set.add(country));else if(value)set.add(value);}choices[key]=[...set].sort();}
  return salesCache={columns,choices};
 }
 function runSales(m){
@@ -474,22 +491,30 @@ function runSales(m){
  const {columns,choices}=salesData(),filters=m.filters||{};
  // Unsupported filters must never be silently ignored.
  for(const [key,f] of Object.entries(filters)){
+  if(['from','to'].includes(key)){if(typeof f!=='string'||f&&dateValue(f)===null)throw Error('Invalid representative date');continue;}
   if(!salesFilterKeys.includes(key)||!f||!['all','blank','value'].includes(f.kind)||f.kind==='value'&&typeof f.value!=='string'||f.kind!=='all'&&columns[key]<0)throw Error('Sales filter unavailable');
  }
  if(!['original','serial'].includes(m.sort)||m.sort==='serial'&&columns.serial<0)throw Error('Sales sort unavailable');
- const result=[];let filtered=0;
+ if(filters.from&&filters.to&&dateValue(filters.from)>dateValue(filters.to))throw Error('Invalid date range');
+ const result=[],groups={year:new Map(),month:new Map(),country:new Map(),exportCountry:new Map()};let filtered=0,noDate=0;
+ const add=(group,value)=>group.set(value,(group.get(value)||0)+1);
  for(let i=0;i<rows.length;i++){
-  const row=rows[i];if(!salesFilterKeys.every(key=>{const f=filters[key],value=cap(row[columns[key]]);return !f||f.kind==='all'||(f.kind==='blank'?value==='':value===f.value);}))continue;
-  filtered++;if(columns.endUser>=0&&!cap(row[columns.endUser]))result.push(i);
+  const row=rows[i];if(!salesFilterKeys.every(key=>{const f=filters[key],value=cap(row[columns[key]]);return !f||f.kind==='all'||(f.kind==='blank'?value==='':key==='country'?salesCountries(value).includes(f.value):value===f.value);}))continue;
+  const date=salesDate(row,columns);
+  if((filters.from||filters.to)&&(date.value===null||filters.from&&date.value<dateValue(filters.from)||filters.to&&date.value>dateValue(filters.to)))continue;
+  filtered++;
+  if(date.value===null)noDate++;else{const text=salesDateText(date.value);add(groups.year,text.slice(0,4));add(groups.month,text.slice(0,7));}
+  for(const key of ['country','exportCountry'])if(columns[key]>=0)for(const country of salesCountries(row[columns[key]]))add(groups[key],country);
+  if(columns.endUser>=0&&!cap(row[columns.endUser]))result.push(i);
  }
  if(m.sort==='serial')result.sort((a,b)=>{const x=cap(rows[a][columns.serial]),y=cap(rows[b][columns.serial]);return x<y?-1:x>y?1:a-b;});
- salesIndexes=result;salesResult={columns,choices,headings,filters,sort:m.sort,loaded:rows.length,filtered,total:result.length,reviewAvailable:columns.endUser>=0};
+ salesIndexes=result;salesResult={columns,choices,headings,filters,sort:m.sort,loaded:rows.length,filtered,noDate,groups:Object.fromEntries(Object.entries(groups).map(([key,map])=>[key,[...map].sort(([a],[b])=>a.localeCompare(b)).map(([value,count])=>({value,count}))])),total:result.length,reviewAvailable:columns.endUser>=0};
  outputSalesPage(m);
 }
 function outputSalesPage(m){
  if(m.datasetVersion!==datasetVersion||!salesResult)return;
  const totalPages=Math.max(1,Math.ceil(salesIndexes.length/20)),page=Math.max(1,Math.min(totalPages,m.page||1));
- const entries=salesIndexes.slice((page-1)*20,page*20).map(index=>({index,values:rows[index]}));
+ const entries=salesIndexes.slice((page-1)*20,page*20).map(index=>({index,values:rows[index],date:salesDate(rows[index],salesResult.columns)}));
  postMessage({type:'sales',...salesResult,datasetVersion,requestId:m.requestId,page,totalPages,entries});
 }
 
@@ -884,7 +909,7 @@ function renderDashboard(){
  const a=dashboardState,r=a.result;
  $('searchTab').textContent=d('機械情報検索','Machine search');$('dashboardTab').textContent=d('ダッシュボード','Dashboard');
  $('dashboardModes').setAttribute('aria-label',d('ダッシュボード','Dashboard'));
- $('salesTab').textContent=d('営業','Sales');$('statsTab').textContent=d('機械統計','Machine statistics');$('qualityTab').textContent=d('データ保守','Data maintenance');
+ $('salesTab').textContent=d('輸出','Export');$('statsTab').textContent=d('機械統計','Machine statistics');$('qualityTab').textContent=d('データ保守','Data maintenance');
  for(const [id,mode] of [['statsTab','stats'],['qualityTab','quality'],['salesTab','sales']]){$(id).setAttribute('aria-selected',String(a.mode===mode));$(id).tabIndex=a.mode===mode?0:-1;}
  $('dashboardStandard').hidden=a.mode==='sales';$('salesView').hidden=a.mode!=='sales';$('dashboardStandard').setAttribute('aria-labelledby',a.mode==='quality'?'qualityTab':'statsTab');
  if(a.mode==='sales'){renderSales();return;}
@@ -938,11 +963,11 @@ worker.addEventListener('message',event=>{
  else if(m.type==='dashboard-row'&&a.active&&a.mode!=='sales'&&!a.busy&&!current.busy&&m.datasetVersion===a.version&&m.requestId===a.rowRequestId){showDetail(m);$('detailBody').scrollIntoView({block:'nearest'});}
  else if(m.type==='dashboard-error'&&m.datasetVersion===a.version&&m.requestId===a.requestId){a.busy=false;a.draft=dashClone(a.applied);renderDashboard();$('dashState').textContent=d('集計失敗。前回の集計を表示しています。','Calculation failed. Showing previous result.');}
 });
-function salesDescription(filters){return Object.entries(salesFilterNames).filter(([key])=>filters[key]&&filters[key].kind!=='all').map(([key,name])=>tr(name)+': '+dashChoiceLabel(filters[key])).join(' / ')||d('指定なし（輸出期間による絞込なし）','None (no export period filter)');}
+function salesDescription(filters){return Object.entries(salesFilterNames).filter(([key])=>filters[key]&&filters[key].kind!=='all').map(([key,name])=>tr(name)+': '+dashChoiceLabel(filters[key])).join(' / ')||d('指定なし','None');}
 function renderSalesState(){
  const a=salesState,r=a.result;
- $('salesState').textContent=a.failure==='load'?d('再取得/読込失敗、前回データ表示中','Retrieval/load failed. Showing previous data.'):a.failure==='calculation'?d('集計失敗。前回の集計を表示しています。','Calculation failed. Showing previous result.'):a.busy?d('集計中','Calculating'):!a.version?d('CSVを読み込んでください。','Load a CSV to begin.'):a.dirty?d('条件変更未適用。「適用」で反映します。','Changes not applied. Select Apply.'):!r?d('営業タブを開くと集計します。','Open Sales to calculate.'):!r.reviewAvailable?d('判定不可：エンドユーザー列がありません。','Review unavailable: end user column missing.'):!r.total?d('判定可能な条件に該当するレコードは0件です。','No records match the supported review condition.'):d('集計完了（判定可能な条件のみ）','Calculation complete (supported condition only)');
- $('salesApplied').textContent=d('適用済み条件：','Applied filters: ')+salesDescription(a.applied);
+ $('salesState').textContent=a.failure==='load'?d('再取得/読込失敗、前回データ表示中','Retrieval/load failed. Showing previous data.'):a.failure==='calculation'?d('集計失敗。前回の集計を表示しています。','Calculation failed. Showing previous result.'):a.busy?d('集計中','Calculating'):!a.version?d('CSVを読み込んでください。','Load a CSV to begin.'):a.dirty?d('条件変更未適用。「適用」で反映します。','Changes not applied. Select Apply.'):!r?d('輸出タブを開くと集計します。','Open Export to calculate.'):!r.reviewAvailable?d('判定不可：エンドユーザー列がありません。','Review unavailable: end user column missing.'):!r.total?d('判定可能な条件に該当するレコードは0件です。','No records match the supported review condition.'):d('集計完了（判定可能な条件のみ）','Calculation complete (supported condition only)');
+ $('salesApplied').textContent=d('適用済み条件：','Applied filters: ')+salesDescription(a.applied)+(a.applied.from||a.applied.to?' / '+d('代表日付：','Representative date: ')+(a.applied.from||'…')+' ～ '+(a.applied.to||'…'):'');
  $('salesView').setAttribute('aria-busy',String(a.busy));
  for(const el of $('salesFilters').querySelectorAll('button,input,select'))el.disabled=!a.version||a.busy||current.busy||el.dataset.unavailable==='true';
  $('salesSort').disabled=!a.version||a.busy||current.busy;$('salesSort').options[1].disabled=!!r&&r.columns.serial<0;
@@ -956,24 +981,27 @@ function requestSales(filters=salesState.draft,page=1,focusList=false,pageOnly=f
 }
 function renderSales(){
  const a=salesState,r=a.result;
- $('salesTitle').textContent=d('営業ダッシュボード','Sales dashboard');
+ $('salesTitle').textContent=d('輸出ダッシュボード','Export dashboard');
  $('salesMeta').textContent=d('対象：読込CSVの範囲 | 元データ更新日時：不明','Scope: loaded CSV only | Source data updated: unknown')+(lastMetadata?' | '+lastMetadata.fileName+' | '+d('読込日時：','Loaded: ')+new Date(lastMetadata.loadedAt).toLocaleString(uiLanguage==='en'?'en-US':'ja-JP',{timeZoneName:'short'}):'')+(r?' | '+d('読込：','Loaded: ')+formatNum(r.loaded)+d('行 / 条件一致：',' rows / Filtered: ')+formatNum(r.filtered)+d('行',' rows'):'');
  $('salesNote').textContent=d('読込CSVの範囲のみ。自社販社限定の認可は検証できません。販社フィルタは権限制御になりません。輸出実績・自社全体の実績を表すものではありません。','Loaded CSV only. Company-specific authorization cannot be verified; a distributor filter is not access control. This is not a complete export or company performance report.');
  $('salesAvailable').replaceChildren();
  for(const [key,name] of Object.entries(salesFilterNames)){
   const label=document.createElement('label'),span=document.createElement('span'),select=document.createElement('select');span.textContent=tr(name);select.id='salesFilter-'+key;
   const choices=[{kind:'all'},{kind:'blank'},...(r?.choices[key]||[]).map(value=>({kind:'value',value}))];
-  for(const choice of choices){const op=document.createElement('option');op.value=JSON.stringify(choice);op.textContent=dashChoiceLabel(choice);select.appendChild(op);}
+  for(const choice of choices){const op=document.createElement('option');op.value=JSON.stringify(choice);op.textContent=key==='country'&&choice.kind==='all'?d('すべての国','All countries'):dashChoiceLabel(choice);select.appendChild(op);}
   select.value=JSON.stringify(a.draft[key]||{kind:'all'});select.dataset.unavailable=String(!!r&&r.columns[key]<0);
-  select.onchange=()=>{a.draft[key]=JSON.parse(select.value);a.dirty=true;renderSalesState();};label.append(span,select);
+  select.onchange=()=>{a.draft[key]=JSON.parse(select.value);a.dirty=true;renderSalesState();if(key==='country')requestSales();};label.append(span,select);
   if(r&&r.columns[key]<0){const small=document.createElement('small');small.textContent=d('取得不可：対応する列がありません。','Unavailable: column missing.');label.appendChild(small);}$('salesAvailable').appendChild(label);
  }
  $('salesUnavailable').replaceChildren();
- for(const [id,ja,en,type] of [['from','輸出開始日','Export start date','date'],['to','輸出終了日','Export end date','date'],['country','設置国','Installation country','text'],['dealer','輸出側機械代理店','Export-side machine dealer','text']]){
+ for(const [key,ja,en] of [['from','代表日付（開始）','Representative date (from)'],['to','代表日付（終了）','Representative date (to)']]){
+  const label=document.createElement('label'),span=document.createElement('span'),input=document.createElement('input');span.textContent=d(ja,en);input.id='salesDate-'+key;input.type='date';input.value=a.draft[key]||'';input.onchange=()=>{a.draft[key]=input.value;a.dirty=true;renderSalesState();};label.append(span,input);$('salesAvailable').appendChild(label);
+ }
+ for(const [id,ja,en,type] of [['country','設置国','Installation country','text'],['dealer','輸出側機械代理店','Export-side machine dealer','text']]){
   const label=document.createElement('label'),span=document.createElement('span'),input=document.createElement('input'),small=document.createElement('small');span.textContent=d(ja,en);input.id='salesUnavailable-'+id;input.type=type;input.dataset.unavailable='true';input.disabled=true;
   small.textContent=d('取得不可：現行33項目に対応する定義がありません。','Unavailable: no confirmed mapping in the 33 fields.');label.append(span,input,small);$('salesUnavailable').appendChild(label);
  }
- for(const [id,text] of Object.entries({salesApply:d('適用','Apply'),salesClear:d('解除','Clear'),salesListTitle:d('営業フォロー対象一覧（元レコード）','Sales follow-up (source records)'),salesSortLabel:d('並び順','Sort'),salesPrev:d('前ページ','Previous page'),salesNext:d('次ページ','Next page')}))$(id).textContent=text;
+ for(const [id,text] of Object.entries({salesApply:d('適用','Apply'),salesClear:d('解除','Clear'),salesListTitle:d('輸出フォロー対象一覧（元レコード）','Export follow-up (source records)'),salesSortLabel:d('並び順','Sort'),salesPrev:d('前ページ','Previous page'),salesNext:d('次ページ','Next page')}))$(id).textContent=text;
  $('salesSort').options[0].textContent=d('CSV元順','CSV order');$('salesSort').options[1].textContent=d('機械シリアル昇順','Machine serial ascending');$('salesSort').value=a.sort;
  const exportReason=d('輸出日・輸出対象の定義が未確認。機械出荷日で代用しません。','Export date and scope are unconfirmed. Shipment date is not a substitute.');
  const installationReason=d('設置先会社の対応列がありません。住所IDだけでは判定できません。','No installation company column; an address ID alone is insufficient.');
@@ -983,23 +1011,27 @@ function renderSales(){
   const box=document.createElement('div');box.className='panel dash-card';box.dataset.salesKpi='unavailable';const label=document.createElement('span'),value=document.createElement('strong'),note=document.createElement('small');label.textContent=d(ja,en);value.textContent=d('算定不可','Unavailable');note.textContent=reason;box.append(label,value,note);$('salesCards').appendChild(box);
  }
  $('salesCharts').replaceChildren();
- for(const [ja,en,reason] of [['月別輸出台数','Monthly exported machines',exportReason],['国別設置台数ランキング','Installation country ranking',d('設置国の対応列がありません。輸入国で代用しません。','No installation country column. Import country is not a substitute.')]]){
-  const box=document.createElement('section');box.className='panel dash-chart';const h=document.createElement('h3'),p=document.createElement('p');h.textContent=d(ja,en);p.textContent=d('算定不可：','Unavailable: ')+reason;box.append(h,p);$('salesCharts').appendChild(box);
+ for(const [key,ja,en] of [['year','年別レコード数（代表日付）','Records by year (representative date)'],['month','月別レコード数（代表日付）','Records by month (representative date)'],['country','輸入国別レコード数','Records by import country'],['exportCountry','輸出国別レコード数','Records by export country']]){
+  const box=document.createElement('section');box.className='panel dash-chart';const h=document.createElement('h3');h.textContent=d(ja,en);box.appendChild(h);
+  const groups=r?.groups[key]||[],items=['year','month'].includes(key)?[...groups,{value:d('日付なし','No date'),count:r?.noDate||0}]:groups;
+  for(const group of items){const bar=document.createElement('div');bar.className='dash-bar';const text=document.createElement('span'),fill=document.createElement('i');text.textContent=group.value+' — '+formatNum(group.count);fill.style.width=(r?.filtered?group.count/r.filtered*100:0)+'%';bar.append(text,fill);box.appendChild(bar);}
+  if(!r||!items.length){const p=document.createElement('p');p.textContent=d('対象データなし／列なし','No records / column missing');box.appendChild(p);}
+  $('salesCharts').appendChild(box);
  }
- $('salesRule').textContent=d('一覧は判定可能な「エンドユーザーが空欄」の元CSV行のみです。設置先会社未登録・契約終了予定は未対応で、全フォロー対象を網羅しません。件数は行数で、輸出機械台数ではありません。列不足は未登録と見なしません。複数値を位置で対応付けず、行の統合や日付による有効契約判定は行いません。候補・条件は前後空白を除いたセル全体の完全一致です。','The list includes only source CSV rows with a blank end user. Missing installation companies and expiring contracts are unsupported, so this is not a complete follow-up list. Counts are rows, not exported machines. Missing columns do not mean unregistered data. Multi-values are not paired, rows are not merged and dates do not establish active contracts. Filters match whole trimmed cells exactly.');
+ $('salesRule').textContent=d('一覧は判定可能な「エンドユーザーが空欄」の元CSV行のみです。設置先会社未登録・契約終了予定は未対応で、全フォロー対象を網羅しません。件数は行数で、輸出機械台数ではありません。列不足は未登録と見なしません。複数値を位置で対応付けず、行の統合や日付による有効契約判定は行いません。代表日付は契約開始日→機械出荷日→設置日→販売日の最初の有効日です。日付なしは別集計し、期間指定時は除外します。国は国コード単位で分割し、国別グラフの合計は対象レコード数を超える場合があります。その他の条件はセル全体の完全一致です。','The list includes only source CSV rows with a blank end user. Missing installation companies and expiring contracts are unsupported, so this is not a complete follow-up list. Counts are rows, not exported machines. Missing columns do not mean unregistered data. Multi-values are not paired, rows are not merged and dates do not establish active contracts. Representative dates use the first valid contract start, shipment, installation or sale date. Undated rows are grouped separately and excluded by date ranges. Countries are split by code; country chart totals may exceed the filtered row count. Other filters match whole trimmed cells.');
  $('salesSummary').replaceChildren();
- for(const [label,n,button] of [[d('条件一致レコード数','Filtered source records'),r?.filtered,false],[d('顧客未登録レコード数（判定可能分）','Blank end user records (supported scope)'),r?.reviewAvailable?r.total:null,true]]){
+ for(const [label,n,button] of [[d('読込レコード数','Loaded source records'),r?.loaded,false],[d('日付なし','No date'),r?.noDate,false],[d('条件一致レコード数','Filtered source records'),r?.filtered,false],[d('顧客未登録レコード数（判定可能分）','Blank end user records (supported scope)'),r?.reviewAvailable?r.total:null,true]]){
   const box=document.createElement(button?'button':'div');box.className='panel dash-card';if(button){box.type='button';box.onclick=()=>{if(!a.busy&&!current.busy){$('salesList').focus();$('salesList').scrollIntoView({block:'start'});}};}
   const title=document.createElement('span'),value=document.createElement('strong');title.textContent=label;value.textContent=n==null?'—':formatNum(n);box.append(title,value);$('salesSummary').appendChild(box);
  }
  const unavailable=d('取得不可','Unavailable'),blank=d('未登録','Unregistered');
  const cell=(entry,key)=>r.columns[key]<0?unavailable:capSales(entry.values[r.columns[key]])||blank;
- const headingsList=[tr('工作機械シリアル番号'),tr('機械メーカー'),tr('工作機械モデル番号'),d('輸出日','Export date'),tr('輸入国'),d('設置国','Installation country'),d('輸入代理店','Import dealer'),d('設置先会社','Installation company'),tr('エンドユーザー'),d('契約情報（原文）','Contract data (source)'),d('確認事項','Review fields'),d('詳細','Details')];
+ const headingsList=[tr('工作機械シリアル番号'),tr('機械メーカー'),tr('工作機械モデル番号'),d('代表日付','Representative date'),tr('輸入国'),d('設置国','Installation country'),d('輸入代理店','Import dealer'),d('設置先会社','Installation company'),tr('エンドユーザー'),d('契約情報（原文）','Contract data (source)'),d('確認事項','Review fields'),d('詳細','Details')];
  $('salesHead').innerHTML='<tr>'+headingsList.map(v=>'<th scope="col">'+escapeHTML(v)+'</th>').join('')+'</tr>';$('salesBody').replaceChildren();
  for(const entry of r?.entries||[]){
   const row=document.createElement('tr');row.dataset.salesIndex=entry.index;row.tabIndex=0;
   const contract=[['contract','契約番号'],['contractType','契約タイプ'],['contractStart','契約開始日'],['contractEnd','契約終了日'],['contractMonths','契約期間（月）']].map(([key,name])=>tr(name)+': '+cell(entry,key)).join('\n');
-  for(const value of [cell(entry,'serial'),cell(entry,'maker'),cell(entry,'model'),unavailable,cell(entry,'country'),unavailable,unavailable,unavailable,cell(entry,'endUser'),contract,d('顧客未登録（元行のエンドユーザー空欄）','End user unregistered (blank in source row)')]){const td=document.createElement('td');td.textContent=value;row.appendChild(td);}
+  for(const value of [cell(entry,'serial'),cell(entry,'maker'),cell(entry,'model'),entry.date?.value==null?d('日付なし','No date'):String(entry.date.value).padStart(8,'0').replace(/^(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3'),cell(entry,'country'),unavailable,unavailable,unavailable,cell(entry,'endUser'),contract,d('顧客未登録（元行のエンドユーザー空欄）','End user unregistered (blank in source row)')]){const td=document.createElement('td');td.textContent=value;row.appendChild(td);}
   const td=document.createElement('td'),button=document.createElement('button');button.type='button';button.className='btn sm';button.textContent=d('開く','Open');td.appendChild(button);row.appendChild(td);
   const select=()=>{if(a.busy||current.busy)return;a.rowRequestId++;worker.postMessage({type:'sales-row',datasetVersion:a.version,requestId:a.rowRequestId,index:entry.index});};row.onclick=select;row.onkeydown=e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select();}};$('salesBody').appendChild(row);
  }
@@ -1026,3 +1058,4 @@ applyLanguage();
 </script>
 </body>
 </html>
+
