@@ -44,7 +44,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await frame.locator('#dashBody tr[data-dashboard-index]').first().getByRole('button').click();await frame.locator('.detailrow').first().waitFor();assert.equal(await frame.locator('.detailrow').count(),33);
   await frame.locator('[data-view=search]').click();
   await frame.locator('#languageSelect').selectOption('en');await frame.locator('#resultTitle').filter({hasText:'3 records'}).waitFor();await page.getByRole('button',{name:'Close search',exact:true}).waitFor();assert.match(await frame.locator('#fetchBtn').textContent(),/Get data from GDH/);
-  await frame.locator('#languageSelect').selectOption('ja');await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.getByRole('button',{name:'拡張検索を閉じる',exact:true}).waitFor();
+  await frame.locator('#languageSelect').selectOption('ja');await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.getByRole('button',{name:'拡張ツールを閉じる',exact:true}).waitFor();
   assert.deepEqual(posts[0].fields.getAll('keyword'),['first','second']);assert.equal(posts[0].fields.get('iszip'),'false');assert.equal(posts[0].method,'POST');
   const serial=frame.locator('.facet-card[data-field="NCシリアル番号"]');
   await serial.getByRole('searchbox').fill('X1001');await serial.getByRole('button',{name:'入力語をOR条件に追加'}).click();await serial.getByRole('searchbox').fill('X1003');await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'2件'}).waitFor();
@@ -58,7 +58,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await maker.getByRole('combobox').fill('EXTRA MAKER');await maker.getByRole('option',{name:'EXTRA MAKER（1件）',exact:true}).click();await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'1件'}).waitFor();
   await frame.locator('#advancedToggle').check();const machineSerial=frame.locator('.facet-card[data-field="工作機械シリアル番号"]');await machineSerial.getByRole('searchbox').fill('S-009');await machineSerial.getByLabel('機械シリアルの一致方法').selectOption('exact');await frame.locator('#searchBtn').click();await frame.locator('#resultTitle').filter({hasText:'1件'}).waitFor();assert.equal(await frame.locator('#resultsBody .duplicate-badge').textContent(),'重複あり');
   await frame.locator('tr[data-index]').click();await frame.locator('#detailBody .duplicate-badge').waitFor();await frame.locator('#closeDetail').click();
-  await page.getByRole('button',{name:'拡張検索を閉じる'}).click();assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);
+  await page.getByRole('button',{name:'拡張ツールを閉じる'}).click();assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);
   await page.locator('#gdh-search-extension-button').click();await frame.locator('#fetchBtn').waitFor();assert.equal(await frame.locator('#filename').textContent(),'未読み込み');
   // A host-page message cannot impersonate the extension iframe.
   const countBefore=posts.length;await page.evaluate(()=>{const u=new URL(document.querySelector('#gdh-search-extension-panel iframe').src);window.postMessage({type:'GDH_SEARCH_EXPORT',channel:new URLSearchParams(u.hash.slice(1)).get('channel'),requestId:'forged'},location.origin);});
@@ -72,7 +72,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   const largeFile=await largeDownload;assert.equal(fs.statSync(await largeFile.path()).size,largeFixture.length);
   await frame.locator('#resultTitle').filter({hasText:'192,836件'}).waitFor({timeout:120000});
   if(process.env.TEST_SCREENSHOT)await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});
-  await page.getByRole('button',{name:'拡張検索を閉じる'}).click();
+  await page.getByRole('button',{name:'拡張ツールを閉じる'}).click();
   assert.equal(dialogs[0],'CSVファイルを出力します。よろしいですか？');assert.deepEqual(errors,[]);
   // A different site does not receive the GDH button.
   await page.goto('https://example.com/').catch(()=>{});assert.equal(await page.locator('#gdh-search-extension-button').count(),0);
