@@ -38,3 +38,12 @@ jobs:
       - run: node tests/gdh-export.cjs
       - run: node tests/extension.cjs
       - run: node tests/getdata-live.cjs
+
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Windows setup and updater
+        shell: powershell
+        run: ./tests/setup.ps1
