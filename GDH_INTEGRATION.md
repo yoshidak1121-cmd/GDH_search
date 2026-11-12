@@ -1,5 +1,7 @@
 # GDH追加画面とCSV自動取得（本番未接続）
 
+> テーブル管理画面の内部RPC `getData` に関する観測仕様と16テーブルの項目一覧は、[reference/GDATAHUB_DATA_ACCESS_GUIDE.md](reference/GDATAHUB_DATA_ACCESS_GUIDE.md) および [reference/ZALS_TABLE_COLUMNS.md](reference/ZALS_TABLE_COLUMNS.md) を参照。**以下のCSV出力連携とは別方式で、直接呼び出しは未検証です。**
+
 v1.3.0ではChrome / Edgeの拡張機能としてページ内へ追加する配布形式も提供します。この形式ではGDH本体にファイルを設置する必要はありません。導入は `EXTENSION_INSTALL.md` を参照してください。以下はGDH本体への直接組み込み形式の手順を含みます。
 
 現行GDHの画面上で以下を手動実施するとCSVが取得できると伺っています。
