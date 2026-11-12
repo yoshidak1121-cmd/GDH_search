@@ -20,12 +20,12 @@ $release.assets[0].browser_download_url='https://example.com/setup.zip'
 MustFail { Get-GdhReleasePlan $release }
 $release.assets[0].browser_download_url=$url+'GDH_Search_Setup_v1.0.0.zip'
 $release.prerelease=$true;MustFail { Get-GdhReleasePlan $release };$release.prerelease=$false
-$work=Join-Path ([IO.Path]::GetTempPath()) ('GDH-Setup-Test-'+[guid]::NewGuid().ToString('N'))
+$testRoot=Join-Path ([IO.Path]::GetTempPath()) ('GDH-Setup-Test-'+[guid]::NewGuid().ToString('N'))
 $previousLocal=$env:LOCALAPPDATA
 try {
- New-Item -ItemType Directory -Path $work | Out-Null
- $env:LOCALAPPDATA=Join-Path $work 'Local'
- $fixture=Join-Path $work 'Package'
+ New-Item -ItemType Directory -Path $testRoot | Out-Null
+ $env:LOCALAPPDATA=Join-Path $testRoot 'Local'
+ $fixture=Join-Path $testRoot 'Package'
  $extension=Join-Path $fixture 'GDH_Search_Extension'
  New-Item -ItemType Directory -Path $extension -Force | Out-Null
  foreach ($name in @('Setup.ps1','Browser.ps1','Update.bat','Update.ps1')) { Copy-Item -LiteralPath (Join-Path $root "installer\$name") -Destination $fixture }
@@ -54,10 +54,10 @@ try {
  Assert ($LASTEXITCODE -ne 0) 'Unrelated target rejected'
  Assert ((Get-Content -LiteralPath (Join-Path $target 'manifest.json') -Raw | ConvertFrom-Json).name -eq 'Unrelated extension') 'Unrelated target not replaced'
  Add-Type -AssemblyName System.IO.Compression.FileSystem
- $zipSource=Join-Path $work 'ZipSource';$zipRoot=Join-Path $zipSource 'GDH_Search_Setup'
+ $zipSource=Join-Path $testRoot 'ZipSource';$zipRoot=Join-Path $zipSource 'GDH_Search_Setup'
  New-Item -ItemType Directory -Path $zipRoot -Force | Out-Null
  Set-Content -LiteralPath (Join-Path $zipRoot 'synthetic.txt') -Value 'fixture'
- $zip=Join-Path $work 'GDH_Search_Setup_v1.0.0.zip'
+ $zip=Join-Path $testRoot 'GDH_Search_Setup_v1.0.0.zip'
  [IO.Compression.ZipFile]::CreateFromDirectory($zipSource,$zip)
  $checksum=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash+'  GDH_Search_Setup_v1.0.0.zip'
  Test-GdhPackage $zip $checksum 'GDH_Search_Setup_v1.0.0.zip'
@@ -68,5 +68,23 @@ try {
  $null=$archive.CreateEntry('GDH_Search_Setup/../escape.txt');$archive.Dispose()
  $checksum=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash+'  GDH_Search_Setup_v1.0.0.zip'
  MustFail { Test-GdhPackage $zip $checksum 'GDH_Search_Setup_v1.0.0.zip' }
+ # Run the complete updater with synthetic downloads and a stubbed setup process.
+ Remove-Item -LiteralPath $zip
+ $zipExtension=Join-Path $zipRoot 'GDH_Search_Extension';New-Item -ItemType Directory -Path $zipExtension | Out-Null
+ @{name='GDH 機械情報 拡張検索';version='1.0.0'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $zipExtension 'manifest.json') -Encoding UTF8
+ Set-Content -LiteralPath (Join-Path $zipRoot 'Setup.ps1') -Value '# synthetic only'
+ [IO.Compression.ZipFile]::CreateFromDirectory($zipSource,$zip)
+ $script:fixtureZip=$zip
+ $script:fixtureHash=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash+'  GDH_Search_Setup_v1.0.0.zip'
+ @{name='GDH 機械情報 拡張検索';version='0.9.0'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $target 'manifest.json') -Encoding UTF8
+ $script:setupCalls=0
+ function Invoke-RestMethod { param($Uri,$TimeoutSec,$Headers);Assert ($Uri -eq 'https://api.github.com/repos/yoshidak1121-cmd/GDH_search/releases/latest') 'Pinned release source';return $script:release }
+ function Invoke-WebRequest { param([switch]$UseBasicParsing,$TimeoutSec,$Uri,$OutFile);if($Uri.EndsWith('.zip')){Copy-Item -LiteralPath $script:fixtureZip -Destination $OutFile}else{Set-Content -LiteralPath $OutFile -Value $script:fixtureHash -Encoding ASCII} }
+ function powershell.exe { param([switch]$NoLogo,[switch]$NoProfile,$ExecutionPolicy,$File);Assert (Test-Path -LiteralPath $File) 'Verified setup file';$script:setupCalls++;$global:LASTEXITCODE=0 }
+ . (Join-Path $root 'installer\Update.ps1')
+ Assert ($script:setupCalls -eq 1) 'Verified update invokes setup exactly once'
+ Assert (!(Test-Path -LiteralPath $work)) 'Update temporary files removed'
  Write-Host 'PASS: Windows browser selection, first/update placement, backup, stale cleanup, unrelated-target refusal, updater assets/checksum/ZIP rejection; no browser/profile/registry writes'
-} finally { $env:LOCALAPPDATA=$previousLocal; if(Test-Path -LiteralPath $work){Remove-Item -LiteralPath $work -Recurse -Force} }
+} finally { $env:LOCALAPPDATA=$previousLocal; if(Test-Path -LiteralPath $testRoot){Remove-Item -LiteralPath $testRoot -Recurse -Force} }
+
+exit 0
