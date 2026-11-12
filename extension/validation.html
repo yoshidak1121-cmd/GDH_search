@@ -19,5 +19,12 @@
 <button id="liveRun" disabled>本番100件を読み取り</button><p>実データや認証情報の保存・ダウンロードは行いません。</p></section>
 <p id="validationResult" role="status" aria-live="polite">検証モードはOFFです。</p>
 <details id="validationFields" hidden><summary>項目名を確認</summary><ul id="validationFieldList"></ul></details>
+<details id="schemaReview"><summary>CSVとの項目対応・キー点検</summary>
+<p>名称に基づく対応候補です。変換・結合・検索への投入は行いません。</p>
+<p id="schemaOverview"></p><div class="review-scroll"><table class="review-table"><thead><tr><th>getData項目</th><th>CSV側の候補</th><th>判定／今回の応答</th><th>確認事項</th></tr></thead><tbody id="schemaRows"></tbody></table></div>
+<details><summary>このテーブルに対応候補がないCSV項目</summary><ul id="unavailableCsv"></ul></details>
+<h3>取得したページ内のキー点検</h3><p>1ページだけの集計です。全体の一意性・主キー・結合関係は確定しません。同じNCシリアルだけを根拠に行を統合しません。異なる値と重複は文字列・数値を対象に、型・先頭ゼロ・記号・大文字小文字を変えず集計します。</p>
+<p id="keyReviewStatus">本番読み取り後に件数だけ表示します。ID・シリアル番号の実値は表示しません。</p><div class="review-scroll"><table id="keyReviewTable" class="review-table" hidden><thead><tr><th>項目</th><th>空欄行</th><th>異なる値</th><th>重複する値</th><th>重複に含まれる行</th><th>文字列以外の行</th></tr></thead><tbody id="keyRows"></tbody></table></div>
+</details>
 <button id="validationClose" class="secondary">OFFにして検証を終了</button>
-</section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-validation-ui.js"></script></body></html>
+</section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-schema.js"></script><script src="getdata-validation-ui.js"></script></body></html>

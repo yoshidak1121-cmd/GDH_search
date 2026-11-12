@@ -52,7 +52,22 @@ async function readGdhContractPage(){
      const fields=[...new Set(data.flatMap(row=>Object.keys(row)))];
      const missingColumns=data.length?columns.filter(c=>data.some(row=>!Object.hasOwn(row,c))):[];
      const unexpectedColumns=fields.filter(c=>!columns.includes(c));
-     finish({ok:true,source:'getData-live',summary:{count:data.length,fields,missingColumns,unexpectedColumns,valid:!missingColumns.length&&!unexpectedColumns.length},request:{db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:1,pageline:100}});
+     // Page-local counts only. Preserve raw identifier equality and types;
+     // no normalization, number coercion, joins or uniqueness claims beyond this page.
+     const keyChecks=['contract_id','contract_no','nc_serial_no','contractor_id'].map(field=>{
+      let blankCount=0,nonStringCount=0;const counts=new Map();
+      for(const row of data){
+       const value=Object.hasOwn(row,field)?row[field]:undefined;
+       if(value==null||(typeof value==='string'&&!value.trim())){blankCount++;continue;}
+       if(typeof value!=='string')nonStringCount++;
+       // Ignore object-valued keys for equality; flag their type instead.
+       if(typeof value!=='string'&&typeof value!=='number')continue;
+       counts.set(value,(counts.get(value)||0)+1);
+      }
+      const duplicates=[...counts.values()].filter(count=>count>1);
+      return {field,blankCount,nonStringCount,distinctCount:counts.size,duplicateValues:duplicates.length,duplicateRows:duplicates.reduce((sum,count)=>sum+count,0)};
+     });
+     finish({ok:true,source:'getData-live',keyChecks,summary:{count:data.length,fields,missingColumns,unexpectedColumns,valid:!missingColumns.length&&!unexpectedColumns.length},request:{db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:1,pageline:100}});
     }catch{finish(fail('INVALID_RESPONSE'));}
    };
    xhr.send(body);

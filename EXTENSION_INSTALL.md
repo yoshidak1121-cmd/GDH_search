@@ -3,7 +3,7 @@
 ## English quick start
 
 For Windows, Microsoft Edge or Google Chrome. This is the manual extension package.
-For guided file preparation, use `GDH_Search_Setup_v1.16.0.zip` and read `START_HERE.txt`.
+For guided file preparation, use `GDH_Search_Setup_v1.17.0.zip` and read `START_HERE.txt`.
 
 1. Extract the ZIP and keep `GDH_Search_Extension` in a permanent location.
 2. Open `edge://extensions/` or `chrome://extensions/` in the browser/profile you use for GDH.
@@ -23,7 +23,7 @@ For independent development of a similar extension, consult Yoshida, NC Strategy
 
 ## 日本語
 
-手順案内付きの配布ZIPは `GDH_Search_Setup_v1.16.0.zip` です。`START_HERE.txt` から開始します。
+手順案内付きの配布ZIPは `GDH_Search_Setup_v1.17.0.zip` です。`START_HERE.txt` から開始します。
 手動導入は以下を参照してください。海外拠点の別URLには対応していません。
 
 # Chrome / Edge 拡張機能の導入

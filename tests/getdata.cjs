@@ -5,7 +5,17 @@ const vm=require('node:vm');
 (async()=>{
  let network=0;const saved={};
  const context=vm.createContext({setTimeout,clearTimeout,console:{table(){}},fetch(){network++;throw Error('Network forbidden');},chrome:{storage:{local:{async get(key){return {[key]:saved[key]};},async set(values){Object.assign(saved,values);}}}}});
- for(const file of ['getdata-adapter.js','getdata-validation.js'])vm.runInContext(fs.readFileSync('extension/'+file,'utf8'),context);
+ for(const file of ['getdata-adapter.js','getdata-validation.js','getdata-schema.js'])vm.runInContext(fs.readFileSync('extension/'+file,'utf8'),context);
+ const schema=context.GdhContractSchema.describe();
+ assert.equal(schema.rows.length,19);assert.equal(schema.candidateCount,9);assert.equal(schema.unavailableCsv.length,24);
+ const pairs=new Map(schema.rows.map(row=>[row.field,row.csv]));
+ assert.equal(pairs.get('contract_id'),'契約ID');assert.equal(pairs.get('contract_no'),'契約番号');
+ assert.equal(pairs.get('nc_serial_no'),'NCシリアル番号');assert.equal(pairs.get('contractor_id'),'契約者ID');
+ for(const column of ['工作機械シリアル番号','契約者名','NCモデルID'])assert(schema.unavailableCsv.includes(column));
+ const partial=context.GdhContractSchema.describe(['contract_id','unexpected']);assert.equal(partial.rows.find(row=>row.field==='contract_id').present,true);assert.equal(partial.rows.find(row=>row.field==='contract_no').present,false);assert.equal(partial.unexpectedFields[0],'unexpected');
+ const app=fs.readFileSync('index.html','utf8');
+ const canonical=[...app.slice(app.indexOf('const englishHeaders ='),app.indexOf('const cap =')).matchAll(/\["[^"]+","([^"]+)"\]/g)].map(match=>match[1]);
+ assert.equal(canonical.length,33);assert.deepEqual([...new Set([...schema.rows.map(row=>row.csv).filter(Boolean),...schema.unavailableCsv])].sort(),canonical.sort());
  const api=context.GDH_GETDATA_VALIDATION;
  assert.equal(await api.enabled(),false);
  await assert.rejects(api.run(),{code:'MODE_OFF'});

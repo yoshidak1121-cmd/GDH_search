@@ -10,7 +10,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension]});
  try{
   let mode='success',posts=[],blocked=[],release;
-  const rows=Array.from({length:100},()=>Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])));
+  const rows=Array.from({length:100},(_,i)=>({...Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])),contract_id:i===0?'':i===1?'01':i===2?'1':i===3?1:'SYNTHETIC-ID-'+i,contract_no:'SYNTHETIC-NO-'+i,nc_serial_no:'SYNTHETIC-NC-'+Math.floor(i/2),contractor_id:'SYNTHETIC-PARTY-'+Math.floor(i/5)}));
   const html=`<!doctype html><title>synthetic table</title><script>
    window.createRequestData=()=>({db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:'3',pageline:'50',isphysicalname:undefined,searches:{tm_seach_fieldname__contract_id:''}});
    window.ImJson={toJSONString:args=>JSON.stringify(args,(key,value)=>value===undefined?'__UNDEFINED__':value).replaceAll('"__UNDEFINED__"','undefined')};
@@ -49,17 +49,23 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   await ui.locator('#liveRun').click();assert.equal(posts.length,0);
   accept=true;await ui.locator('#liveRun').click();
   await ui.locator('#validationResult').filter({hasText:'本番読み取り成功：100件・19項目'}).waitFor();
+  await ui.locator('#schemaReview summary').first().click();
+  assert.equal(await ui.locator('#schemaRows tr').count(),19);assert.equal(await ui.locator('#unavailableCsv li').count(),24);assert.equal(await ui.locator('#keyRows tr').count(),4);
+  assert(!(await ui.locator('body').textContent()).includes('SYNTHETIC-ID-'));
   assert.equal(posts.length,1);assert.equal(posts[0].method,'POST');assert.equal(posts[0].headers['x-fixture'],'present');
   const payload=JSON.parse(posts[0].body.replace(/\bundefined\b/g,'null'));
   assert.equal(payload.length,1);assert.equal(payload[0].pagenumber,'1');assert.equal(payload[0].pageline,'100');assert(posts[0].body.includes('undefined'));
   assert.equal(await host.evaluate(()=>createRequestData().pagenumber),'3');
   assert(!(await ui.locator('body').textContent()).includes('SYNTHETIC-PRIVATE-RECORD'));
-  const result=await send();assert.equal(result.ok,true);assert(!('data' in result));assert(!JSON.stringify(result).includes('SYNTHETIC-CURRENT'));
+  const result=await send();assert.equal(result.ok,true);assert(!('data' in result));assert(!JSON.stringify(result).includes('SYNTHETIC-CURRENT'));assert(!JSON.stringify(result).includes('SYNTHETIC-ID-'));
+  const contractKey=result.keyChecks.find(row=>row.field==='contract_id'),ncKey=result.keyChecks.find(row=>row.field==='nc_serial_no');
+  assert.equal(contractKey.blankCount,1);assert.equal(contractKey.nonStringCount,1);assert.equal(contractKey.distinctCount,99);assert.equal(contractKey.duplicateValues,0);
+  assert.equal(ncKey.distinctCount,50);assert.equal(ncKey.duplicateValues,50);assert.equal(ncKey.duplicateRows,100);
   for(const [testMode,code] of [['auth','AUTH_REQUIRED'],['html','AUTH_REQUIRED'],['http','HTTP_ERROR'],['invalid','INVALID_RESPONSE'],['script','INVALID_RESPONSE']]){mode=testMode;assert.equal((await send()).code,code);}
   assert.equal(await host.evaluate(()=>window.fixtureAttack),undefined);
   await host.evaluate(()=>{ImJsspRpc.receive=xhr=>JSON.parse(xhr.responseText.replace(/"(?:[^"\\]|\\.)*"|\bundefined\b/g,token=>token==='undefined'?'null':token));});
   mode='extended';assert.equal((await send()).summary.count,100);
-  mode='empty';assert.equal((await send()).summary.count,0);
+  mode='empty';const empty=await send();assert.equal(empty.summary.count,0);assert(empty.keyChecks.every(row=>row.blankCount===0&&row.distinctCount===0&&row.duplicateRows===0));
   await host.evaluate(()=>{window.savedSetTimeout=window.setTimeout;window.setTimeout=(callback,ms,...args)=>ms===15000?(queueMicrotask(callback),0):savedSetTimeout(callback,ms,...args);});
   assert.equal((await send()).code,'TIMEOUT');
   await host.evaluate(()=>{window.setTimeout=window.savedSetTimeout;delete window.savedSetTimeout;});

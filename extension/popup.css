@@ -3,3 +3,5 @@ body{width:280px;margin:18px;color:#14243c;font:13px "Yu Gothic",sans-serif}h1{f
 .validation-link{margin-left:auto;font-size:12px;color:#1768dc;padding:6px 10px;border:1px solid #cbd6e5;border-radius:6px;text-decoration:none;float:right}.validation-page{width:auto;max-width:480px;margin:24px auto;padding:0 16px}.validation-page #validationPanel{border:0;margin:0}.validation-page h1{font-size:20px}
 
 .live-section{border-top:1px solid #cbd6e5;margin-top:20px;padding-top:16px}#liveTab{width:100%;padding:8px;margin:6px 0 10px;box-sizing:border-box}
+
+.review-scroll{overflow-x:auto}.review-table{border-collapse:collapse;font-size:12px;width:100%;min-width:580px}.review-table th,.review-table td{padding:8px;border:1px solid #cbd6e5;text-align:left;vertical-align:top;overflow-wrap:anywhere}.review-table th{background:#eef5ff}#schemaReview{margin:16px 0}#schemaRows td:first-child{font-family:monospace}h3{font-size:14px}

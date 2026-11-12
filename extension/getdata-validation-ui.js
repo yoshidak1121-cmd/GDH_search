@@ -6,6 +6,20 @@
  let busy=false,ready=false;
  const errors={MODE_OFF:'検証モードはOFFです。ONにしてから実行してください。',PRODUCTION_DISABLED:'モック側から本番通信はできません。',WRONG_PAGE:'対象のGDHタブを開き直してください。',WRONG_TABLE:'選んだタブでZALSの契約情報テーブルを開いてください。',PAGE_NOT_READY:'契約情報テーブルを単独のタブで開いてから再度お試しください。',RPC_UNCONFIRMED:'画面の通信形式が確認済みの形式と異なります。通信せず停止しました。',NETWORK_ERROR:'GDHとの通信に失敗しました。',CONFIRM_REQUIRED:'本番読み取りの確認が必要です。',ABORTED:'読み取りを中止しました。',AUTH_REQUIRED:'認証エラーを安全に検出しました。',HTTP_ERROR:'通信エラーを安全に検出しました。',INVALID_JSON:'不正なJSONを安全に拒否しました。',INVALID_RESPONSE:'不正な応答を安全に拒否しました。',TIMEOUT:'タイムアウトを安全に検出しました。',BUSY:'検証中です。完了までお待ちください。'};
  function show(text,state=''){result.textContent=text;result.dataset.state=state;}
+ function renderSchema(fields=null,keyChecks=null){
+  const review=GdhContractSchema.describe(fields);
+  $('schemaOverview').textContent=`getData 19項目中、CSVの対応候補は${review.candidateCount}項目。対応候補がないCSV項目は${review.unavailableCsv.length}項目です。すべて定義確認前の候補です。`;
+  $('schemaRows').replaceChildren();
+  for(const row of review.rows){
+   const tr=document.createElement('tr');
+   for(const text of [row.field,row.csv||'—',row.status+'／'+(row.present===null?'未取得':row.present?'応答あり':'今回の応答に項目なし'),row.note]){const td=document.createElement('td');td.textContent=text;tr.append(td);}
+   $('schemaRows').append(tr);
+  }
+  $('unavailableCsv').replaceChildren();for(const field of review.unavailableCsv){const li=document.createElement('li');li.textContent=field;$('unavailableCsv').append(li);}
+  $('keyRows').replaceChildren();$('keyReviewTable').hidden=!keyChecks;
+  $('keyReviewStatus').textContent=keyChecks?'本番で取得したページ内だけの集計です。空データは各件数0です。':'本番読み取り後に件数だけ表示します。ID・シリアル番号の実値は表示しません。';
+  for(const row of keyChecks||[]){const tr=document.createElement('tr');for(const value of [row.field,row.blankCount,row.distinctCount,row.duplicateValues,row.duplicateRows,row.nonStringCount]){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}$('keyRows').append(tr);}
+ }
  function controls(){
   run.disabled=!ready||busy||!toggle.checked;toggle.disabled=!ready||busy;scenario.disabled=busy;
   $('validationClose').disabled=busy;
@@ -28,9 +42,10 @@
  scenario.addEventListener('change',controls);
  run.addEventListener('click',async()=>{
   if(busy||run.disabled)return;
-  busy=true;controls();$('validationFields').hidden=true;$('validationFieldList').replaceChildren();show('架空データを検証しています…');
+  busy=true;controls();renderSchema();$('validationFields').hidden=true;$('validationFieldList').replaceChildren();show('架空データを検証しています…');
   try{
    const {summary}=await GDH_GETDATA_VALIDATION.run({scenario:scenario.value});
+   renderSchema(summary.fields);
    show(`${summary.valid?'検証成功':'項目を確認してください'}：${summary.count}件・${summary.fields.length}項目\n${summary.count===0?'空データを正常に処理しました。':'件数と項目名を確認しました。'}\nGDHへの通信は行っていません。`,summary.valid?'success':'error');
    for(const field of summary.fields){const li=document.createElement('li');li.textContent=field;$('validationFieldList').append(li);}
    $('validationFields').hidden=!summary.fields.length;
@@ -53,11 +68,12 @@
  $('liveRun').addEventListener('click',async()=>{
   if(busy||$('liveRun').disabled)return;
   if(!window.confirm('選択したGDHタブの契約情報を、現在の検索条件で1ページ目・最大100件読み取ります。実行しますか？'))return;
-  busy=true;controls();$('validationFields').hidden=true;$('validationFieldList').replaceChildren();show('GDHから最大100件を読み取り中です…');
+  busy=true;controls();renderSchema();$('validationFields').hidden=true;$('validationFieldList').replaceChildren();show('GDHから最大100件を読み取り中です…');
   try{
    const response=await chrome.runtime.sendMessage({type:'GDH_GETDATA_READ',tabId:Number($('liveTab').value),confirmed:true});
    if(!response?.ok){show(errors[response?.code]||'本番読み取りに失敗しました。GDH画面を確認してください。','error');return;}
    const {summary}=response;
+   renderSchema(summary.fields,response.keyChecks);
    show(`本番読み取り${summary.valid?'成功':'：項目を確認してください'}：${summary.count}件・${summary.fields.length}項目\n検索データは変更していません。`,summary.valid?'success':'error');
    for(const field of summary.fields){const li=document.createElement('li');li.textContent=field;$('validationFieldList').append(li);}
    $('validationFields').hidden=!summary.fields.length;
@@ -71,5 +87,6 @@
   catch{show('OFFにできませんでした。再度お試しください。','error');}
   finally{ready=true;controls();}
  });
+ renderSchema();
  open();
 })();
