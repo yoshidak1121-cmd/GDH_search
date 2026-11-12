@@ -1,0 +1,18 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>getData 検証</title><link rel="stylesheet" href="popup.css"></head><body class="validation-page"><h1>getData 検証</h1><section id="validationPanel" aria-labelledby="validationTitle">
+<h2 id="validationTitle">getData モック検証</h2>
+<p class="notice">架空データだけで動作を確認します。GDHへの通信や検索データの更新は行いません。本番接続は認証・送受信仕様の確認待ちです。</p>
+<label class="validation-switch"><input id="validationEnabled" type="checkbox" disabled> 検証モードを有効にする</label>
+<label class="scenario-label" for="validationScenario">確認する内容</label>
+<select id="validationScenario">
+<option value="success">正常データ（100件・19項目）</option>
+<option value="empty">データなし（0件）</option>
+<option value="invalid-json">不正なJSON</option>
+<option value="auth-error">認証エラー</option>
+<option value="http-error">通信エラー</option>
+<option value="timeout">タイムアウト</option>
+</select>
+<button id="validationRun" disabled>モック100件を検証</button>
+<p id="validationResult" role="status" aria-live="polite">検証モードはOFFです。</p>
+<details id="validationFields" hidden><summary>項目名を確認</summary><ul id="validationFieldList"></ul></details>
+<button id="validationClose" class="secondary">OFFにして検証を終了</button>
+</section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-validation-ui.js"></script></body></html>
