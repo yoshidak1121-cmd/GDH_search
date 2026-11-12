@@ -16,6 +16,15 @@ const vm=require('node:vm');
  const app=fs.readFileSync('index.html','utf8');
  const canonical=[...app.slice(app.indexOf('const englishHeaders ='),app.indexOf('const cap =')).matchAll(/\["[^"]+","([^"]+)"\]/g)].map(match=>match[1]);
  assert.equal(canonical.length,33);assert.deepEqual([...new Set([...schema.rows.map(row=>row.csv).filter(Boolean),...schema.unavailableCsv])].sort(),canonical.sort());
+ const migration=context.GdhContractSchema.migration();assert.equal(migration.rows.length,33);assert.equal(migration.tables.length,10);
+ const metadata=new Map();
+ for(const part of fs.readFileSync('reference/ZALS_TABLE_COLUMNS.md','utf8').split(/\n## /).slice(1)){
+  const table=part.match(/`([A-Z][A-Z0-9_]+)`/);if(table)metadata.set(table[1],new Set([...part.matchAll(/\|\s*\d+\s*\|\s*`([a-z0-9_]+)`/g)].map(match=>match[1])));
+ }
+ for(const row of migration.rows)for(const source of row.sources){const [table,column]=source.split('.');assert(metadata.get(table)?.has(column),source);}
+ assert(migration.rows.find(row=>row.csv==='NCシステム型名').sources.length===2);
+ const safeReport=context.GdhContractSchema.report({source:'getData-live',summary:{count:100,fields:['SYNTHETIC-SECRET']},data:['SYNTHETIC-SECRET'],im_mark:'SYNTHETIC-SECRET',keyChecks:[{field:'contract_id',blankCount:0,distinctCount:100}]},'1.18.0');
+ assert(!safeReport.includes('SYNTHETIC-SECRET'));assert(safeReport.includes('contract_id | 0 | 100'));assert(safeReport.includes('33項目・10テーブル'));
  const api=context.GDH_GETDATA_VALIDATION;
  assert.equal(await api.enabled(),false);
  await assert.rejects(api.run(),{code:'MODE_OFF'});

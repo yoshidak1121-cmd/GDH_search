@@ -26,5 +26,8 @@
 <h3>取得したページ内のキー点検</h3><p>1ページだけの集計です。全体の一意性・主キー・結合関係は確定しません。同じNCシリアルだけを根拠に行を統合しません。異なる値と重複は文字列・数値を対象に、型・先頭ゼロ・記号・大文字小文字を変えず集計します。</p>
 <p id="keyReviewStatus">本番読み取り後に件数だけ表示します。ID・シリアル番号の実値は表示しません。</p><div class="review-scroll"><table id="keyReviewTable" class="review-table" hidden><thead><tr><th>項目</th><th>空欄行</th><th>異なる値</th><th>重複する値</th><th>重複に含まれる行</th><th>文字列以外の行</th></tr></thead><tbody id="keyRows"></tbody></table></div>
 </details>
+<section class="live-section"><h2>まとめ診断</h2><p>件数・型・日付の表記形式をまとめます。実値は含みません。日付の妥当性・期間の単位は確定しません。</p>
+<button id="copyReview" disabled>診断結果をまとめてコピー</button><p id="copyStatus" role="status"></p><textarea id="reviewText" rows="8" readonly hidden aria-label="まとめ診断結果"></textarea>
+<details id="migrationReview"><summary>CSV33項目の取得元候補</summary><p id="migrationOverview"></p><div class="review-scroll"><table class="review-table"><thead><tr><th>CSV項目</th><th>取得元の候補</th><th>未確認事項</th></tr></thead><tbody id="migrationRows"></tbody></table></div></details></section>
 <button id="validationClose" class="secondary">OFFにして検証を終了</button>
 </section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-schema.js"></script><script src="getdata-validation-ui.js"></script></body></html>

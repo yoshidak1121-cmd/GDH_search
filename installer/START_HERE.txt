@@ -1,33 +1,19 @@
-GDH Machine Search - Start here / はじめに
-Windows | Microsoft Edge / Google Chrome | Japanese / English
+GDH Search — Windows / Edge・Chrome
 
-日本語
-1. ZIPを右クリックし、「すべて展開」します。
-2. README_ja.txtを開き、初回導入または更新の手順を確認します。
-3. Install.batをダブルクリックします。管理者として実行する必要はありません。
-4. ファイル配置後、ブラウザーで手動の登録または再読み込みを行います。
-   Install.batだけでは、ブラウザーへの登録は完了しません。
+初回・今回の更新
+ZIPをすべて展開 → Install.bat → ブラウザーで本拡張機能の ↻ → GDHでF5。
+初回登録：開発者モード → 展開して読み込み。配置先はコピーされます。
 
-English
-1. Right-click the ZIP and select Extract All.
-2. Open README_en.txt and follow First-time setup or Updating.
-3. Double-click Install.bat. Administrator rights are not required.
-4. After files are prepared, manually load or reload the extension in the browser.
-   Running Install.bat alone does not complete browser registration.
+次回から
+デスクトップの「GDH Update」をダブルクリック。
+最新版を取得・照合・配置し、前回のブラウザーを開きます。
 
-Files / 同梱ファイル
-START_HERE.txt        Start here / 最初に読む案内
-README_ja.txt         Japanese instructions / 日本語の手順
-README_en.txt         English instructions / 英語の手順
-Install.bat           Start setup / 導入・更新の開始
-Setup.ps1             Setup script used by Install.bat / BATが呼び出す処理
-GDH_Search_Extension  Browser extension files / 拡張機能本体
+First run / this update
+Extract All > Install.bat > Reload the extension > F5 on GDH.
+First installation: Developer mode > Load unpacked. The folder path is copied.
 
-Setup language / 導入画面の言語
-Japanese Windows UI: Japanese. All other Windows UI languages: English.
-Windowsの表示言語が日本語の場合は日本語、それ以外は英語です。
-The search screen has its own Japanese / English selector.
-検索画面の言語は画面右上で別途切り替えられます。
+Future updates
+Double-click GDH Update on the desktop.
+The latest package is downloaded, verified and placed automatically.
 
-Use the browser and profile you normally use for GDH.
-GDHを利用するブラウザーとプロファイルに登録してください。
+詳細 / Details: README_ja.txt / README_en.txt

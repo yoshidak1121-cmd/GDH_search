@@ -10,7 +10,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension]});
  try{
   let mode='success',posts=[],blocked=[],release;
-  const rows=Array.from({length:100},(_,i)=>({...Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])),contract_id:i===0?'':i===1?'01':i===2?'1':i===3?1:'SYNTHETIC-ID-'+i,contract_no:'SYNTHETIC-NO-'+i,nc_serial_no:'SYNTHETIC-NC-'+Math.floor(i/2),contractor_id:'SYNTHETIC-PARTY-'+Math.floor(i/5)}));
+  const rows=Array.from({length:100},(_,i)=>({...Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])),contract_id:i===0?'':i===1?'01':i===2?'1':i===3?1:'SYNTHETIC-ID-'+i,contract_no:'SYNTHETIC-NO-'+i,nc_serial_no:'SYNTHETIC-NC-'+Math.floor(i/2),contractor_id:'SYNTHETIC-PARTY-'+Math.floor(i/5),contract_type:'SYNTHETIC-TYPE',contract_from_location_code:'SYNTHETIC-LOCATION',contract_period:i===0?null:i%2===0?12:'12',contract_start_date:['2026-01-01','2026/01/01','20260101','2026-01-01T00:00:00Z'][i%4],contract_end_date:i===0?null:'2027-01-01'}));
   const html=`<!doctype html><title>synthetic table</title><script>
    window.createRequestData=()=>({db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:'3',pageline:'50',isphysicalname:undefined,searches:{tm_seach_fieldname__contract_id:''}});
    window.ImJson={toJSONString:args=>JSON.stringify(args,(key,value)=>value===undefined?'__UNDEFINED__':value).replaceAll('"__UNDEFINED__"','undefined')};
@@ -57,10 +57,18 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   assert.equal(payload.length,1);assert.equal(payload[0].pagenumber,'1');assert.equal(payload[0].pageline,'100');assert(posts[0].body.includes('undefined'));
   assert.equal(await host.evaluate(()=>createRequestData().pagenumber),'3');
   assert(!(await ui.locator('body').textContent()).includes('SYNTHETIC-PRIVATE-RECORD'));
+  await ui.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.fixtureCopied=text;}}});});
+  const beforeCopy=posts.length;await ui.locator('#copyReview').click();await ui.locator('#copyStatus').filter({hasText:'コピーしました'}).waitFor();
+  const copied=await ui.evaluate(()=>window.fixtureCopied);assert(copied.includes('contract_id | 1 | 99'));assert(copied.includes('ymdDash:25'));assert(!copied.includes('SYNTHETIC-'));
+  await ui.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('synthetic clipboard failure');}}});});
+  await ui.locator('#copyReview').click();await ui.locator('#reviewText').waitFor({state:'visible'});assert.equal(await ui.locator('#reviewText').inputValue(),copied);
+  assert.equal(posts.length,beforeCopy);assert.equal(await ui.locator('#migrationRows tr').count(),33);
   const result=await send();assert.equal(result.ok,true);assert(!('data' in result));assert(!JSON.stringify(result).includes('SYNTHETIC-CURRENT'));assert(!JSON.stringify(result).includes('SYNTHETIC-ID-'));
   const contractKey=result.keyChecks.find(row=>row.field==='contract_id'),ncKey=result.keyChecks.find(row=>row.field==='nc_serial_no');
   assert.equal(contractKey.blankCount,1);assert.equal(contractKey.nonStringCount,1);assert.equal(contractKey.distinctCount,99);assert.equal(contractKey.duplicateValues,0);
   assert.equal(ncKey.distinctCount,50);assert.equal(ncKey.duplicateValues,50);assert.equal(ncKey.duplicateRows,100);
+  const period=result.fieldChecks.find(row=>row.field==='contract_period');assert.equal(period.blankCount,1);assert.equal(period.numberCount,49);assert.equal(period.stringCount,50);
+  const dates=result.fieldChecks.find(row=>row.field==='contract_start_date');for(const key of ['ymdDash','ymdSlash','ymdCompact','dateTime'])assert.equal(dates.dateFormats[key],25);
   for(const [testMode,code] of [['auth','AUTH_REQUIRED'],['html','AUTH_REQUIRED'],['http','HTTP_ERROR'],['invalid','INVALID_RESPONSE'],['script','INVALID_RESPONSE']]){mode=testMode;assert.equal((await send()).code,code);}
   assert.equal(await host.evaluate(()=>window.fixtureAttack),undefined);
   await host.evaluate(()=>{ImJsspRpc.receive=xhr=>JSON.parse(xhr.responseText.replace(/"(?:[^"\\]|\\.)*"|\bundefined\b/g,token=>token==='undefined'?'null':token));});

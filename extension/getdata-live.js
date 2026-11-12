@@ -67,7 +67,21 @@ async function readGdhContractPage(){
       const duplicates=[...counts.values()].filter(count=>count>1);
       return {field,blankCount,nonStringCount,distinctCount:counts.size,duplicateValues:duplicates.length,duplicateRows:duplicates.reduce((sum,count)=>sum+count,0)};
      });
-     finish({ok:true,source:'getData-live',keyChecks,summary:{count:data.length,fields,missingColumns,unexpectedColumns,valid:!missingColumns.length&&!unexpectedColumns.length},request:{db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:1,pageline:100}});
+     const fieldChecks=['contract_type','contract_period','contract_start_date','contract_end_date','contract_from_location_code'].map(field=>{
+      const stats={field,blankCount:0,stringCount:0,numberCount:0,otherCount:0,dateFormats:{ymdDash:0,ymdSlash:0,ymdCompact:0,dateTime:0,other:0}};
+      for(const row of data){
+       const value=Object.hasOwn(row,field)?row[field]:undefined;
+       if(value==null||(typeof value==='string'&&!value.trim())){stats.blankCount++;continue;}
+       if(typeof value==='string')stats.stringCount++;else if(typeof value==='number')stats.numberCount++;else stats.otherCount++;
+       if(field==='contract_start_date'||field==='contract_end_date'){
+        // Shape counts only: no date parsing, timezone conversion or business meaning inferred.
+        const shape=typeof value!=='string'?'other':/^\d{4}-\d{2}-\d{2}$/.test(value)?'ymdDash':/^\d{4}\/\d{2}\/\d{2}$/.test(value)?'ymdSlash':/^\d{8}$/.test(value)?'ymdCompact':/^\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value)?'dateTime':'other';
+        stats.dateFormats[shape]++;
+       }
+      }
+      return stats;
+     });
+     finish({ok:true,source:'getData-live',keyChecks,fieldChecks,summary:{count:data.length,fields,missingColumns,unexpectedColumns,valid:!missingColumns.length&&!unexpectedColumns.length},request:{db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:1,pageline:100}});
     }catch{finish(fail('INVALID_RESPONSE'));}
    };
    xhr.send(body);

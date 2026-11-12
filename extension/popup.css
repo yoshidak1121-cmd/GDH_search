@@ -5,3 +5,5 @@ body{width:280px;margin:18px;color:#14243c;font:13px "Yu Gothic",sans-serif}h1{f
 .live-section{border-top:1px solid #cbd6e5;margin-top:20px;padding-top:16px}#liveTab{width:100%;padding:8px;margin:6px 0 10px;box-sizing:border-box}
 
 .review-scroll{overflow-x:auto}.review-table{border-collapse:collapse;font-size:12px;width:100%;min-width:580px}.review-table th,.review-table td{padding:8px;border:1px solid #cbd6e5;text-align:left;vertical-align:top;overflow-wrap:anywhere}.review-table th{background:#eef5ff}#schemaReview{margin:16px 0}#schemaRows td:first-child{font-family:monospace}h3{font-size:14px}
+
+#reviewText{box-sizing:border-box;width:100%;font-size:12px}#migrationReview{margin-top:12px}
