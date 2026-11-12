@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "GDH 機械情報 拡張検索",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "description": "GDHの機械情報CSVを取り込み、AND・ORの複合条件で検索します。",
+  "permissions": ["storage"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "GDH 拡張検索"

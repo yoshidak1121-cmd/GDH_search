@@ -36,6 +36,7 @@ jobs:
           tag="v$version"
           test -z "$REQUESTED_TAG" || test "$REQUESTED_TAG" = "$tag"
           echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+      - run: node tests/getdata.cjs
       - run: node tests/english-headers.cjs
       - run: node tests/export-results.cjs
       - run: node tests/smoke.cjs

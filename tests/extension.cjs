@@ -73,10 +73,21 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await frame.locator('#resultTitle').filter({hasText:'192,836件'}).waitFor({timeout:120000});
   if(process.env.TEST_SCREENSHOT)await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});
   await page.getByRole('button',{name:'拡張ツールを閉じる'}).click();
+  // Hidden validation is confined to the extension popup; no host RPC is added.
+  const popup=await context.newPage();await popup.goto(new URL('popup.html',frameUrl).href);
+  assert.equal(await popup.locator('button').count(),1);
+  assert.equal(await popup.evaluate(()=>GDH_GETDATA_VALIDATION.enabled()),false);
+  const validationPosts=posts.length,validationBlocked=blocked.length;
+  assert.equal(await popup.evaluate(async()=>{try{await GDH_GETDATA_VALIDATION.run();}catch(e){return e.code;}}),'MODE_OFF');
+  assert.equal(await popup.evaluate(async()=>{await GDH_GETDATA_VALIDATION.setEnabled(true);return (await GDH_GETDATA_VALIDATION.run()).summary.count;}),100);
+  await popup.reload();assert.equal(await popup.evaluate(()=>GDH_GETDATA_VALIDATION.enabled()),true);
+  assert.equal(await popup.evaluate(async()=>{try{await GDH_GETDATA_VALIDATION.run({source:'production'});}catch(e){return e.code;}}),'PRODUCTION_DISABLED');
+  await popup.evaluate(()=>GDH_GETDATA_VALIDATION.setEnabled(false));await popup.close();await page.bringToFront();
+  assert.equal(posts.length,validationPosts);assert.equal(blocked.length,validationBlocked);
   assert.equal(dialogs[0],'CSVファイルを出力します。よろしいですか？');assert.deepEqual(errors,[]);
   // A different site does not receive the GDH button.
   await page.goto('https://example.com/').catch(()=>{});assert.equal(await page.locator('#gdh-search-extension-button').count(),0);
-  console.log('PASS: loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer');
+  console.log('PASS: loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer, hidden mock settings/persistence and zero validation HTTP');
   console.log('Browser: '+context.browser().version());
  }finally{await context.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,26 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+(async()=>{
+ let network=0;const saved={};
+ const context=vm.createContext({setTimeout,clearTimeout,console:{table(){}},fetch(){network++;throw Error('Network forbidden');},chrome:{storage:{local:{async get(key){return {[key]:saved[key]};},async set(values){Object.assign(saved,values);}}}}});
+ for(const file of ['getdata-adapter.js','getdata-validation.js'])vm.runInContext(fs.readFileSync('extension/'+file,'utf8'),context);
+ const api=context.GDH_GETDATA_VALIDATION;
+ assert.equal(await api.enabled(),false);
+ await assert.rejects(api.run(),{code:'MODE_OFF'});
+ await api.setEnabled(true);
+ const result=await api.run();assert.equal(result.data.length,100);assert.equal(result.summary.fields.length,19);assert.equal(result.summary.valid,true);assert.equal(result.request.pageline,100);
+ assert.equal((await api.run({scenario:'empty',pagenumber:2})).summary.count,0);
+ for(const [scenario,code] of [['http-error','HTTP_ERROR'],['auth-error','AUTH_REQUIRED'],['forbidden','AUTH_REQUIRED'],['error','INVALID_RESPONSE'],['invalid-json','INVALID_JSON'],['invalid-data','INVALID_RESPONSE']])await assert.rejects(api.run({scenario}),{code});
+ await assert.rejects(api.run({source:'production'}),{code:'PRODUCTION_DISABLED'});
+ const short=context.GdhGetData.create({isEnabled:api.enabled,timeoutMs:10});
+ const pending=short({scenario:'timeout'});await assert.rejects(short(),{code:'BUSY'});await assert.rejects(pending,{code:'TIMEOUT'});
+ assert.equal((await short()).data.length,100);
+ await api.setEnabled(false);await assert.rejects(api.run(),{code:'MODE_OFF'});
+ assert.equal(network,0);assert.deepEqual(saved,{gdhGetDataValidationEnabled:false});
+ const manifest=JSON.parse(fs.readFileSync('extension/manifest.json'));
+ assert(!manifest.content_scripts[0].js.some(s=>s.includes('getdata')));
+ assert(!manifest.web_accessible_resources[0].resources.some(s=>s.includes('getdata')));
+ console.log('PASS: OFF/ON, 100 rows/19 columns, empty, HTTP/auth/RPC/JSON errors, production blocked, timeout, duplicate guard, boolean-only storage, zero network');
+})().catch(e=>{console.error(e);process.exitCode=1;});

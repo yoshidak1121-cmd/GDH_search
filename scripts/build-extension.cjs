@@ -18,7 +18,7 @@ fs.writeFileSync(path.join(destination,'viewer.css'),css[1]);
 const viewer=html.replace(css[0],'<link rel="stylesheet" href="viewer.css">').replace(worker[0],'').replace(app[0],'<script src="bridge.js"></script>\n<script src="viewer.js"></script>');
 if(/<script(?![^>]*src=)[^>]*>/i.test(viewer))throw Error('Inline script remains in extension viewer');
 fs.writeFileSync(path.join(destination,'viewer.html'),viewer);
-for(const name of ['manifest.json','content.js','bridge.js','popup.html','popup.js','popup.css'])fs.copyFileSync(path.join(root,'extension',name),path.join(destination,name));
+for(const name of ['manifest.json','content.js','bridge.js','popup.html','popup.js','popup.css','getdata-adapter.js','getdata-validation.js'])fs.copyFileSync(path.join(root,'extension',name),path.join(destination,name));
 fs.copyFileSync(path.join(root,'gdh-export.js'),path.join(destination,'gdh-export.js'));
 if(fs.existsSync(path.join(root,'EXTENSION_INSTALL.md')))fs.copyFileSync(path.join(root,'EXTENSION_INSTALL.md'),path.join(destination,'INSTALL.md'));
 console.log('Built: '+destination);

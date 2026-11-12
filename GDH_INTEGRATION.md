@@ -116,3 +116,33 @@ function addGdhMachineSearch(containerElement, confirmedViewerUrl) {
 ### テスト
 
 開発用Playwrightが利用できる環境で `node tests/gdh-export.cjs` を実行します。テスト用フォームとCSVだけを使い、GDH本番には接続しません。フォーム値・重複項目の保持、圧縮なしPOST、確認取消し、CSV取込とダウンロード、HTML／ZIP／権限エラー／リダイレクト／空応答、二重実行、タイムアウト、別オリジンの拒否を検証します。
+
+## getData 隠しモック検証（本番通信は無効）
+
+通常画面、CSV取得、検索元は変更しません。拡張機能ポップアップを右クリックして
+「検証」で開発者ツールを開き、ポップアップのコンソールで明示的に実行します。
+
+```js
+await GDH_GETDATA_VALIDATION.enabled(); // 初期値 false
+await GDH_GETDATA_VALIDATION.setEnabled(true);
+await GDH_GETDATA_VALIDATION.run(); // ZALS / ZGDDTB_CONTRACT_INFO、100件・19項目の架空データ
+await GDH_GETDATA_VALIDATION.run({scenario:'empty', pagenumber:2});
+await GDH_GETDATA_VALIDATION.run({scenario:'invalid-json'}); // 安全に拒否
+await GDH_GETDATA_VALIDATION.setEnabled(false);
+```
+
+`chrome.storage.local` に真偽値だけを保存します。ONでも自動実行しません。
+コンソールには件数・項目名・不足／未知項目の検証結果だけを表示します。
+`run` の戻り値は `{source, request, data, summary}` で、CSV Blobの取得契約から独立しています。
+検索データへの投入、CSV33項目への変換はまだ行いません。
+`http-error`、`auth-error`、`forbidden`、`error`、`invalid-data`、`timeout` も模擬可能です。
+通信関数・送信先は実装しておらず、`source:'production'` はONでも拒否します。
+隠し設定は認証・認可の代替ではありません。
+
+本番利用前に、正式な利用許可、拡張機能からのアクセス権限、`im_mark` の取得・更新・失効、
+Cookie／CSRF、厳密な送受信形式（`undefined` を含む表示との差異）、認証・エラー形式、
+件数・タイムアウト・監査要件を確認する必要があります。
+次は承認済み仕様に基づく通信アダプターを追加し、明示的な許可後に1ページの読み取りを検証します。
+v1.15.0で既存の配布系列に追加します。通常の取得元は引き続きCSVです。
+
+依存追加なしのモック確認：`node tests/getdata.cjs`。
