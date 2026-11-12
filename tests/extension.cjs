@@ -77,7 +77,13 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await page.locator('#gdh-search-extension-button').click();await frame.locator('#fetchBtn').waitFor();
   for(const width of [1440,390]){
    await page.setViewportSize({width,height:900});
-   const box=await frame.getByRole('link',{name:'検証',exact:true}).boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width);
+   let box;
+   for(let attempt=0;attempt<20;attempt++){
+    box=await frame.getByRole('link',{name:'検証',exact:true}).boundingBox();
+    if(box&&box.x>=0&&box.x+box.width<=width)break;
+    await page.waitForTimeout(50); // Wait for the iframe renderer to apply the viewport resize.
+   }
+   assert(box&&box.x>=0&&box.x+box.width<=width,JSON.stringify({width,box}));
   }
   await page.setViewportSize({width:1440,height:900});
   const validationTab=context.waitForEvent('page');await frame.getByRole('link',{name:'検証',exact:true}).click();

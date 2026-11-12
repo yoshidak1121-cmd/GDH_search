@@ -1,6 +1,6 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>getData 検証</title><link rel="stylesheet" href="popup.css"></head><body class="validation-page"><h1>getData 検証</h1><section id="validationPanel" aria-labelledby="validationTitle">
 <h2 id="validationTitle">getData モック検証</h2>
-<p class="notice">架空データだけで動作を確認します。GDHへの通信や検索データの更新は行いません。本番接続は認証・送受信仕様の確認待ちです。</p>
+<p class="notice">架空データだけで動作を確認します。モックは通信しません。本番読み取りは下の専用ボタンから実行します。検索データは更新しません。</p>
 <label class="validation-switch"><input id="validationEnabled" type="checkbox" disabled> 検証モードを有効にする</label>
 <label class="scenario-label" for="validationScenario">確認する内容</label>
 <select id="validationScenario">
@@ -12,6 +12,11 @@
 <option value="timeout">タイムアウト</option>
 </select>
 <button id="validationRun" disabled>モック100件を検証</button>
+<section class="live-section" aria-labelledby="liveTitle"><h2 id="liveTitle">本番の接続確認</h2>
+<p>GDHで契約情報テーブルを開いてから、対象タブを選んでください。現在の検索条件で1ページ目・最大100件を読み取り、件数と項目名だけ表示します。</p>
+<button id="liveRefresh" class="secondary">GDHのタブを探す</button>
+<label class="scenario-label" for="liveTab">接続するタブ</label><select id="liveTab"><option value="">タブを探してください</option></select>
+<button id="liveRun" disabled>本番100件を読み取り</button><p>実データや認証情報の保存・ダウンロードは行いません。</p></section>
 <p id="validationResult" role="status" aria-live="polite">検証モードはOFFです。</p>
 <details id="validationFields" hidden><summary>項目名を確認</summary><ul id="validationFieldList"></ul></details>
 <button id="validationClose" class="secondary">OFFにして検証を終了</button>
