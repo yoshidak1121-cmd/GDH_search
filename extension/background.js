@@ -1,5 +1,5 @@
 'use strict';
-importScripts('getdata-live.js','getdata-catalog.js','update-controller.js');
+importScripts('getdata-live.js','getdata-catalog.js','update-controller.js','csv-navigation.js');
 let liveBusy=false,currentBatch=null;
 const pattern='https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*';
 const BATCH_LIMIT_MS=60000,READ_LIMIT_MS=18000,PROBE_LIMIT_MS=2000;

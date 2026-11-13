@@ -31,7 +31,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   });
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const dialogs=[];let accept=true;page.on('dialog',async d=>{dialogs.push(d.message());await (accept?d.accept():d.dismiss());});
-  // Home opens in place after explicit confirmation, with no search-page request.
+  // Home confirmation, local loading, then visible navigation and one-time CSV resume.
   accept=false;await page.goto(origin+'/cncservice/home?');
   await page.locator('#gdh-search-extension-button').waitFor();
   assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);
@@ -39,36 +39,34 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   accept=true;await page.reload();
   const homeFrame=page.frameLocator('#gdh-search-extension-panel iframe');
   await homeFrame.locator('#gdh-home-csv-note').waitFor();
-  assert.equal(new URL(page.url()).pathname,'/cncservice/home');
-  assert.equal(await homeFrame.locator('#fetchBtn').isVisible(),true);
   await homeFrame.locator('#csvFile').setInputFiles(path.join(root,'tests/synthetic.csv'));
   await homeFrame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
-  assert.equal(posts.length,0);assert.deepEqual(blocked,[]);
-  assert.equal(dialogs.pop(),'拡張検索を開きますか？');
-  accept=false;await homeFrame.locator('#fetchBtn').click();await homeFrame.locator('#fetchStatus.err').waitFor();
-  assert.equal(homeLoads,0);assert.equal(posts.length,0);assert.equal(dialogs.pop(),'CSVファイルを出力します。よろしいですか？');
-  accept=true;const homeDownload=page.waitForEvent('download');await homeFrame.locator('#fetchBtn').click();await homeDownload;
-  await homeFrame.locator('body').evaluate(()=>new Promise(resolve=>{const check=()=>document.getElementById('fetchBtn').disabled?setTimeout(check,20):resolve();check();}));
+  assert.equal(posts.length,0);assert.deepEqual(blocked,[]);dialogs.pop();
+  // Cancel CSV confirmation on the destination. Reload must not start it again.
+  accept=false;await homeFrame.locator('#fetchBtn').click();
+  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  await homeFrame.locator('#fetchStatus.err').waitFor();
+  assert.equal(posts.length,0);assert.equal(dialogs.pop(),'CSVファイルを出力します。よろしいですか？');
+  await page.reload();await page.locator('#gdh-search-extension-button').waitFor();
+  assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);assert.equal(posts.length,0);
+  // Registered source path works without a home menu link. No query or auth is stored.
+  accept=true;await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();dialogs.pop();
+  await page.locator('#machineSearchLink').evaluate(link=>link.remove());
+  const homeDownload=page.waitForEvent('download');await homeFrame.locator('#fetchBtn').click();await homeDownload;
+  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine');
   await homeFrame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
-  assert.equal(await homeFrame.locator('#fetchStatus.err').count(),0);
-  assert.equal(homeLoads,1);assert.equal(posts.length,1);assert.equal(posts[0].fields.get('csrf_mock'),'dynamic-home-fixture');
-  assert.equal(new URL(page.url()).pathname,'/cncservice/home');assert.equal(await page.locator('iframe[aria-hidden="true"]').count(),0);
-  assert.equal(dialogs.pop(),'CSVファイルを出力します。よろしいですか？');
+  assert.equal(posts.length,1);assert.equal(posts[0].fields.get('csrf_mock'),'dynamic-home-fixture');
+  assert.equal(await page.locator('iframe[aria-hidden="true"]').count(),0);dialogs.pop();
+  const stored=await homeFrame.locator('body').evaluate(()=>chrome.storage.local.get('gdhCsvSourcePath'));
+  assert.equal(stored.gdhCsvSourcePath,'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  const jobs=await context.serviceWorkers()[0].evaluate(()=>chrome.storage.session.get(null));
+  assert.equal(Object.keys(jobs).filter(key=>key.startsWith('gdhCsvNavigation:')).length,0);
+  // Invalid external menu link with no registered source never navigates or posts.
+  await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();dialogs.pop();
+  await homeFrame.locator('body').evaluate(()=>chrome.storage.local.remove('gdhCsvSourcePath'));
   await page.locator('#machineSearchLink').evaluate(link=>{link.href='https://example.com/cncservice/viewcreator/dataview/list/synthetic-machine';});
   await homeFrame.locator('#fetchBtn').click();await homeFrame.locator('#fetchStatus.err').waitFor();
-  assert.equal(homeLoads,1);assert.equal(posts.length,1);assert.deepEqual(blocked,[]);dialogs.pop();posts.length=0;
-  await page.getByRole('button',{name:'拡張ツールを閉じる'}).click();
-  await page.locator('#gdh-search-extension-button').click();await homeFrame.locator('#gdh-home-csv-note').waitFor();
-  // Capture only the verified page path, then export from a home with no menu link.
-  await page.goto(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine?csrf_mock=never-save&keyword=never-save');
-  await page.locator('#gdh-search-extension-button').waitFor();
-  await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();
-  await page.locator('#machineSearchLink').evaluate(link=>link.remove());
-  const rememberedDownload=page.waitForEvent('download');await homeFrame.locator('#fetchBtn').click();await rememberedDownload;
-  await homeFrame.locator('body').evaluate(()=>new Promise(resolve=>{const check=()=>document.getElementById('fetchBtn').disabled?setTimeout(check,20):resolve();check();}));
-  const remembered=await homeFrame.locator('body').evaluate(()=>chrome.storage.local.get('gdhCsvSourcePath'));
-  assert.equal(remembered.gdhCsvSourcePath,'/cncservice/viewcreator/dataview/list/synthetic-machine');
-  assert.equal(new URL(page.url()).pathname,'/cncservice/home');assert.equal(posts.length,1);
+  assert.equal(new URL(page.url()).pathname,'/cncservice/home');assert.equal(posts.length,1);assert.deepEqual(blocked,[]);
   dialogs.length=0;posts.length=0;
   await page.goto(origin+'/cncservice/mock');
   for(const width of [1440,390]){await page.setViewportSize({width,height:900});const button=await page.locator('#gdh-search-extension-button').boundingBox(),heading=await page.locator('h1').boundingBox(),form=await page.locator('#frmmain').boundingBox();assert(button.y>=heading.y+heading.height);assert(button.y+button.height<=form.y);assert(button.x<40);assert(button.x+button.width<=width);}
@@ -147,7 +145,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   assert.equal(dialogs[0],'CSVファイルを出力します。よろしいですか？');assert.deepEqual(errors,[]);
   // A different site does not receive the GDH button.
   await page.goto('https://example.com/').catch(()=>{});assert.equal(await page.locator('#gdh-search-extension-button').count(),0);
-  console.log('PASS: home confirmation, CSV export via live iframe form with no navigation, cancellation, external-link refusal, loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer, validation UI/settings/persistence and zero validation HTTP');
+  console.log('PASS: home confirmation, visible machine-page navigation and one-time CSV resume, cancellation without retry, external-link refusal, loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer, validation UI/settings/persistence and zero validation HTTP');
   console.log('Browser: '+context.browser().version());
  }finally{await context.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
