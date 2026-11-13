@@ -29,7 +29,7 @@ jobs:
           sha256sum GDH_Search_Setup.zip "GDH_Search_Setup_${RELEASE_TAG}.zip" > "SHA256SUMS_${RELEASE_TAG}.txt"
           gh release upload "$RELEASE_TAG" "SHA256SUMS_${RELEASE_TAG}.txt" --clobber
           for asset in "CNC_Machine_Viewer_${RELEASE_TAG}.zip" "GDH_Search_Extension_${RELEASE_TAG}.zip"; do
-            if gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | rg -Fx "$asset"; then
+            if gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | grep -Fx "$asset"; then
               gh release delete-asset "$RELEASE_TAG" "$asset" --yes
             fi
           done

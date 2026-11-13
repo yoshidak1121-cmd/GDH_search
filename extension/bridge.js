@@ -6,6 +6,13 @@
  const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
  const pending=new Map();
  if(channel && hostOrigin===allowed && window.parent!==window){
+  if(params.get('csvAvailable')==='0'){
+   for(const id of ['fetchBtn','fetchDuration','fetchFallback']){const element=document.getElementById(id);if(element)element.hidden=true;}
+   const note=document.createElement('p');note.id='gdh-home-csv-note';note.setAttribute('role','status');
+   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'Opened from GDH Home. Use Load local data to select a CSV file.':'GDHホームから開きました。「ローカルからデータ取得」でCSVファイルを選択してください。';};
+   document.querySelector('.fetch-area')?.before(note);translate();window.addEventListener('gdh-language-changed',translate);
+  }
+
   window.GDH_CSV_EXPORT_ADAPTER=()=>new Promise((resolve,reject)=>{
    const requestId=crypto.randomUUID();
    const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('GDHとの接続がタイムアウトしました。'));},125000);
