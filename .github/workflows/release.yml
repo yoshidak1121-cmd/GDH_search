@@ -47,7 +47,8 @@ jobs:
         working-directory: dist/release
         run: sha256sum -c "SHA256SUMS_${RELEASE_TAG}.txt"
       - name: Prepare release notes
-        run: python3 -c "from pathlib import Path; Path('dist/release-notes.md').write_text('Download: [GDH_Search_Setup.zip](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip). Other assets support automatic updates.\n\n' + Path('CHANGELOG.md').read_text().split('\n## ', 1)[0] + '\n')"
+        run: |
+          python3 -c "from pathlib import Path; Path('dist/release-notes.md').write_text('Download: [GDH_Search_Setup.zip](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip). Other assets support automatic updates.\n\n' + Path('CHANGELOG.md').read_text().split('\n## ', 1)[0] + '\n')"
       - name: Create draft for a version update
         if: github.event_name == 'push'
         run: |
