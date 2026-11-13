@@ -21,7 +21,7 @@
  }
  window.createGdhCsvExportAdapter = function (options={}) {
   const form=options.form || document.getElementById('frmmain');
-  if(!(form instanceof HTMLFormElement))throw new Error('GDHの機械情報検索フォームが見つかりません。');
+  if(!form||!(form instanceof form.ownerDocument?.defaultView?.HTMLFormElement))throw new Error('GDHの機械情報検索フォームが見つかりません。');
   const timeoutMs=options.timeoutMs ?? 120000;
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0)throw new Error('CSV取得のタイムアウト値が不正です。');
   const confirm=options.confirmExport || confirmExport;

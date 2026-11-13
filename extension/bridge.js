@@ -6,10 +6,9 @@
  const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
  const pending=new Map();
  if(channel && hostOrigin===allowed && window.parent!==window){
-  if(params.get('csvAvailable')==='0'){
-   for(const id of ['fetchBtn','fetchDuration','fetchFallback']){const element=document.getElementById(id);if(element)element.hidden=true;}
+  if(params.get('home')==='1'){
    const note=document.createElement('p');note.id='gdh-home-csv-note';note.setAttribute('role','status');
-   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'Opened from GDH Home. Use Load local data to select a CSV file.':'GDHホームから開きました。「ローカルからデータ取得」でCSVファイルを選択してください。';};
+   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'CSV retrieval loads the machine search page in the background. GDH Home stays open.':'GDHホームを表示したまま取得します。CSV取得時に機械情報検索画面を裏で読み込みます。';};
    document.querySelector('.fetch-area')?.before(note);translate();window.addEventListener('gdh-language-changed',translate);
   }
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GDH 機械情報 拡張検索",
-  "version": "1.20.6",
+  "version": "1.20.7",
   "description": "GDHの機械情報CSVを取り込み、AND・ORの複合条件で検索します。",
   "permissions": [
     "storage",
@@ -19,6 +19,7 @@
       ],
       "js": [
         "gdh-export.js",
+        "home-csv.js",
         "content.js"
       ],
       "run_at": "document_idle",
