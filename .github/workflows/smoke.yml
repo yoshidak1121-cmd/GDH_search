@@ -47,4 +47,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Windows setup and updater
         shell: powershell
-        run: ./tests/setup.ps1
+        run: |
+          powershell.exe -NoProfile -File ./tests/setup.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell.exe -NoProfile -File ./tests/native-host.ps1
+          exit $LASTEXITCODE

@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([switch]$LibraryOnly)
+param([switch]$LibraryOnly,[switch]$Silent,[ValidatePattern('^\d+\.\d+\.\d+$')][string]$ExpectedVersion)
 $ErrorActionPreference = 'Stop'
 function Get-GdhReleasePlan($Release) {
     if ($Release.draft -or $Release.prerelease -or $Release.tag_name -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Invalid release' }
@@ -32,16 +32,22 @@ function Test-GdhPackage([string]$PackagePath, [string]$ChecksumText, [string]$N
 }
 if ($LibraryOnly) { return }
 $work = $null
+$updateLock = $null
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Write-Host 'GDH Update...'
+    $base = Join-Path $env:LOCALAPPDATA 'GDH_Search'
+    if(!(Test-Path -LiteralPath $base)){New-Item -ItemType Directory -Path $base | Out-Null}
+    if((Get-Item -LiteralPath $base).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Update folder must not be a link'}
+    $updateLock=[IO.File]::Open((Join-Path $base 'update.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
     $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/yoshidak1121-cmd/GDH_search/releases/latest' -TimeoutSec 30 -Headers @{ Accept='application/vnd.github+json'; 'User-Agent'='GDH-Search-Updater' }
     $plan = Get-GdhReleasePlan $release
+    if($ExpectedVersion -and $plan.Version -ne $ExpectedVersion){throw 'Release changed; check again'}
     $base = Join-Path $env:LOCALAPPDATA 'GDH_Search'
     $current = Join-Path $base 'Extension\manifest.json'
     if (Test-Path -LiteralPath $current) {
         $installed = Get-Content -LiteralPath $current -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ([version]$installed.version -ge [version]$plan.Version) { Write-Host "v$($installed.version): latest"; Read-Host 'Enter' | Out-Null; exit 0 }
+        if ([version]$installed.version -ge [version]$plan.Version) { Write-Host "v$($installed.version): latest"; if(!$Silent){Read-Host 'Enter' | Out-Null}; exit 0 }
     }
     $work = Join-Path ([IO.Path]::GetTempPath()) ('GDH-Update-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $work | Out-Null
@@ -55,11 +61,13 @@ try {
     $setupRoot = Join-Path $expanded 'GDH_Search_Setup'
     $manifest = Get-Content -LiteralPath (Join-Path $setupRoot 'GDH_Search_Extension\manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($manifest.version -ne $plan.Version -or $manifest.name -ne 'GDH 機械情報 拡張検索') { throw 'Package version mismatch' }
-    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $setupRoot 'Setup.ps1')
+    if($Silent){& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $setupRoot 'Setup.ps1') -AutomatedUpdate}
+    else {& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $setupRoot 'Setup.ps1')}
     if ($LASTEXITCODE -ne 0) { throw 'Setup failed' }
 } catch {
     Write-Host "GDH Update failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
+    if($updateLock){$updateLock.Dispose()}
     if ($work -and (Test-Path -LiteralPath $work)) { Remove-Item -LiteralPath $work -Recurse -Force }
 }

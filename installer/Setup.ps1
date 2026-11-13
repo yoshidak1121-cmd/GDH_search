@@ -2,7 +2,8 @@
 param(
     [ValidateSet('Edge', 'Chrome')][string]$Browser,
     [ValidateSet('Auto', 'ja', 'en')][string]$Language = 'Auto',
-    [switch]$PrepareOnly
+    [switch]$PrepareOnly,
+    [switch]$AutomatedUpdate
 )
 $ErrorActionPreference = 'Stop'
 if ($Language -eq 'Auto') { $Language = if ([Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq 'ja') { 'ja' } else { 'en' } }
@@ -23,7 +24,7 @@ try {
     $target = Join-Path $base 'Extension'
     $isUpdate = Test-Path -LiteralPath (Join-Path $target 'manifest.json')
     $preferences = Join-Path $base 'setup.json'
-    if (!$PrepareOnly) {
+    if (!$PrepareOnly -and !$AutomatedUpdate) {
         $savedBrowser = $null
         if (Test-Path -LiteralPath $preferences -PathType Leaf) {
             try { $savedBrowser = (Get-Content -LiteralPath $preferences -Raw -Encoding UTF8 | ConvertFrom-Json).Browser } catch {}
@@ -73,13 +74,16 @@ try {
         if ($backupMoved -and !(Test-Path -LiteralPath $target)) { Move-Item -LiteralPath $backup -Destination $target; $rolledBack = $true }
         throw
     }
-    foreach ($name in @('Update.bat','Update.ps1')) {
+    foreach ($name in @('Update.bat','Update.ps1','NativeHost.cs','NativeHost.ps1')) {
         $launcher = Join-Path $base $name
         if ((Test-Path -LiteralPath $launcher) -and ((Get-Item -LiteralPath $launcher).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Updater path must not be a link' }
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $launcher -Force
     }
     Write-Host (T "GDH v$($manifest.version)：配置完了" "GDH v$($manifest.version): files ready") -ForegroundColor Green
     if ($PrepareOnly) { exit 0 }
+    . (Join-Path $base 'NativeHost.ps1')
+    $null = Install-GdhNativeHost -Base $base -ExtensionPath $target
+    if($AutomatedUpdate){exit 0}
     if ((Test-Path -LiteralPath $preferences) -and ((Get-Item -LiteralPath $preferences).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Settings path must not be a link' }
     @{ Browser = $Browser } | ConvertTo-Json | Set-Content -LiteralPath $preferences -Encoding UTF8
     try { Remove-GdhLegacyShortcut -Desktop ([Environment]::GetFolderPath('Desktop')) -Updater (Join-Path $base 'Update.bat') } catch {}

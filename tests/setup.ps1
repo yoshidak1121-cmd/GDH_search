@@ -38,7 +38,7 @@ try {
  $fixture=Join-Path $testRoot 'Package'
  $extension=Join-Path $fixture 'GDH_Search_Extension'
  New-Item -ItemType Directory -Path $extension -Force | Out-Null
- foreach ($name in @('Setup.ps1','Browser.ps1','Update.bat','Update.ps1')) { Copy-Item -LiteralPath (Join-Path $root "installer\$name") -Destination $fixture }
+ foreach ($name in @('Setup.ps1','Browser.ps1','NativeHost.cs','NativeHost.ps1','Update.bat','Update.ps1')) { Copy-Item -LiteralPath (Join-Path $root "installer\$name") -Destination $fixture }
  $manifest=@{name='GDH 機械情報 拡張検索';manifest_version=3;version='1.0.0'}
  $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $extension 'manifest.json') -Encoding UTF8
  Set-Content -LiteralPath (Join-Path $extension 'old.txt') -Value 'synthetic'
