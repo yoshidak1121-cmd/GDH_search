@@ -17,8 +17,9 @@
  }
  function report(result,version){
   const count=value=>Number.isSafeInteger(value)&&value>=0&&value<=100?value:'—';
-  const labels={DUPLICATE_TABS:'対象タブが複数',NOT_OPEN:'対象タブなし',SCHEMA_MISMATCH:'項目不一致',AUTH_REQUIRED:'認証・権限エラー',HTTP_ERROR:'HTTPエラー',NETWORK_ERROR:'通信エラー',PAGE_NOT_READY:'画面未準備',RPC_UNCONFIRMED:'通信形式未確認',TIMEOUT:'タイムアウト'};
+  const labels={DUPLICATE_TABS:'対象タブが複数',NOT_OPEN:'対象タブなし',SCHEMA_MISMATCH:'項目不一致',AUTH_REQUIRED:'認証・権限エラー',HTTP_ERROR:'HTTPエラー',NETWORK_ERROR:'通信エラー',PAGE_NOT_READY:'画面未準備',RPC_UNCONFIRMED:'通信形式未確認',TIMEOUT:'通信待ち上限',READ_TIMEOUT:'通信待ち上限',BATCH_TIMEOUT:'全体上限',DISCOVERY_TIMEOUT:'画面確認待ち上限',CANCELLED:'停止',MODE_OFF:'OFFで停止',NOT_ATTEMPTED:'未実行'};
   const lines=['GDH 一括点検 '+(/^\d+\.\d+\.\d+$/.test(version)?version:''),'各テーブル1ページ目・最大100件。元の各行を集計し、全体一意性・業務定義は未確定。','テーブル | 状態 | 行数 | 項目数'];
+  if(result.run){const states={running:'実行中',stopping:'停止処理中',completed:'完了',cancelled:'停止',timeout:'待ち時間上限',interrupted:'中断'};lines.splice(2,0,'処理状態：'+(states[result.run.status]||'不明')+'／'+(labels[result.run.reason]||''));if(tables.some(table=>table.table===result.run.table))lines.splice(3,0,'停止・処理箇所：'+result.run.table);}
   for(const table of tables){const row=result.tables.find(row=>row.table===table.table);lines.push([table.table,row?.ok?(row.summary?.valid?'取得済み':'項目不一致'):(labels[row?.code]||'未取得／確認必要'),count(row?.summary?.count),count(row?.summary?.fields?.length)].join(' | '));}
   lines.push('','候補関係 | 1件対応 | サンプルに対象なし | 複数候補 | 空欄');
   for(const link of links){const row=result.relationships.find(row=>row.from===link.from&&row.fromKey===link.fromKey&&row.to===link.to&&row.toKey===link.toKey);if(row)lines.push([link.from+'.'+link.fromKey+' → '+link.to+'.'+link.toKey,...['matched','notInSample','ambiguous','blank'].map(key=>count(row[key]))].join(' | '));}

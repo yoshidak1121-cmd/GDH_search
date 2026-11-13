@@ -5,6 +5,15 @@
 async function readGdhContractPage(config){
  'use strict';
  const fail=code=>({ok:false,code});
+ const controlKey=Symbol.for('GDH_SEARCH_READ_CONTROL');
+ const state=window[controlKey]||(window[controlKey]={active:null,cancelled:new Map()});
+ for(const [key,expiry] of state.cancelled)if(expiry<Date.now())state.cancelled.delete(key);
+ const readId=config?.readId||crypto.randomUUID(),deadline=Math.min(config?.deadline||Infinity,Date.now()+15000);
+ if(Date.now()>=deadline)return fail('TIMEOUT');
+ if(state.cancelled.has(readId))return fail('ABORTED');
+ if(state.active&&state.active.deadline>Date.now())return fail('BUSY');
+ if(state.active){try{state.active.xhr.abort();}catch{}state.active=null;}
+
  const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
  const path='/cncservice/tablemaintenance(2f)views(2f)table(5f)edit.jssprpc';
  const defaultColumns=['contract_id','contract_no','contract_type','contract_period','contract_start_date','contract_end_date','contract_from_location_code','contractor_id','contract_notes','nc_serial_no','del_flg','ins_user_id','upd_user_id','ins_date','ins_id','ins_pgmid','upd_date','upd_id','upd_pgmid'];
@@ -36,17 +45,24 @@ async function readGdhContractPage(config){
  }catch{return fail('PAGE_NOT_READY');}
  return new Promise(resolve=>{
   let xhr=new XMLHttpRequest(),settled=false;
-  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value);};
-  const timer=setTimeout(()=>{finish(fail('TIMEOUT'));try{xhr.abort();}catch{}},15000);
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);if(state.active?.id===readId)state.active=null;resolve(value);};
+  const readTimeout=Math.max(1,deadline-Date.now());
+  const timer=setTimeout(()=>{finish(fail('TIMEOUT'));try{xhr.abort();}catch{}},readTimeout);
   try{
+   if(Date.now()>=deadline)return finish(fail('TIMEOUT'));
+   if(state.cancelled.has(readId))return finish(fail('ABORTED'));
+   state.active={id:readId,xhr,deadline};
    xhr.open('POST',url.href,true);
    xhr=window.ImAjax.setContentTypeAndReqHeaders(xhr,'application/json; charset=utf-8');
-   xhr.timeout=15000;
+   xhr.timeout=readTimeout;
+   state.active.xhr=xhr;
    xhr.onerror=()=>finish(fail('NETWORK_ERROR'));
    xhr.ontimeout=()=>finish(fail('TIMEOUT'));
    xhr.onabort=()=>finish(fail('ABORTED'));
    xhr.onload=()=>{
     try{
+     if(state.cancelled.has(readId))return finish(fail('ABORTED'));
+     if(Date.now()>=deadline)return finish(fail('TIMEOUT'));
      if(xhr.status===401||xhr.status===403)return finish(fail('AUTH_REQUIRED'));
      if(xhr.status!==200)return finish(fail('HTTP_ERROR'));
      if(xhr.responseURL&&xhr.responseURL!==url.href)return finish(fail('AUTH_REQUIRED'));
@@ -92,10 +108,23 @@ async function readGdhContractPage(config){
       return stats;
      });
      const sample=config?.collect===true?data.map(row=>Object.fromEntries(config.keys.map(field=>{const value=row[field];return [field,typeof value==='string'||(typeof value==='number'&&Number.isFinite(value))?value:null];}))):undefined;
+     if(Date.now()>=deadline)return finish(fail('TIMEOUT'));
+     if(state.cancelled.has(readId))return finish(fail('ABORTED'));
      finish({ok:true,source:'getData-live',...(sample?{sample}:{}),keyChecks,fieldChecks,summary:{count:data.length,fields,missingColumns,unexpectedColumns,valid:!missingColumns.length&&!unexpectedColumns.length},request:{db_source:'ZALS',tablename:table,pagenumber:1,pageline:100}});
     }catch{finish(fail('INVALID_RESPONSE'));}
    };
+   if(Date.now()>=deadline)return finish(fail('TIMEOUT'));
+   if(state.cancelled.has(readId))return finish(fail('ABORTED'));
    xhr.send(body);
   }catch{finish(fail('NETWORK_ERROR'));}
  });
+}
+
+function cancelGdhRead(readId){
+ 'use strict';
+ if(typeof readId!=='string'||readId.length>100)return;
+ const key=Symbol.for('GDH_SEARCH_READ_CONTROL');
+ const state=window[key]||(window[key]={active:null,cancelled:new Map()});
+ state.cancelled.set(readId,Date.now()+30000);
+ if(state.active?.id===readId){try{state.active.xhr.abort();}catch{}state.active=null;}
 }

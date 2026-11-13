@@ -12,6 +12,7 @@ jobs:
           node-version: '24'
       - run: node tests/export-results.cjs
       - run: node tests/getdata.cjs
+      - run: node tests/getdata-batch.cjs
       - run: node tests/english-headers.cjs
       - run: node tests/smoke.cjs
       - run: node tests/countries.cjs

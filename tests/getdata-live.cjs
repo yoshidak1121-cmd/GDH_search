@@ -29,7 +29,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
    if(url.origin===origin&&['/cncservice/synthetic-nc','/cncservice/synthetic-model'].includes(url.pathname))return route.fulfill({contentType:'text/html',body:html.replaceAll('ZGDDTB_CONTRACT_INFO',url.pathname.endsWith('-nc')?'ZGDDTB_NC_INFO_RS':'ZGDDTM_NC_MODEL')});
    if(url.origin===origin&&url.pathname===rpc){
     posts.push({url:req.url(),method:req.method(),body:req.postData(),headers:req.headers()});
-    if(mode==='hold')await new Promise(resolve=>{release=resolve;});
+    if(mode==='hold'){await new Promise(resolve=>{release=resolve;});if(req.failure())return;}
     if(mode==='auth')return route.fulfill({status:403,body:'forbidden'});
     if(mode==='html')return route.fulfill({contentType:'text/html',body:'<html>login</html>'});
     if(mode==='http')return route.fulfill({status:500,body:'error'});
@@ -50,6 +50,17 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const tabs=await ui.locator('#liveTab option').evaluateAll(options=>options.map(x=>x.value).filter(Boolean));assert.equal(tabs.length,1);
   const tabId=Number(tabs[0]);await ui.locator('#liveTab').selectOption(String(tabId));
   const send=()=>ui.evaluate(tabId=>chrome.runtime.sendMessage({type:'GDH_GETDATA_READ',tabId,confirmed:true}),tabId);
+  const runBatch=options=>ui.evaluate(async options=>{
+   const start=await chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true,...options});
+   if(!start.ok)return start;
+   for(let i=0;i<600;i++){
+    const state=await chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH_STATUS',jobId:start.jobId});
+    if(!state.ok)throw Error(state.code);
+    if(state.status!=='running'&&state.status!=='stopping')return state.result;
+    await new Promise(resolve=>setTimeout(resolve,25));
+   }
+   throw Error('Synthetic batch timed out');
+  },options||{});
   assert.equal((await send()).code,'MODE_OFF');assert.equal((await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}))).code,'MODE_OFF');assert.equal(posts.length,0);
   await ui.locator('#validationEnabled').check();
   let accept=false;ui.on('dialog',dialog=>accept?dialog.accept():dialog.dismiss());
@@ -78,7 +89,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const dates=result.fieldChecks.find(row=>row.field==='contract_start_date');for(const key of ['ymdDash','ymdSlash','ymdCompact','dateTime'])assert.equal(dates.dateFormats[key],25);
   const nc=await context.newPage();await nc.goto(origin+'/cncservice/synthetic-nc');
   const model=await context.newPage();await model.goto(origin+'/cncservice/synthetic-model');
-  const batch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',tabId:-1,confirmed:true}));
+  const batch=await runBatch({tabId:-1});
   assert.equal(batch.ok,true);assert.equal(batch.tables.filter(row=>row.ok).length,3);assert.equal(batch.tables.filter(row=>row.code==='NOT_OPEN').length,7);
   const ncRelation=batch.relationships.find(row=>row.from==='ZGDDTB_CONTRACT_INFO'&&row.fromKey==='nc_serial_no');assert.equal(ncRelation.matched,2);assert.equal(ncRelation.notInSample,98);
   const modelRelation=batch.relationships.find(row=>row.from==='ZGDDTB_NC_INFO_RS'&&row.fromKey==='nc_model_id');assert.equal(modelRelation.ambiguous,1);
@@ -87,15 +98,15 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const switched=posts.filter(post=>JSON.parse(post.body.replace(/\bundefined\b/g,'null'))[0].tablename==='ZGDDTM_CUSTOMER');assert(switched.length>0);assert.equal(JSON.parse(switched[0].body.replace(/\bundefined\b/g,'null'))[0].searches.tm_seach_fieldname__customer_id,'');
   const batchText=await ui.locator('#reviewText').inputValue();assert(batchText.includes('サンプルに対象なし＝不存在ではありません'));assert(!batchText.includes('SYNTHETIC-'));
   const duplicate=await context.newPage();await duplicate.goto(origin+'/cncservice/synthetic-nc');
-  const duplicateResult=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));assert.equal(duplicateResult.tables.find(row=>row.table==='ZGDDTB_NC_INFO_RS').code,'DUPLICATE_TABS');
+  const duplicateResult=await runBatch();assert.equal(duplicateResult.tables.find(row=>row.table==='ZGDDTB_NC_INFO_RS').code,'DUPLICATE_TABS');
   await duplicate.close();await nc.close();await model.close();
   for(const [testMode,code] of [['auth','AUTH_REQUIRED'],['html','AUTH_REQUIRED'],['http','HTTP_ERROR'],['invalid','INVALID_RESPONSE'],['script','INVALID_RESPONSE']]){mode=testMode;assert.equal((await send()).code,code);}
   assert.equal(await host.evaluate(()=>window.fixtureAttack),undefined);
   await host.evaluate(()=>{ImJsspRpc.receive=xhr=>JSON.parse(xhr.responseText.replace(/"(?:[^"\\]|\\.)*"|\bundefined\b/g,token=>token==='undefined'?'null':token));});
-  mode='auth';const beforeAuthBatch=posts.length;const authBatch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));assert.equal(posts.length-beforeAuthBatch,1);assert(authBatch.tables.every(row=>row.code==='AUTH_REQUIRED'));
+  mode='auth';const beforeAuthBatch=posts.length;const authBatch=await runBatch();assert.equal(posts.length-beforeAuthBatch,1);assert(authBatch.tables.every(row=>row.code==='AUTH_REQUIRED'));
   mode='extended';assert.equal((await send()).summary.count,100);
   mode='empty';const empty=await send();assert.equal(empty.summary.count,0);assert(empty.keyChecks.every(row=>row.blankCount===0&&row.distinctCount===0&&row.duplicateRows===0));
-  await host.evaluate(()=>{window.savedSetTimeout=window.setTimeout;window.setTimeout=(callback,ms,...args)=>ms===15000?(queueMicrotask(callback),0):savedSetTimeout(callback,ms,...args);});
+  await host.evaluate(()=>{window.savedSetTimeout=window.setTimeout;window.setTimeout=(callback,ms,...args)=>ms>10000&&ms<=15000?(queueMicrotask(callback),0):savedSetTimeout(callback,ms,...args);});
   assert.equal((await send()).code,'TIMEOUT');
   await host.evaluate(()=>{window.setTimeout=window.savedSetTimeout;delete window.savedSetTimeout;});
   mode='hold';const first=send();
@@ -109,8 +120,37 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const popup=await context.newPage();await popup.goto(base+'/popup.html');
   assert.equal(await popup.evaluate(tabId=>chrome.runtime.sendMessage({type:'GDH_GETDATA_READ',tabId,confirmed:true}),tabId),undefined);
   await popup.close();await ui.locator('#validationClose').click();assert.equal((await send()).code,'MODE_OFF');
+  // Stop must abort the actual page XHR and prevent every subsequent table request.
+  await host.reload();
+  const beforeGuard=posts.length;
+  const guarded=await worker.evaluate(async tabId=>{
+   await chrome.scripting.executeScript({target:{tabId},world:'MAIN',func:cancelGdhRead,args:['synthetic-cancelled-read']});
+   const cancelled=await chrome.scripting.executeScript({target:{tabId},world:'MAIN',func:readGdhContractPage,args:[{readId:'synthetic-cancelled-read',deadline:Date.now()+15000}]});
+   const expired=await chrome.scripting.executeScript({target:{tabId},world:'MAIN',func:readGdhContractPage,args:[{readId:'synthetic-expired-read',deadline:Date.now()-1}]});
+   return [cancelled[0].result.code,expired[0].result.code];
+  },tabId);
+  assert.deepEqual(guarded,['ABORTED','TIMEOUT']);assert.equal(posts.length,beforeGuard);
+  await ui.locator('#validationEnabled').check();mode='hold';release=undefined;
+  const beforeStop=posts.length;const aborted=context.waitForEvent('requestfailed',{predicate:req=>new URL(req.url()).pathname===rpc});
+  aborted.catch(()=>{});
+  await ui.locator('#batchRun').click();await ui.locator('#batchStop').waitFor({state:'visible'});
+  for(let i=0;i<500&&!release;i++)await new Promise(resolve=>setTimeout(resolve,10));assert(release);
+  await ui.locator('#batchStatus').filter({hasText:'ZGDDTB_CONTRACT_INFO'}).waitFor();
+  await ui.locator('#batchStop').click();await aborted;
+  await ui.locator('#batchStatus').filter({hasText:'一括点検を停止'}).waitFor();release();
+  assert.equal(posts.length,beforeStop+1);assert(!(await ui.locator('#batchStatus').textContent()).includes('一括点検中'));
+  assert((await ui.locator('#reviewText').inputValue()).includes('停止'));
+  // A lost status channel must clear the running state and request cancellation.
+  mode='hold';release=undefined;const beforeDisconnect=posts.length;
+  await ui.evaluate(()=>{window.fixtureRuntimeSend=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=(message,...rest)=>message.type==='GDH_GETDATA_BATCH_STATUS'?Promise.reject(Error('synthetic channel loss')):window.fixtureRuntimeSend(message,...rest);});
+  const disconnectedAbort=context.waitForEvent('requestfailed',{predicate:req=>new URL(req.url()).pathname===rpc});
+  disconnectedAbort.catch(()=>{});
+  await ui.locator('#batchRun').click();await ui.locator('#batchStatus').filter({hasText:'接続切断'}).waitFor();await disconnectedAbort;
+  if(release)release();assert.equal(posts.length,beforeDisconnect+1);
+  await ui.evaluate(()=>{chrome.runtime.sendMessage=window.fixtureRuntimeSend;delete window.fixtureRuntimeSend;});
+  await ui.locator('#validationClose').click();
   const saved=await ui.evaluate(()=>chrome.storage.local.get(null));assert.deepEqual(saved,{gdhGetDataValidationEnabled:false});
   assert.deepEqual(blocked,[]);
-  console.log('PASS: real MV3 worker/MAIN transport, explicit confirmation/OFF gate, current RPC URL, native serializer/security headers/receiver, 1 page/100 max, metadata only, HTTP/auth/invalid/empty, duplicate guard, wrong table/URL/sender, no records/tokens saved, synthetic routes only');
+  console.log('PASS: real MV3 worker/MAIN transport, explicit confirmation/OFF gate, current RPC URL, native serializer/security headers/receiver, 1 page/100 max, metadata only, HTTP/auth/invalid/empty, duplicate guard, wrong table/URL/sender, progress/stop/late injection/channel loss, no records/tokens saved, synthetic routes only');
  }finally{await context.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
