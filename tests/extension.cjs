@@ -20,7 +20,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
    const req=route.request(),url=new URL(req.url());
    if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
    if(url.origin===origin&&url.pathname==='/cncservice/home')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><h1>GDH home fixture</h1><a id="machineSearchLink" href="/cncservice/viewcreator/dataview/list/synthetic-machine">機械情報 検索</a>'});
-   if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list/synthetic-machine'){homeLoads++;return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml.replace('</form>','<input name="csrf_mock" value="dynamic-home-fixture"></form>')});}
+   if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list/synthetic-machine'){homeLoads++;return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml.replace('<head>','<head><title>機械情報 検索</title>').replace('</form>','<input name="csrf_mock" value="dynamic-home-fixture"></form>')});}
    if(url.origin===origin&&url.pathname==='/cncservice/mock')return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml});
    if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list_csv'){
     posts.push({method:req.method(),fields:new URLSearchParams(req.postData())});
@@ -59,6 +59,17 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   assert.equal(homeLoads,1);assert.equal(posts.length,1);assert.deepEqual(blocked,[]);dialogs.pop();posts.length=0;
   await page.getByRole('button',{name:'拡張ツールを閉じる'}).click();
   await page.locator('#gdh-search-extension-button').click();await homeFrame.locator('#gdh-home-csv-note').waitFor();
+  // Capture only the verified page path, then export from a home with no menu link.
+  await page.goto(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine?csrf_mock=never-save&keyword=never-save');
+  await page.locator('#gdh-search-extension-button').waitFor();
+  await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();
+  await page.locator('#machineSearchLink').evaluate(link=>link.remove());
+  const rememberedDownload=page.waitForEvent('download');await homeFrame.locator('#fetchBtn').click();await rememberedDownload;
+  await homeFrame.locator('body').evaluate(()=>new Promise(resolve=>{const check=()=>document.getElementById('fetchBtn').disabled?setTimeout(check,20):resolve();check();}));
+  const remembered=await homeFrame.locator('body').evaluate(()=>chrome.storage.local.get('gdhCsvSourcePath'));
+  assert.equal(remembered.gdhCsvSourcePath,'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  assert.equal(new URL(page.url()).pathname,'/cncservice/home');assert.equal(posts.length,1);
+  dialogs.length=0;posts.length=0;
   await page.goto(origin+'/cncservice/mock');
   for(const width of [1440,390]){await page.setViewportSize({width,height:900});const button=await page.locator('#gdh-search-extension-button').boundingBox(),heading=await page.locator('h1').boundingBox(),form=await page.locator('#frmmain').boundingBox();assert(button.y>=heading.y+heading.height);assert(button.y+button.height<=form.y);assert(button.x<40);assert(button.x+button.width<=width);}
   await page.setViewportSize({width:1440,height:900});

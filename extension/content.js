@@ -7,6 +7,13 @@
  const isHome=location.pathname==='/cncservice/home'||location.pathname==='/cncservice/home/';
  const extensionOrigin='chrome-extension://'+chrome.runtime.id;
  function sourceForm(){const form=document.getElementById('frmmain');return form instanceof HTMLFormElement&&form.querySelector('[name="dataview_cd"]')?form:null;}
+ function rememberCsvSource(){
+  const form=sourceForm(),label=(document.title+' '+(document.querySelector('h1')?.textContent||'')).replace(/\s/g,'');
+  if(!form||!/機械情報検索|machineinformationsearch|machinesearch/i.test(label)||!/^\/cncservice\/viewcreator\/dataview\/list\/[A-Za-z0-9_-]+\/?$/.test(location.pathname))return;
+  if(!['dataview_cd','iszip','pdf','downloadToken','form_submit'].every(name=>form.querySelector('[name="'+name+'"]')))return;
+  chrome.storage.local.set({gdhCsvSourcePath:location.pathname}).catch(()=>{});
+ }
+ rememberCsvSource();
  function close(){if(busy)return false;panel?.remove();panel=null;frame=null;channel=null;exportCsv=null;return true;}
  function setHostLanguage(language){
   if(!['ja','en'].includes(language))return;uiLang=language;

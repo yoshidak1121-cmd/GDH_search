@@ -1,4 +1,4 @@
-/* Read the live menu link and the authenticated form; retain neither after export. */
+/* Keep only an observed page path; read authentication from a fresh live form. */
 (function(){
  'use strict';
  window.createGdhHomeCsvExportAdapter=function({confirmExport,timeoutMs=20000}){
@@ -16,7 +16,11 @@
       if(url.origin===location.origin&&!url.username&&!url.password&&/^\/cncservice\/viewcreator\/dataview\/list\/[^/]+\/?$/.test(url.pathname))urls.add(url.href);
      }catch{}
     }
-    if(urls.size!==1)throw Error('ホーム内の機械情報検索リンクを特定できません。CSV取得は開始していません。');
+    if(urls.size===0){
+     const {gdhCsvSourcePath:path}=await chrome.storage.local.get('gdhCsvSourcePath');
+     if(typeof path==='string'&&/^\/cncservice\/viewcreator\/dataview\/list\/[A-Za-z0-9_-]+\/?$/.test(path))urls.add(new URL(path,location.origin).href);
+    }
+    if(urls.size!==1)throw Error('取得元が未登録です。一度だけ機械情報検索画面を開いてからホームへ戻ってください。CSV取得は開始していません。');
     frame=document.createElement('iframe');frame.hidden=true;frame.setAttribute('aria-hidden','true');
     frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads');
     await new Promise((resolve,reject)=>{
