@@ -23,6 +23,9 @@ try{
   $start=New-Object Diagnostics.ProcessStartInfo
   $start.FileName=$hostInfo.Executable;$start.Arguments=$Caller;$start.UseShellExecute=$false;$start.CreateNoWindow=$true
   $start.RedirectStandardInput=$true;$start.RedirectStandardOutput=$true;$start.RedirectStandardError=$true
+  # Native Messaging is raw bytes, not a console text stream with a UTF-8 BOM.
+  [Console]::InputEncoding=New-Object Text.UTF8Encoding($false)
+  if($start.PSObject.Properties.Name -contains 'StandardInputEncoding'){$start.StandardInputEncoding=New-Object Text.UTF8Encoding($false)}
   $process=[Diagnostics.Process]::Start($start)
   try{
    $bytes=[Text.Encoding]::UTF8.GetBytes(($Message|ConvertTo-Json -Compress));$size=if($Oversized){$Oversized}else{$bytes.Length}
