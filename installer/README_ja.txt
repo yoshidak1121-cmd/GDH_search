@@ -5,11 +5,12 @@ GDH Search 導入・更新（Windows）
 2. 開いたブラウザーで本拡張機能の ↻ を押す。
 3. GDH画面でF5。
 
-次回から
-デスクトップの「GDH Update」をダブルクリックするだけで、最新版を取得・配置します。
-その後、本拡張機能の ↻ とGDH画面のF5を行ってください。
-ショートカットがない場合：%LOCALAPPDATA%\GDH_Search\Update.bat
-通信・照合に失敗した場合は配置を開始しません。旧版はBackup-*に保持します。
+GitHubから更新
+ポップアップの「GitHubから更新」または次のURLで最新版を取得します。
+https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip
+バージョン番号の選択は不要です。展開後Install.batを実行し、↻ → GDHでF5。
+デスクトップにファイルは作成しません。以前本ツールが作った未変更の「GDH Update」は削除します。
+旧版はBackup-*に保持します。ブラウザーへの反映は手動です。
 
 初回のみ
 開発者モード → 展開して読み込み → コピーされた配置先を選択。

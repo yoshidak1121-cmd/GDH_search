@@ -26,6 +26,7 @@ const vm=require('node:vm');
  const safeReport=context.GdhContractSchema.report({source:'getData-live',summary:{count:100,fields:['SYNTHETIC-SECRET']},data:['SYNTHETIC-SECRET'],im_mark:'SYNTHETIC-SECRET',keyChecks:[{field:'contract_id',blankCount:0,distinctCount:100}]},'1.18.0');
  assert(!safeReport.includes('SYNTHETIC-SECRET'));assert(safeReport.includes('contract_id | 0 | 100'));assert(safeReport.includes('33項目・10テーブル'));
  for(const table of context.GdhMigrationCatalog.tables){for(const field of table.columns)assert(metadata.get(table.table)?.has(field));for(const key of table.keys)assert(table.columns.includes(key));}
+ for(const link of context.GdhMigrationCatalog.links){assert(context.GdhMigrationCatalog.tables.find(row=>row.table===link.from)?.keys.includes(link.fromKey));assert(context.GdhMigrationCatalog.tables.find(row=>row.table===link.to)?.keys.includes(link.toKey));}
  const relations=context.GdhMigrationCatalog.compare(new Map([
   ['ZGDDTB_CONTRACT_INFO',[{nc_serial_no:'01'},{nc_serial_no:1},{nc_serial_no:'1'},{nc_serial_no:null}]],
   ['ZGDDTB_NC_INFO_RS',[{nc_serial_no:'01'},{nc_serial_no:'1'},{nc_serial_no:'1'}]]

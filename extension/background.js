@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
    if((await chrome.storage.local.get('gdhGetDataValidationEnabled')).gdhGetDataValidationEnabled!==true)return {ok:false,code:'MODE_OFF'};
    if(message.type==='GDH_GETDATA_BATCH'){
     if(message.confirmed!==true)return {ok:false,code:'CONFIRM_REQUIRED'};
-    return await inspectOpenTables();
+    return await inspectOpenTables(message.tabId);
    }
    if(message.confirmed!==true||!Number.isInteger(message.tabId))return {ok:false,code:'CONFIRM_REQUIRED'};
    const tabs=await chrome.tabs.query({url:pattern});
@@ -28,9 +28,9 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
  return true;
 });
 
-async function inspectOpenTables(){
+async function inspectOpenTables(seedTabId){
  const tabs=await chrome.tabs.query({url:pattern});
- const found=new Map(),tables=[],samples=new Map();
+ const found=new Map(),tables=[],samples=new Map();let validSeed=null,authStopped=false;
  for(const tab of tabs){
   try{
    const results=await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',func:()=>{
@@ -38,21 +38,26 @@ async function inspectOpenTables(){
     try{const request=window.createRequestData();return request.db_source==='ZALS'?{table:request.tablename}:null;}catch{return null;}
    }});
    const table=results[0]?.result?.table;
+   if(table==='ZGDDTB_CONTRACT_INFO'&&tab.id===seedTabId)validSeed=tab.id;
    if(GdhMigrationCatalog.tables.some(config=>config.table===table)){const ids=found.get(table)||[];ids.push(tab.id);found.set(table,ids);}
   }catch{}
  }
+ if(seedTabId==null&&(found.get('ZGDDTB_CONTRACT_INFO')||[]).length===1)validSeed=found.get('ZGDDTB_CONTRACT_INFO')[0];
  for(const config of GdhMigrationCatalog.tables){
   if((await chrome.storage.local.get('gdhGetDataValidationEnabled')).gdhGetDataValidationEnabled!==true)return {ok:false,code:'MODE_OFF'};
-  const ids=found.get(config.table)||[];
+  if(authStopped){tables.push({table:config.table,ok:false,code:'AUTH_REQUIRED'});continue;}
+  const ownIds=config.table==='ZGDDTB_CONTRACT_INFO'&&validSeed!==null?[validSeed]:(found.get(config.table)||[]);
+  const useSeed=ownIds.length===0&&validSeed!==null;
+  const ids=useSeed?[validSeed]:ownIds;
   if(ids.length!==1){tables.push({table:config.table,ok:false,code:ids.length?'DUPLICATE_TABS':'NOT_OPEN'});continue;}
   try{
-   const results=await chrome.scripting.executeScript({target:{tabId:ids[0]},world:'MAIN',func:readGdhContractPage,args:[{...config,collect:true}]});
+   const results=await chrome.scripting.executeScript({target:{tabId:ids[0]},world:'MAIN',func:readGdhContractPage,args:[{...config,collect:true,allowTableSwitch:true}]});
    const result=results[0]?.result;
    if(result?.ok){
     const {sample,...summary}=result;
-    tables.push({table:config.table,...summary});
+    tables.push({table:config.table,...summary,ok:result.summary.valid,code:result.summary.valid?undefined:'SCHEMA_MISMATCH'});
     if(result.summary.valid&&Array.isArray(sample))samples.set(config.table,sample);
-   }else tables.push({table:config.table,ok:false,code:result?.code||'PAGE_NOT_READY'});
+   }else {tables.push({table:config.table,ok:false,code:result?.code||'PAGE_NOT_READY'});if(result?.code==='AUTH_REQUIRED')authStopped=true;}
   }catch{tables.push({table:config.table,ok:false,code:'PAGE_NOT_READY'});}
  }
  const relationships=GdhMigrationCatalog.compare(samples);samples.clear();

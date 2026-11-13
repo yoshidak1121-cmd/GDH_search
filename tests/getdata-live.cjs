@@ -15,6 +15,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   let mode='success',posts=[],blocked=[],release;
   const rows=Array.from({length:100},(_,i)=>({...Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])),contract_id:i===0?'':i===1?'01':i===2?'1':i===3?1:'SYNTHETIC-ID-'+i,contract_no:'SYNTHETIC-NO-'+i,nc_serial_no:'SYNTHETIC-NC-'+Math.floor(i/2),contractor_id:'SYNTHETIC-PARTY-'+Math.floor(i/5),contract_type:'SYNTHETIC-TYPE',contract_from_location_code:'SYNTHETIC-LOCATION',contract_period:i===0?null:i%2===0?12:'12',contract_start_date:['2026-01-01','2026/01/01','20260101','2026-01-01T00:00:00Z'][i%4],contract_end_date:i===0?null:'2027-01-01'}));
   const extraRows={ZGDDTB_NC_INFO_RS:[{...Object.fromEntries(catalog.find(t=>t.table==='ZGDDTB_NC_INFO_RS').columns.map(c=>[c,null])),nc_serial_no:'SYNTHETIC-NC-0',nc_model_id:'SYNTHETIC-MODEL'}],ZGDDTM_NC_MODEL:Array.from({length:2},()=>({...Object.fromEntries(catalog.find(t=>t.table==='ZGDDTM_NC_MODEL').columns.map(c=>[c,null])),nc_model_id:'SYNTHETIC-MODEL'}))};
+  for(const config of catalog)if(!extraRows[config.table]&&config.table!=='ZGDDTB_CONTRACT_INFO')extraRows[config.table]=[{...Object.fromEntries(config.columns.map(field=>[field,null]))}];
   const html=`<!doctype html><title>synthetic table</title><script>
    window.createRequestData=()=>({db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:'3',pageline:'50',isphysicalname:undefined,searches:{tm_seach_fieldname__contract_id:''}});
    window.ImJson={toJSONString:args=>JSON.stringify(args,(key,value)=>value===undefined?'__UNDEFINED__':value).replaceAll('"__UNDEFINED__"','undefined')};
@@ -77,12 +78,13 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const dates=result.fieldChecks.find(row=>row.field==='contract_start_date');for(const key of ['ymdDash','ymdSlash','ymdCompact','dateTime'])assert.equal(dates.dateFormats[key],25);
   const nc=await context.newPage();await nc.goto(origin+'/cncservice/synthetic-nc');
   const model=await context.newPage();await model.goto(origin+'/cncservice/synthetic-model');
-  const batch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));
+  const batch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',tabId:-1,confirmed:true}));
   assert.equal(batch.ok,true);assert.equal(batch.tables.filter(row=>row.ok).length,3);assert.equal(batch.tables.filter(row=>row.code==='NOT_OPEN').length,7);
   const ncRelation=batch.relationships.find(row=>row.from==='ZGDDTB_CONTRACT_INFO'&&row.fromKey==='nc_serial_no');assert.equal(ncRelation.matched,2);assert.equal(ncRelation.notInSample,98);
   const modelRelation=batch.relationships.find(row=>row.from==='ZGDDTB_NC_INFO_RS'&&row.fromKey==='nc_model_id');assert.equal(modelRelation.ambiguous,1);
   assert(!JSON.stringify(batch).includes('SYNTHETIC-'));assert(!JSON.stringify(batch).includes('"sample"'));
-  await ui.locator('#batchRun').click();await ui.locator('#batchStatus').filter({hasText:'3/10テーブル'}).waitFor();
+  await ui.locator('#batchRun').click();await ui.locator('#batchStatus').filter({hasText:'10/10テーブル'}).waitFor();
+  const switched=posts.filter(post=>JSON.parse(post.body.replace(/\bundefined\b/g,'null'))[0].tablename==='ZGDDTM_CUSTOMER');assert(switched.length>0);assert.equal(JSON.parse(switched[0].body.replace(/\bundefined\b/g,'null'))[0].searches.tm_seach_fieldname__customer_id,'');
   const batchText=await ui.locator('#reviewText').inputValue();assert(batchText.includes('サンプルに対象なし＝不存在ではありません'));assert(!batchText.includes('SYNTHETIC-'));
   const duplicate=await context.newPage();await duplicate.goto(origin+'/cncservice/synthetic-nc');
   const duplicateResult=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));assert.equal(duplicateResult.tables.find(row=>row.table==='ZGDDTB_NC_INFO_RS').code,'DUPLICATE_TABS');
@@ -90,6 +92,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   for(const [testMode,code] of [['auth','AUTH_REQUIRED'],['html','AUTH_REQUIRED'],['http','HTTP_ERROR'],['invalid','INVALID_RESPONSE'],['script','INVALID_RESPONSE']]){mode=testMode;assert.equal((await send()).code,code);}
   assert.equal(await host.evaluate(()=>window.fixtureAttack),undefined);
   await host.evaluate(()=>{ImJsspRpc.receive=xhr=>JSON.parse(xhr.responseText.replace(/"(?:[^"\\]|\\.)*"|\bundefined\b/g,token=>token==='undefined'?'null':token));});
+  mode='auth';const beforeAuthBatch=posts.length;const authBatch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));assert.equal(posts.length-beforeAuthBatch,1);assert(authBatch.tables.every(row=>row.code==='AUTH_REQUIRED'));
   mode='extended';assert.equal((await send()).summary.count,100);
   mode='empty';const empty=await send();assert.equal(empty.summary.count,0);assert(empty.keyChecks.every(row=>row.blankCount===0&&row.distinctCount===0&&row.duplicateRows===0));
   await host.evaluate(()=>{window.savedSetTimeout=window.setTimeout;window.setTimeout=(callback,ms,...args)=>ms===15000?(queueMicrotask(callback),0):savedSetTimeout(callback,ms,...args);});

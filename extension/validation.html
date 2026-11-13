@@ -17,7 +17,7 @@
 <button id="liveRefresh" class="secondary">GDHのタブを探す</button>
 <label class="scenario-label" for="liveTab">接続するタブ</label><select id="liveTab"><option value="">タブを探してください</option></select>
 <button id="liveRun" disabled>本番100件を読み取り</button><p>実データや認証情報の保存・ダウンロードは行いません。</p></section>
-<section class="live-section"><h2>複数テーブルの自動点検</h2><p>同じブラウザーで開いている対象テーブルを検出し、各1ページ・最大100件を順番に点検します。キーは一時メモリだけで照合し、保存せず件数だけを返します。開いていない画面のURLや認証情報は推測しません。</p><button id="batchRun" disabled>開いているテーブルを一括点検</button><p id="batchStatus" role="status"></p></section>
+<section class="live-section"><h2>複数テーブルの自動点検</h2><p>契約情報画面が1つ開いていれば自動検出します（複数ある場合は対象を選択）。対象テーブルが別タブで開いていればその画面を利用し、なければ契約情報画面の同じgetDataにテーブル名を指定して、検索条件なしで各100件の取得を試みます。認証値は固定せず、サーバーの権限確認に従います。キーは一時メモリだけで照合します。</p><button id="batchRun" disabled>10テーブルを一括自動点検</button><p id="batchStatus" role="status"></p></section>
 <p id="validationResult" role="status" aria-live="polite">検証モードはOFFです。</p>
 <details id="validationFields" hidden><summary>項目名を確認</summary><ul id="validationFieldList"></ul></details>
 <details id="schemaReview"><summary>CSVとの項目対応・キー点検</summary>

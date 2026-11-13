@@ -5,11 +5,12 @@ This update
 2. Click Reload on this extension in the browser that opens.
 3. Press F5 on the GDH page.
 
-Future updates
-Double-click GDH Update on the desktop to download, verify and place the latest release.
-Then reload the extension and press F5 on GDH.
-No shortcut? Run %LOCALAPPDATA%\GDH_Search\Update.bat.
-Download/checksum failures stop before file placement. Previous files remain in Backup-*.
+Update from GitHub
+Use Update from GitHub in the popup, or download the latest Setup ZIP:
+https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip
+Extract, run Install.bat, reload the extension, then press F5 on GDH.
+No desktop files are created. The previous unmodified GDH Update shortcut owned by this tool is removed.
+Previous extension files remain in Backup-*. Applying changes in the browser is manual.
 
 First installation only
 Developer mode > Load unpacked > select the copied folder path.

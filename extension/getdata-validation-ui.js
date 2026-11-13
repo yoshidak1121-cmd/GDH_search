@@ -90,10 +90,10 @@
  });
  $('batchRun').addEventListener('click',async()=>{
   if(busy||$('batchRun').disabled)return;
-  if(!window.confirm('開いている対象テーブル（最大10種類）を各100件まで読み取り、候補キーを一時メモリで照合します。実行しますか？'))return;
+  if(!window.confirm('最大10テーブルを各100件まで読み取ります。対象画面がない場合は選択した契約情報画面のRPCで検索条件なしの取得を試みます。キーは一時メモリだけで照合します。実行しますか？'))return;
   busy=true;controls();setReport();$('batchStatus').textContent='一括点検中…';
   try{
-   const response=await chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true});
+   const response=await chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',tabId:$('liveTab').value?Number($('liveTab').value):undefined,confirmed:true});
    if(!response?.ok){show(errors[response?.code]||'一括点検に失敗しました。','error');return;}
    setReport(response);const loaded=response.tables.filter(row=>row.ok).length;
    $('batchStatus').textContent=`${loaded}/10テーブルを取得。未取得・複数タブ・候補関係はまとめ診断に表示します。`;
