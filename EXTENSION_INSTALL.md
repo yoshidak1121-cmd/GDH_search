@@ -7,7 +7,7 @@ Windows：今回だけ最新版Setup ZIPの **Install.bat** でヘルパー登�
 ## English quick start
 
 For Windows, Microsoft Edge or Google Chrome. This is the manual extension package.
-For guided file preparation, use `GDH_Search_Setup_v1.20.0.zip` and read `START_HERE.txt`.
+For guided file preparation, use `GDH_Search_Setup_v1.20.1.zip` and read `START_HERE.txt`.
 
 1. Extract the ZIP and keep `GDH_Search_Extension` in a permanent location.
 2. Open `edge://extensions/` or `chrome://extensions/` in the browser/profile you use for GDH.
@@ -27,14 +27,14 @@ For independent development of a similar extension, consult Yoshida, NC Strategy
 
 ## 日本語
 
-手順案内付きの配布ZIPは `GDH_Search_Setup_v1.20.0.zip` です。`START_HERE.txt` から開始します。
+手順案内付きの配布ZIPは `GDH_Search_Setup_v1.20.1.zip` です。`START_HERE.txt` から開始します。
 手動導入は以下を参照してください。海外拠点の別URLには対応していません。
 
 # Chrome / Edge 拡張機能の導入
 
-Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.20.0.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「START_HERE.txt」を参照してください。
+Windows用の導入支援パッケージも提供します。`GDH_Search_Setup_v1.20.1.zip` をすべて展開し、`Install.bat` を実行してください。配置・更新を補助し、最後の登録操作は手動で行います。詳しくは [READMEの導入支援手順](README.md#導入支援batを使うwindows)および同梱の「START_HERE.txt」を参照してください。
 
-配布ファイル：`GDH_Search_Extension_v1.20.0.zip`
+配布ファイル：`GDH_Search_Extension_v1.20.1.zip`
 
 1. ZIPを展開し、`GDH_Search_Extension` フォルダーを残します。
 2. Edgeは `edge://extensions`、Chromeは `chrome://extensions` を開き、開発者モード（デベロッパーモード）を有効にします。
