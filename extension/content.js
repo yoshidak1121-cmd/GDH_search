@@ -3,18 +3,16 @@
  'use strict';
  const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
  if(location.origin!==allowed||!location.pathname.startsWith('/cncservice/'))return;
- let panel=null,frame=null,channel=null,exportCsv=null,busy=false,closeButton=null,titleElement=null,uiLang='ja',autoFetch=false,csvSourceRemembered=false;
+ let panel=null,frame=null,channel=null,exportCsv=null,busy=false,closeButton=null,titleElement=null,uiLang='ja',autoFetch=false;
  const isHome=location.pathname==='/cncservice/home'||location.pathname==='/cncservice/home/';
  const extensionOrigin='chrome-extension://'+chrome.runtime.id;
  function sourceForm(){const form=document.getElementById('frmmain');return form instanceof HTMLFormElement&&form.querySelector('[name="dataview_cd"]')?form:null;}
- function rememberCsvSource(){
+ function csvFormReady(){
   const form=sourceForm(),label=(document.title+' '+(document.querySelector('h1')?.textContent||'')).replace(/\s/g,'');
-  if(!form||!/機械情報検索|machineinformationsearch|machinesearch/i.test(label)||!/^\/cncservice\/viewcreator\/dataview\/list\/[A-Za-z0-9_-]+\/?$/.test(location.pathname))return;
+  if(!form||!/機械情報検索|machineinformationsearch|machinesearch/i.test(label)||location.pathname!==window.GDH_CSV_SEARCH_PATH)return;
   if(!['dataview_cd','iszip','pdf','downloadToken','form_submit'].every(name=>form.querySelector('[name="'+name+'"]')))return;
-  if(!csvSourceRemembered){csvSourceRemembered=true;chrome.storage.local.set({gdhCsvSourcePath:location.pathname}).catch(()=>{});}
   return true;
  }
- rememberCsvSource();
  function close(){if(busy)return false;panel?.remove();panel=null;frame=null;channel=null;exportCsv=null;return true;}
  function setHostLanguage(language){
   if(!['ja','en'].includes(language))return;uiLang=language;
@@ -28,7 +26,9 @@
   if(panel)return close()?{ok:true}:{ok:false,error:uiLang==='en'?'CSV retrieval is in progress. Close after it finishes.':'CSV取得中です。完了後に閉じてください。'};
   const form=sourceForm();if(!form&&!isHome)return {ok:false,error:uiLang==='en'?'Use this on the GDH machine search page.':'GDHの機械情報検索画面で使用してください。'};
   const confirmExport=()=>window.confirm(uiLang==='en'?'Export a CSV file?':'CSVファイルを出力します。よろしいですか？');
-  exportCsv=form?window.createGdhCsvExportAdapter({form,confirmExport}):window.createGdhHomeCsvExportAdapter({language:()=>uiLang});channel=crypto.randomUUID();
+  const directExport=form?window.createGdhCsvExportAdapter({form,confirmExport}):null;
+  const navigateExport=window.createGdhHomeCsvExportAdapter({language:()=>uiLang});let resumeOnce=autoFetch;
+  exportCsv=()=>{if(resumeOnce){resumeOnce=false;return directExport();}return isHome||location.pathname===window.GDH_CSV_SEARCH_PATH?navigateExport():directExport();};channel=crypto.randomUUID();
   panel=document.createElement('div');panel.id='gdh-search-extension-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','GDH 拡張ツール');
   panel.style.cssText='position:fixed;inset:12px;z-index:2147483646;background:#fff;border:1px solid #cbd6e5;border-radius:10px;box-shadow:0 8px 40px #0005;display:flex;flex-direction:column;overflow:hidden;';
   const bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#14243c;color:white;font:14px sans-serif;';
@@ -60,14 +60,21 @@
  }
  addButton();
  (async()=>{
-  let ready=!!rememberCsvSource();
-  if(!isHome&&!ready&&/^\/cncservice\/viewcreator\/dataview\/list\//.test(location.pathname)){
+  let loaded=document.readyState==='complete';
+  if(!loaded)loaded=await new Promise(resolve=>{
+   const done=()=>{clearTimeout(timer);resolve(true);};
+   const timer=setTimeout(()=>{window.removeEventListener('load',done);resolve(false);},30000);
+   window.addEventListener('load',done,{once:true});
+  });
+  let ready=loaded&&!!csvFormReady();
+  if(loaded&&!ready&&location.pathname===window.GDH_CSV_SEARCH_PATH){
    ready=await new Promise(resolve=>{
     const timer=setTimeout(()=>{observer.disconnect();resolve(false);},10000);
-    const observer=new MutationObserver(()=>{if(rememberCsvSource()){clearTimeout(timer);observer.disconnect();resolve(true);}});
+    const observer=new MutationObserver(()=>{if(csvFormReady()){clearTimeout(timer);observer.disconnect();resolve(true);}});
     observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});
    });
   }
+  if(ready)await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const result=await chrome.runtime.sendMessage({type:'GDH_CSV_NAVIGATION_RESUME',ready});
   if(result?.start){autoFetch=true;toggle(result.language);autoFetch=false;}
   else if(result?.ok===false&&result.code!=='BUSY'){

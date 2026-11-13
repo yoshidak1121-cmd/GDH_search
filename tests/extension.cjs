@@ -19,10 +19,12 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await context.route(/^https?:/,async route=>{
    const req=route.request(),url=new URL(req.url());
    if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
-   if(url.origin===origin&&url.pathname==='/cncservice/home')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><h1>GDH home fixture</h1><a id="machineSearchLink" href="/cncservice/viewcreator/dataview/list/synthetic-machine">機械情報 検索</a>'});
-   if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list/synthetic-machine'){homeLoads++;return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml.replace('<head>','<head><title>機械情報 検索</title>').replace('</form>','<input name="csrf_mock" value="dynamic-home-fixture"></form>')});}
+   if(url.origin===origin&&url.pathname==='/cncservice/home')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><h1>GDH home fixture</h1><a id="machineSearchLink" href="/cncservice/viewcreator/dataview/list/ZGDS0130vBASE">機械情報 検索</a>'});
+   if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list/ZGDS0130vBASE'){assert.equal(url.searchParams.get('getDataOnInit'),'false');homeLoads++;return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml.replace('<head>','<head><title>機械情報 検索</title>').replace('</form>','<input name="csrf_mock" value="dynamic-home-fixture"></form><img src="/cncservice/load-barrier">')});}
+   if(url.origin===origin&&url.pathname==='/cncservice/load-barrier'){await new Promise(resolve=>setTimeout(resolve,250));return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg"/>'});}
    if(url.origin===origin&&url.pathname==='/cncservice/mock')return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml});
    if(url.origin===origin&&url.pathname==='/cncservice/viewcreator/dataview/list_csv'){
+    assert.equal(await page.evaluate(()=>document.readyState),'complete','CSV must wait for the host window load');
     posts.push({method:req.method(),fields:new URLSearchParams(req.postData())});
     if(mode==='error')return route.fulfill({status:403,body:'Forbidden'});
     return route.fulfill({contentType:'text/csv',headers:{'Content-Disposition':'attachment; filename="synthetic.csv"'},body:mode==='large'?largeFixture:mode==='duplicate'?duplicateFixture:mode==='english'?englishFixture:fixture});
@@ -44,29 +46,26 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   assert.equal(posts.length,0);assert.deepEqual(blocked,[]);dialogs.pop();
   // Cancel CSV confirmation on the destination. Reload must not start it again.
   accept=false;await homeFrame.locator('#fetchBtn').click();
-  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/ZGDS0130vBASE?getDataOnInit=false');
   await homeFrame.locator('#fetchStatus.err').waitFor();
   assert.equal(posts.length,0);assert.equal(dialogs.pop(),'CSVファイルを出力します。よろしいですか？');
   await page.reload();await page.locator('#gdh-search-extension-button').waitFor();
   assert.equal(await page.locator('#gdh-search-extension-panel').count(),0);assert.equal(posts.length,0);
-  // Registered source path works without a home menu link. No query or auth is stored.
+  // The explicit destination works without any home menu link or prior registration.
   accept=true;await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();dialogs.pop();
   await page.locator('#machineSearchLink').evaluate(link=>link.remove());
   const homeDownload=page.waitForEvent('download');await homeFrame.locator('#fetchBtn').click();await homeDownload;
-  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  await page.waitForURL(origin+'/cncservice/viewcreator/dataview/list/ZGDS0130vBASE?getDataOnInit=false');
   await homeFrame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
   assert.equal(posts.length,1);assert.equal(posts[0].fields.get('csrf_mock'),'dynamic-home-fixture');
   assert.equal(await page.locator('iframe[aria-hidden="true"]').count(),0);dialogs.pop();
-  const stored=await homeFrame.locator('body').evaluate(()=>chrome.storage.local.get('gdhCsvSourcePath'));
-  assert.equal(stored.gdhCsvSourcePath,'/cncservice/viewcreator/dataview/list/synthetic-machine');
+  // A second manual refresh on the machine page also completes a new navigation first.
+  const previousLoads=homeLoads,repeatDownload=page.waitForEvent('download');
+  await homeFrame.locator('#fetchBtn').click();await repeatDownload;
+  await homeFrame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  assert.equal(homeLoads,previousLoads+1);assert.equal(posts.length,2);dialogs.pop();
   const jobs=await context.serviceWorkers()[0].evaluate(()=>chrome.storage.session.get(null));
   assert.equal(Object.keys(jobs).filter(key=>key.startsWith('gdhCsvNavigation:')).length,0);
-  // Invalid external menu link with no registered source never navigates or posts.
-  await page.goto(origin+'/cncservice/home?');await homeFrame.locator('#gdh-home-csv-note').waitFor();dialogs.pop();
-  await homeFrame.locator('body').evaluate(()=>chrome.storage.local.remove('gdhCsvSourcePath'));
-  await page.locator('#machineSearchLink').evaluate(link=>{link.href='https://example.com/cncservice/viewcreator/dataview/list/synthetic-machine';});
-  await homeFrame.locator('#fetchBtn').click();await homeFrame.locator('#fetchStatus.err').waitFor();
-  assert.equal(new URL(page.url()).pathname,'/cncservice/home');assert.equal(posts.length,1);assert.deepEqual(blocked,[]);
   dialogs.length=0;posts.length=0;
   await page.goto(origin+'/cncservice/mock');
   for(const width of [1440,390]){await page.setViewportSize({width,height:900});const button=await page.locator('#gdh-search-extension-button').boundingBox(),heading=await page.locator('h1').boundingBox(),form=await page.locator('#frmmain').boundingBox();assert(button.y>=heading.y+heading.height);assert(button.y+button.height<=form.y);assert(button.x<40);assert(button.x+button.width<=width);}
@@ -145,7 +144,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   assert.equal(dialogs[0],'CSVファイルを出力します。よろしいですか？');assert.deepEqual(errors,[]);
   // A different site does not receive the GDH button.
   await page.goto('https://example.com/').catch(()=>{});assert.equal(await page.locator('#gdh-search-extension-button').count(),0);
-  console.log('PASS: home confirmation, visible machine-page navigation and one-time CSV resume, cancellation without retry, external-link refusal, loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer, validation UI/settings/persistence and zero validation HTTP');
+  console.log('PASS: home confirmation, visible machine-page navigation and one-time CSV resume, cancellation without retry, explicit destination with getDataOnInit=false and host load barrier, loaded MV3 extension, GDH button, packaged Worker, CSV transfer/download, OR search, error/cancel rollback, close/reopen, forged-message rejection, host scope, 192836-row CSV transfer, validation UI/settings/persistence and zero validation HTTP');
   console.log('Browser: '+context.browser().version());
  }finally{await context.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

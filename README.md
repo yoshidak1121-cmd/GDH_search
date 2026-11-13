@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.20.9
+# CNC機械情報ビューア / GDH拡張検索 v1.20.10
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -80,9 +80,9 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.9)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.10)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
-v1.20.9では、今回だけ[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
+v1.20.10では、今回だけ[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
 
 次回からは起動時にGitHubの最新版を確認し、「はい」で取得・SHA-256照合・一式置換・拡張機能再読み込み・起動元GDH画面のF5相当まで自動で行います。別のページに移動したGDHタブは更新しません。ポップアップの **更新・設定** にはEdge／Chrome別の案内とヘルパー接続確認があります。デスクトップへの配置はありません。
 
@@ -331,7 +331,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張検索画面を開く
 
-GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` を開くと確認が表示され、「はい」でホーム上に拡張検索を開きます。検索画面への移動はありません。ホームの取得ボタンから機械情報検索画面へ移動し、読み込み完了後にCSV出力を確認して取得・拡張画面へ表示します。ホーム内のリンクがない場合は、一度開いた正規画面のパスを使います。リンク・権限・フォームを確認できない場合は取得を停止します。
+GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` を開くと確認が表示され、「はい」でホーム上に拡張検索を開きます。検索画面への移動はありません。取得ボタンから指定の機械情報検索画面（`ZGDS0130vBASE?getDataOnInit=false`）へ移動し、GDH画面のload完了・描画・CSVフォームの準備後にCSV出力を確認して取得・表示します。取得元の事前登録は不要です。権限・フォームを確認できない場合は停止します。
 
 1. GDHにログインし、**機械情報検索画面を開いて再読み込み**します。
 2. ページ右下の **「拡張検索」**をクリックすると、検索画面が開きます。
