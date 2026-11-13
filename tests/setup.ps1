@@ -25,6 +25,16 @@ $previousLocal=$env:LOCALAPPDATA
 try {
  New-Item -ItemType Directory -Path $testRoot | Out-Null
  $env:LOCALAPPDATA=Join-Path $testRoot 'Local'
+ $desktopFixture=Join-Path $testRoot 'Desktop';New-Item -ItemType Directory -Path $desktopFixture | Out-Null
+ Remove-GdhLegacyShortcut -Desktop $desktopFixture -Updater 'C:\Synthetic\Update.bat'
+ Assert (@(Get-ChildItem -LiteralPath $desktopFixture).Count -eq 0) 'No desktop file created'
+ $linkPath=Join-Path $desktopFixture 'GDH Update.lnk';$shell=New-Object -ComObject WScript.Shell
+ $link=$shell.CreateShortcut($linkPath);$link.TargetPath='C:\Synthetic\Update.bat';$link.Description='GDH Search Update';$link.Save()
+ Remove-GdhLegacyShortcut -Desktop $desktopFixture -Updater 'C:\Synthetic\Update.bat'
+ Assert (!(Test-Path -LiteralPath $linkPath)) 'Owned legacy shortcut removed'
+ $link=$shell.CreateShortcut($linkPath);$link.TargetPath='C:\Other\Update.bat';$link.Description='Other';$link.Save()
+ Remove-GdhLegacyShortcut -Desktop $desktopFixture -Updater 'C:\Synthetic\Update.bat'
+ Assert (Test-Path -LiteralPath $linkPath) 'Unrelated shortcut preserved'
  $fixture=Join-Path $testRoot 'Package'
  $extension=Join-Path $fixture 'GDH_Search_Extension'
  New-Item -ItemType Directory -Path $extension -Force | Out-Null

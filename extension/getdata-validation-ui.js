@@ -21,11 +21,12 @@
   for(const row of keyChecks||[]){const tr=document.createElement('tr');for(const value of [row.field,row.blankCount,row.distinctCount,row.duplicateValues,row.duplicateRows,row.nonStringCount]){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}$('keyRows').append(tr);}
  }
  function setReport(response=null){
-  latestReport=response?GdhContractSchema.report(response,chrome.runtime.getManifest().version):null;
+  latestReport=response?(response.source==='getData-batch'?GdhMigrationCatalog.report(response,chrome.runtime.getManifest().version):GdhContractSchema.report(response,chrome.runtime.getManifest().version)):null;
   $('reviewText').value=latestReport||'';$('reviewText').hidden=true;$('copyStatus').textContent='';
  }
  function controls(){
   $('copyReview').disabled=busy||!latestReport;
+  $('batchRun').disabled=busy||!ready||!toggle.checked;
   run.disabled=!ready||busy||!toggle.checked;toggle.disabled=!ready||busy;scenario.disabled=busy;
   $('validationClose').disabled=busy;
   $('liveRefresh').disabled=busy;$('liveTab').disabled=busy;
@@ -85,6 +86,19 @@
    for(const field of summary.fields){const li=document.createElement('li');li.textContent=field;$('validationFieldList').append(li);}
    $('validationFields').hidden=!summary.fields.length;
   }catch{show('接続が切れました。自動再送は行いません。GDHの状態を確認してください。','error');}
+  finally{busy=false;controls();}
+ });
+ $('batchRun').addEventListener('click',async()=>{
+  if(busy||$('batchRun').disabled)return;
+  if(!window.confirm('開いている対象テーブル（最大10種類）を各100件まで読み取り、候補キーを一時メモリで照合します。実行しますか？'))return;
+  busy=true;controls();setReport();$('batchStatus').textContent='一括点検中…';
+  try{
+   const response=await chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true});
+   if(!response?.ok){show(errors[response?.code]||'一括点検に失敗しました。','error');return;}
+   setReport(response);const loaded=response.tables.filter(row=>row.ok).length;
+   $('batchStatus').textContent=`${loaded}/10テーブルを取得。未取得・複数タブ・候補関係はまとめ診断に表示します。`;
+   $('reviewText').value=latestReport;$('reviewText').hidden=false;show('一括点検が完了しました。「診断結果をまとめてコピー」で結果を共有できます。');
+  }catch{show('一括点検が中断されました。自動再送は行いません。','error');}
   finally{busy=false;controls();}
  });
  $('validationClose').addEventListener('click',async()=>{

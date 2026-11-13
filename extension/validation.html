@@ -17,6 +17,7 @@
 <button id="liveRefresh" class="secondary">GDHのタブを探す</button>
 <label class="scenario-label" for="liveTab">接続するタブ</label><select id="liveTab"><option value="">タブを探してください</option></select>
 <button id="liveRun" disabled>本番100件を読み取り</button><p>実データや認証情報の保存・ダウンロードは行いません。</p></section>
+<section class="live-section"><h2>複数テーブルの自動点検</h2><p>同じブラウザーで開いている対象テーブルを検出し、各1ページ・最大100件を順番に点検します。キーは一時メモリだけで照合し、保存せず件数だけを返します。開いていない画面のURLや認証情報は推測しません。</p><button id="batchRun" disabled>開いているテーブルを一括点検</button><p id="batchStatus" role="status"></p></section>
 <p id="validationResult" role="status" aria-live="polite">検証モードはOFFです。</p>
 <details id="validationFields" hidden><summary>項目名を確認</summary><ul id="validationFieldList"></ul></details>
 <details id="schemaReview"><summary>CSVとの項目対応・キー点検</summary>
@@ -30,4 +31,4 @@
 <button id="copyReview" disabled>診断結果をまとめてコピー</button><p id="copyStatus" role="status"></p><textarea id="reviewText" rows="8" readonly hidden aria-label="まとめ診断結果"></textarea>
 <details id="migrationReview"><summary>CSV33項目の取得元候補</summary><p id="migrationOverview"></p><div class="review-scroll"><table class="review-table"><thead><tr><th>CSV項目</th><th>取得元の候補</th><th>未確認事項</th></tr></thead><tbody id="migrationRows"></tbody></table></div></details></section>
 <button id="validationClose" class="secondary">OFFにして検証を終了</button>
-</section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-schema.js"></script><script src="getdata-validation-ui.js"></script></body></html>
+</section><script src="getdata-adapter.js"></script><script src="getdata-validation.js"></script><script src="getdata-schema.js"></script><script src="getdata-catalog.js"></script><script src="getdata-validation-ui.js"></script></body></html>

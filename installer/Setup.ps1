@@ -82,20 +82,7 @@ try {
     if ($PrepareOnly) { exit 0 }
     if ((Test-Path -LiteralPath $preferences) -and ((Get-Item -LiteralPath $preferences).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Settings path must not be a link' }
     @{ Browser = $Browser } | ConvertTo-Json | Set-Content -LiteralPath $preferences -Encoding UTF8
-    try {
-        $desktop = [Environment]::GetFolderPath('Desktop')
-        if ($desktop) {
-            $linkPath = Join-Path $desktop 'GDH Update.lnk'
-            $shell = New-Object -ComObject WScript.Shell
-            $link = $shell.CreateShortcut($linkPath)
-            if (!(Test-Path -LiteralPath $linkPath) -or $link.TargetPath -eq (Join-Path $base 'Update.bat')) {
-                $link.TargetPath = Join-Path $base 'Update.bat'
-                $link.WorkingDirectory = $base
-                $link.Description = 'GDH Search Update'
-                $link.Save()
-            }
-        }
-    } catch { Write-Host (T "次回の更新：$base\Update.bat" "Next update: $base\Update.bat") }
+    try { Remove-GdhLegacyShortcut -Desktop ([Environment]::GetFolderPath('Desktop')) -Updater (Join-Path $base 'Update.bat') } catch {}
     if (!$isUpdate) { try { Set-Clipboard -Value $target } catch {} }
     $url = if ($Browser -eq 'Edge') { 'edge://extensions/' } else { 'chrome://extensions/' }
     Start-Process -FilePath $exe -ArgumentList $url

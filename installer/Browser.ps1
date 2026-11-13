@@ -31,3 +31,12 @@ function Find-GdhBrowser([string]$Requested, [string]$Saved) {
     } catch {}
     Select-GdhBrowser -Requested $Requested -Saved $Saved -Installed $installed -Running $running -Default $default
 }
+
+function Remove-GdhLegacyShortcut([string]$Desktop, [string]$Updater) {
+    if (!$Desktop) { return }
+    $path = Join-Path $Desktop 'GDH Update.lnk'
+    if (!(Test-Path -LiteralPath $path -PathType Leaf)) { return }
+    $shell = New-Object -ComObject WScript.Shell
+    $link = $shell.CreateShortcut($path)
+    if ($link.TargetPath -eq $Updater -and $link.Description -eq 'GDH Search Update') { Remove-Item -LiteralPath $path }
+}

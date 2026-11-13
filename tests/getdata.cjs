@@ -5,7 +5,7 @@ const vm=require('node:vm');
 (async()=>{
  let network=0;const saved={};
  const context=vm.createContext({setTimeout,clearTimeout,console:{table(){}},fetch(){network++;throw Error('Network forbidden');},chrome:{storage:{local:{async get(key){return {[key]:saved[key]};},async set(values){Object.assign(saved,values);}}}}});
- for(const file of ['getdata-adapter.js','getdata-validation.js','getdata-schema.js'])vm.runInContext(fs.readFileSync('extension/'+file,'utf8'),context);
+ for(const file of ['getdata-adapter.js','getdata-validation.js','getdata-schema.js','getdata-catalog.js'])vm.runInContext(fs.readFileSync('extension/'+file,'utf8'),context);
  const schema=context.GdhContractSchema.describe();
  assert.equal(schema.rows.length,19);assert.equal(schema.candidateCount,9);assert.equal(schema.unavailableCsv.length,24);
  const pairs=new Map(schema.rows.map(row=>[row.field,row.csv]));
@@ -25,6 +25,13 @@ const vm=require('node:vm');
  assert(migration.rows.find(row=>row.csv==='NCシステム型名').sources.length===2);
  const safeReport=context.GdhContractSchema.report({source:'getData-live',summary:{count:100,fields:['SYNTHETIC-SECRET']},data:['SYNTHETIC-SECRET'],im_mark:'SYNTHETIC-SECRET',keyChecks:[{field:'contract_id',blankCount:0,distinctCount:100}]},'1.18.0');
  assert(!safeReport.includes('SYNTHETIC-SECRET'));assert(safeReport.includes('contract_id | 0 | 100'));assert(safeReport.includes('33項目・10テーブル'));
+ for(const table of context.GdhMigrationCatalog.tables){for(const field of table.columns)assert(metadata.get(table.table)?.has(field));for(const key of table.keys)assert(table.columns.includes(key));}
+ const relations=context.GdhMigrationCatalog.compare(new Map([
+  ['ZGDDTB_CONTRACT_INFO',[{nc_serial_no:'01'},{nc_serial_no:1},{nc_serial_no:'1'},{nc_serial_no:null}]],
+  ['ZGDDTB_NC_INFO_RS',[{nc_serial_no:'01'},{nc_serial_no:'1'},{nc_serial_no:'1'}]]
+ ]));
+ const relation=relations.find(row=>row.from==='ZGDDTB_CONTRACT_INFO'&&row.fromKey==='nc_serial_no');assert.equal(relation.matched,1);assert.equal(relation.ambiguous,1);assert.equal(relation.notInSample,1);assert.equal(relation.blank,1);
+ const batchReport=context.GdhMigrationCatalog.report({tables:[],relationships:relations,sample:['SYNTHETIC-SECRET']},'1.19.0');assert(!batchReport.includes('SYNTHETIC-SECRET'));assert(batchReport.includes('不存在ではありません'));
  const api=context.GDH_GETDATA_VALIDATION;
  assert.equal(await api.enabled(),false);
  await assert.rejects(api.run(),{code:'MODE_OFF'});

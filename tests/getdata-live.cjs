@@ -1,6 +1,9 @@
 'use strict';
 const assert=require('node:assert/strict');
 const path=require('node:path');
+const fs=require('node:fs'),vm=require('node:vm');
+const scope={};vm.runInNewContext(fs.readFileSync('extension/getdata-catalog.js','utf8'),scope);
+const catalog=scope.GdhMigrationCatalog.tables;
 const {chromium}=require('playwright');
 const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
 const rpc='/cncservice/tablemaintenance(2f)views(2f)table(5f)edit.jssprpc';
@@ -11,6 +14,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
  try{
   let mode='success',posts=[],blocked=[],release;
   const rows=Array.from({length:100},(_,i)=>({...Object.fromEntries(columns.map(c=>[c,c==='contract_notes'?'SYNTHETIC-PRIVATE-RECORD':null])),contract_id:i===0?'':i===1?'01':i===2?'1':i===3?1:'SYNTHETIC-ID-'+i,contract_no:'SYNTHETIC-NO-'+i,nc_serial_no:'SYNTHETIC-NC-'+Math.floor(i/2),contractor_id:'SYNTHETIC-PARTY-'+Math.floor(i/5),contract_type:'SYNTHETIC-TYPE',contract_from_location_code:'SYNTHETIC-LOCATION',contract_period:i===0?null:i%2===0?12:'12',contract_start_date:['2026-01-01','2026/01/01','20260101','2026-01-01T00:00:00Z'][i%4],contract_end_date:i===0?null:'2027-01-01'}));
+  const extraRows={ZGDDTB_NC_INFO_RS:[{...Object.fromEntries(catalog.find(t=>t.table==='ZGDDTB_NC_INFO_RS').columns.map(c=>[c,null])),nc_serial_no:'SYNTHETIC-NC-0',nc_model_id:'SYNTHETIC-MODEL'}],ZGDDTM_NC_MODEL:Array.from({length:2},()=>({...Object.fromEntries(catalog.find(t=>t.table==='ZGDDTM_NC_MODEL').columns.map(c=>[c,null])),nc_model_id:'SYNTHETIC-MODEL'}))};
   const html=`<!doctype html><title>synthetic table</title><script>
    window.createRequestData=()=>({db_source:'ZALS',tablename:'ZGDDTB_CONTRACT_INFO',pagenumber:'3',pageline:'50',isphysicalname:undefined,searches:{tm_seach_fieldname__contract_id:''}});
    window.ImJson={toJSONString:args=>JSON.stringify(args,(key,value)=>value===undefined?'__UNDEFINED__':value).replaceAll('"__UNDEFINED__"','undefined')};
@@ -21,6 +25,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   await context.route(/^https?:/,async route=>{
    const req=route.request(),url=new URL(req.url());
    if(url.origin===origin&&url.pathname==='/cncservice/synthetic-table')return route.fulfill({contentType:'text/html',body:html});
+   if(url.origin===origin&&['/cncservice/synthetic-nc','/cncservice/synthetic-model'].includes(url.pathname))return route.fulfill({contentType:'text/html',body:html.replaceAll('ZGDDTB_CONTRACT_INFO',url.pathname.endsWith('-nc')?'ZGDDTB_NC_INFO_RS':'ZGDDTM_NC_MODEL')});
    if(url.origin===origin&&url.pathname===rpc){
     posts.push({url:req.url(),method:req.method(),body:req.postData(),headers:req.headers()});
     if(mode==='hold')await new Promise(resolve=>{release=resolve;});
@@ -31,7 +36,8 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
     if(mode==='script')return route.fulfill({contentType:'application/json',body:'({error:false,data:[],attack:(window.fixtureAttack=true)})'});
     if(mode==='extended')return route.fulfill({contentType:'application/json',body:JSON.stringify({error:false,data:rows}).replace('"contract_period":null','"contract_period":undefined')});
     if(mode==='empty')return route.fulfill({contentType:'application/json',body:'{"error":false,"data":[]}'});
-    return route.fulfill({contentType:'application/json',body:JSON.stringify({error:false,data:rows})});
+    const table=JSON.parse(req.postData().replace(/\bundefined\b/g,'null'))[0].tablename;
+    return route.fulfill({contentType:'application/json',body:JSON.stringify({error:false,data:extraRows[table]||rows})});
    }
    blocked.push(req.url());return route.abort();
   });
@@ -43,7 +49,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   const tabs=await ui.locator('#liveTab option').evaluateAll(options=>options.map(x=>x.value).filter(Boolean));assert.equal(tabs.length,1);
   const tabId=Number(tabs[0]);await ui.locator('#liveTab').selectOption(String(tabId));
   const send=()=>ui.evaluate(tabId=>chrome.runtime.sendMessage({type:'GDH_GETDATA_READ',tabId,confirmed:true}),tabId);
-  assert.equal((await send()).code,'MODE_OFF');assert.equal(posts.length,0);
+  assert.equal((await send()).code,'MODE_OFF');assert.equal((await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}))).code,'MODE_OFF');assert.equal(posts.length,0);
   await ui.locator('#validationEnabled').check();
   let accept=false;ui.on('dialog',dialog=>accept?dialog.accept():dialog.dismiss());
   await ui.locator('#liveRun').click();assert.equal(posts.length,0);
@@ -69,6 +75,18 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   assert.equal(ncKey.distinctCount,50);assert.equal(ncKey.duplicateValues,50);assert.equal(ncKey.duplicateRows,100);
   const period=result.fieldChecks.find(row=>row.field==='contract_period');assert.equal(period.blankCount,1);assert.equal(period.numberCount,49);assert.equal(period.stringCount,50);
   const dates=result.fieldChecks.find(row=>row.field==='contract_start_date');for(const key of ['ymdDash','ymdSlash','ymdCompact','dateTime'])assert.equal(dates.dateFormats[key],25);
+  const nc=await context.newPage();await nc.goto(origin+'/cncservice/synthetic-nc');
+  const model=await context.newPage();await model.goto(origin+'/cncservice/synthetic-model');
+  const batch=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));
+  assert.equal(batch.ok,true);assert.equal(batch.tables.filter(row=>row.ok).length,3);assert.equal(batch.tables.filter(row=>row.code==='NOT_OPEN').length,7);
+  const ncRelation=batch.relationships.find(row=>row.from==='ZGDDTB_CONTRACT_INFO'&&row.fromKey==='nc_serial_no');assert.equal(ncRelation.matched,2);assert.equal(ncRelation.notInSample,98);
+  const modelRelation=batch.relationships.find(row=>row.from==='ZGDDTB_NC_INFO_RS'&&row.fromKey==='nc_model_id');assert.equal(modelRelation.ambiguous,1);
+  assert(!JSON.stringify(batch).includes('SYNTHETIC-'));assert(!JSON.stringify(batch).includes('"sample"'));
+  await ui.locator('#batchRun').click();await ui.locator('#batchStatus').filter({hasText:'3/10テーブル'}).waitFor();
+  const batchText=await ui.locator('#reviewText').inputValue();assert(batchText.includes('サンプルに対象なし＝不存在ではありません'));assert(!batchText.includes('SYNTHETIC-'));
+  const duplicate=await context.newPage();await duplicate.goto(origin+'/cncservice/synthetic-nc');
+  const duplicateResult=await ui.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_GETDATA_BATCH',confirmed:true}));assert.equal(duplicateResult.tables.find(row=>row.table==='ZGDDTB_NC_INFO_RS').code,'DUPLICATE_TABS');
+  await duplicate.close();await nc.close();await model.close();
   for(const [testMode,code] of [['auth','AUTH_REQUIRED'],['html','AUTH_REQUIRED'],['http','HTTP_ERROR'],['invalid','INVALID_RESPONSE'],['script','INVALID_RESPONSE']]){mode=testMode;assert.equal((await send()).code,code);}
   assert.equal(await host.evaluate(()=>window.fixtureAttack),undefined);
   await host.evaluate(()=>{ImJsspRpc.receive=xhr=>JSON.parse(xhr.responseText.replace(/"(?:[^"\\]|\\.)*"|\bundefined\b/g,token=>token==='undefined'?'null':token));});

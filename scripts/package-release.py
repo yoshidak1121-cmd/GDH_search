@@ -31,6 +31,9 @@ with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.write(root / name, 'CNC_Machine_Viewer/' + name)
     archive.write(root / 'installer/VIEWER_START_HERE.txt', 'CNC_Machine_Viewer/START_HERE.txt')
 packages.append(archive_path)
+stable_setup = out / 'GDH_Search_Setup.zip'
+shutil.copyfile(out / f'GDH_Search_Setup_v{version}.zip', stable_setup)
+packages.append(stable_setup)
 checksums = []
 for package in sorted(packages):
     with zipfile.ZipFile(package) as archive:
