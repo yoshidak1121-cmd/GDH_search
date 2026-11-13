@@ -13,7 +13,7 @@ const extension=path.resolve('dist/GDH_Search_Extension'),manifestFile=path.join
   const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await context.route(/^https?:/,route=>{
    const url=new URL(route.request().url());
-   if(url.href==='https://api.github.com/repos/yoshidak1121-cmd/GDH_search/releases/latest'){checks++;if(checkFailure)return route.fulfill({status:403,body:'rate limited'});assert.equal(route.request().headers().cookie,undefined);return route.fulfill({contentType:'application/json',body:JSON.stringify(release)});}
+   if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json'){checks++;if(checkFailure)return route.fulfill({status:403,body:'rate limited'});assert.equal(route.request().headers().cookie,undefined);return route.fulfill({contentType:'application/json',body:JSON.stringify(release)});}
    if(url.href===origin+'/cncservice/synthetic-update'){
     loads++;return route.fulfill({contentType:'text/html',body:'<!doctype html><h1>Fixture '+loads+'</h1><form id="frmmain" method="post"><input name="dataview_cd" value="synthetic-view"></form>'});
    }
@@ -62,6 +62,6 @@ const extension=path.resolve('dist/GDH_Search_Extension'),manifestFile=path.join
   const state=await newWorker.evaluate(()=>gdhUpdateState);assert.equal(state.phase,'done');assert.equal(state.reloaded,1);
   const pending=await newWorker.evaluate(()=>chrome.storage.local.get('gdhUpdatePending'));assert.equal(pending.gdhUpdatePending,undefined);
   if(!guide.isClosed())await guide.locator('#updateStatus').filter({hasText:'更新完了'}).waitFor();
-  console.log('PASS: visible HTTP failure, manual retry bypasses cache, startup GitHub check without cookies, exact update prompt, Yes starts native version-only request, replaced files are reloaded, original GDH document receives exactly one automatic F5, pending state cleared');
+  console.log('PASS: visible HTTP failure, manual retry bypasses cache, release metadata without API or cookies, exact update prompt, Yes starts native version-only request, replaced files are reloaded, original GDH document receives exactly one automatic F5, pending state cleared');
  }finally{await context.close();fs.writeFileSync(manifestFile,original);}
 })().catch(error=>{console.error(error);process.exitCode=1;});

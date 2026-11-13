@@ -42,3 +42,10 @@ for package in sorted(packages):
     checksums.append(hashlib.sha256(package.read_bytes()).hexdigest() + '  ' + package.name)
     print(package.name, package.stat().st_size)
 (out / f'SHA256SUMS_v{version}.txt').write_text('\n'.join(checksums) + '\n')
+
+# Published with the packages: no API quota and no unpublished main-branch version.
+release_info = {'tag_name': 'v' + version, 'draft': False, 'prerelease': False,
+                'assets': [{'name': name, 'browser_download_url':
+                    f'https://github.com/yoshidak1121-cmd/GDH_search/releases/download/v{version}/{name}'}
+                    for name in [f'GDH_Search_Setup_v{version}.zip', f'SHA256SUMS_v{version}.txt']]}
+(out / 'gdh-release.json').write_text(json.dumps(release_info) + '\n')

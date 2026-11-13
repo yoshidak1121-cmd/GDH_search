@@ -220,7 +220,7 @@ MAIN worldの要求にも期限と取消し識別子を渡し、期限切れの�
 
 ### 自動更新との分離
 
-起動時の更新確認は、GitHubの固定リリースAPIへのCookieなしメタデータ取得です。5分間は版情報だけをキャッシュし、GDHのデータや認証値は含めません。
+起動時の更新確認は、GitHubの公開リリース添付 `gdh-release.json` へのCookieなしメタデータ取得（v1.20.3以降はAPI不使用）です。5分間は版情報だけをキャッシュし、GDHのデータや認証値は含めません。
 「はい」で承認した場合のみNative Messagingを使い、Windowsヘルパーへactionとversionだけを渡します。
 ヘルパーは利用者専用フォルダーの固定Update.ps1のみを起動し、要求された版とGitHub最新版が違う場合や照合失敗時は適用しません。
 ヘルパーは初回SetupでHKCUのChrome／Edge NativeMessagingHostsに登録され、常駐しません。許可originは専用ExtensionフォルダーのIDだけです。

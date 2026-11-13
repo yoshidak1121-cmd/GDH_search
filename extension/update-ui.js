@@ -1,7 +1,7 @@
 /* Non-blocking startup check: pinned public metadata, no cookies or GDH data. */
 (function(){
  'use strict';
- const endpoint='https://api.github.com/repos/yoshidak1121-cmd/GDH_search/releases/latest';
+ const endpoint='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json';
  const tr=(ja,en)=>document.documentElement.lang==='en'?en:ja;
  const compare=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if(x[i]!==y[i])return x[i]>y[i]?1:-1;return 0;};
  const current=chrome.runtime.getManifest().version;
@@ -47,7 +47,7 @@
   if(!force&&cached&&Date.now()-cached.checkedAt<300000&&/^\d+\.\d+\.\d+$/.test(cached.version)){latest=cached.version;received();return;}
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7000);
   try{
-   const response=await fetch(endpoint,{credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal,headers:{Accept:'application/vnd.github+json'}});
+   const response=await fetch(endpoint,{credentials:'omit',redirect:'follow',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}});
    if(!response.ok)throw Error('HTTP '+response.status);
    const release=await response.json();
    if(release.draft!==false||release.prerelease!==false||!/^v\d+\.\d+\.\d+$/.test(release.tag_name||''))throw Error('INVALID_RESPONSE');

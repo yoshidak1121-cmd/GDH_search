@@ -25,7 +25,7 @@ const columns=['contract_id','contract_no','contract_type','contract_period','co
   </script>`;
   await context.route(/^https?:/,async route=>{
    const req=route.request(),url=new URL(req.url());
-   if(url.href==='https://api.github.com/repos/yoshidak1121-cmd/GDH_search/releases/latest')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
+   if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
    if(url.origin===origin&&url.pathname==='/cncservice/synthetic-table')return route.fulfill({contentType:'text/html',body:html});
    if(url.origin===origin&&['/cncservice/synthetic-nc','/cncservice/synthetic-model'].includes(url.pathname))return route.fulfill({contentType:'text/html',body:html.replaceAll('ZGDDTB_CONTRACT_INFO',url.pathname.endsWith('-nc')?'ZGDDTB_NC_INFO_RS':'ZGDDTM_NC_MODEL')});
    if(url.origin===origin&&url.pathname===rpc){
