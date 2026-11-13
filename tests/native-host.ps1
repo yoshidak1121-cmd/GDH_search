@@ -40,7 +40,7 @@ try{
    return $reply
   }finally{if(!$process.HasExited){$process.Kill()};$process.Dispose()}
  }
- $ping=Invoke-FixtureHost $origin @{action='ping'};Assert ($ping.ok -and $ping.version -eq '0.9.0') 'Native ping'
+ $ping=Invoke-FixtureHost $origin @{action='ping'};Assert ($ping.ok -and $ping.version -eq '0.9.0') ('Native ping: '+($ping|ConvertTo-Json -Compress))
  $denied=Invoke-FixtureHost 'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/' @{action='ping'}
  Assert ($denied.code -eq 'ORIGIN_DENIED') 'Foreign origin rejected'
  Assert ((Invoke-FixtureHost $origin @{action='delete';path='C:\anything'}).code -eq 'INVALID_REQUEST') 'Arbitrary commands rejected'

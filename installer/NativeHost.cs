@@ -63,6 +63,6 @@ public class GdhNativeHost {
                 if(process.ExitCode!=0||InstalledVersion()!=version){Fail("UPDATE_FAILED");return 1;}
             }
             Send(new {ok=true,version=version});return 0;
-        }catch{Fail("HELPER_FAILED");return 1;}
+        }catch(Exception error){Fail("HELPER_"+error.GetType().Name);return 1;}
     }
 }
