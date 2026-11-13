@@ -88,7 +88,7 @@ try {
  $script:fixtureHash=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash+'  GDH_Search_Setup_v1.0.0.zip'
  @{name='GDH 機械情報 拡張検索';version='0.9.0'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $target 'manifest.json') -Encoding UTF8
  $script:setupCalls=0
- function Invoke-RestMethod { param($Uri,$TimeoutSec,$Headers);Assert ($Uri -eq 'https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json') 'Pinned release source';return $script:release }
+ function Invoke-RestMethod { param($Uri,$TimeoutSec,$Headers);Assert ($Uri -eq 'https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json') 'Pinned release source';return ($script:release | ConvertTo-Json -Depth 10) }
  function Invoke-WebRequest { param([switch]$UseBasicParsing,$TimeoutSec,$Uri,$OutFile);if($Uri.EndsWith('.zip')){Copy-Item -LiteralPath $script:fixtureZip -Destination $OutFile}else{Set-Content -LiteralPath $OutFile -Value $script:fixtureHash -Encoding ASCII} }
  function powershell.exe { param([switch]$NoLogo,[switch]$NoProfile,$ExecutionPolicy,$File);Assert (Test-Path -LiteralPath $File) 'Verified setup file';$script:setupCalls++;$global:LASTEXITCODE=0 }
  . (Join-Path $root 'installer\Update.ps1')

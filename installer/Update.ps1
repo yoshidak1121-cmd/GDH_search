@@ -41,6 +41,7 @@ try {
     if((Get-Item -LiteralPath $base).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Update folder must not be a link'}
     $updateLock=[IO.File]::Open((Join-Path $base 'update.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
     $release = Invoke-RestMethod -Uri 'https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json' -TimeoutSec 30 -Headers @{ Accept='application/json'; 'User-Agent'='GDH-Search-Updater' }
+    if ($release -is [string]) { $release = $release | ConvertFrom-Json }
     $plan = Get-GdhReleasePlan $release
     if($ExpectedVersion -and $plan.Version -ne $ExpectedVersion){throw 'Release changed; check again'}
     $base = Join-Path $env:LOCALAPPDATA 'GDH_Search'
