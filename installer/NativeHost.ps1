@@ -16,7 +16,8 @@ function Install-GdhNativeHost([string]$Base,[string]$ExtensionPath,[switch]$Ski
     $id=Get-GdhExtensionId $ExtensionPath
     $hostPath=Join-Path $Base 'com.yoshidak.gdh_search_updater.json'
     if((Test-Path -LiteralPath $hostPath)-and((Get-Item -LiteralPath $hostPath).Attributes-band[IO.FileAttributes]::ReparsePoint)){throw 'Helper manifest must not be a link'}
-    @{name='com.yoshidak.gdh_search_updater';description='GDH Search updater';path=$exe;type='stdio';allowed_origins=@("chrome-extension://$id/")} | ConvertTo-Json | Set-Content -LiteralPath $hostPath -Encoding UTF8
+    $json=@{name='com.yoshidak.gdh_search_updater';description='GDH Search updater';path=$exe;type='stdio';allowed_origins=@("chrome-extension://$id/")} | ConvertTo-Json
+    [IO.File]::WriteAllText($hostPath,$json,(New-Object Text.UTF8Encoding($false)))
     if(!$SkipRegistration){
         foreach($browser in @('Google\Chrome','Microsoft\Edge')){
             $key="HKCU:\Software\$browser\NativeMessagingHosts\com.yoshidak.gdh_search_updater"

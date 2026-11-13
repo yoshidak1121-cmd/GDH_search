@@ -1,5 +1,5 @@
 'use strict';
-importScripts('getdata-live.js','getdata-catalog.js');
+importScripts('getdata-live.js','getdata-catalog.js','update-controller.js');
 let liveBusy=false,currentBatch=null;
 const pattern='https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*';
 const BATCH_LIMIT_MS=60000,READ_LIMIT_MS=18000,PROBE_LIMIT_MS=2000;
@@ -94,9 +94,9 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
    const tabs=await within(chrome.tabs.query({url:pattern}),PROBE_LIMIT_MS);
    return {ok:true,tabs:tabs.filter(t=>Number.isInteger(t.id)).map(t=>({id:t.id,label:t.title==='ZGDDTB_CONTRACT_INFO'?'契約情報':'GDH（契約情報を開いているか確認）'}))};
   }
-  if(liveBusy)return {ok:false,code:'BUSY'};
+  if(liveBusy||gdhUpdatePort||['preparing','installing','reloading'].includes(gdhUpdateState.phase))return {ok:false,code:'BUSY'};
   if((await within(chrome.storage.local.get('gdhGetDataValidationEnabled'),PROBE_LIMIT_MS)).gdhGetDataValidationEnabled!==true)return {ok:false,code:'MODE_OFF'};
-  if(liveBusy)return {ok:false,code:'BUSY'};
+  if(liveBusy||gdhUpdatePort||['preparing','installing','reloading'].includes(gdhUpdateState.phase))return {ok:false,code:'BUSY'};
   if(message.confirmed!==true)return {ok:false,code:'CONFIRM_REQUIRED'};
   if(message.type==='GDH_GETDATA_BATCH'){
    let rejectCancel;

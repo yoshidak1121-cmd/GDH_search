@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.19.1
+# CNC機械情報ビューア / GDH拡張検索 v1.20.0
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -80,13 +80,15 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.19.1)の `GDH_Search_Setup_v1.19.1.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.0)の `GDH_Search_Setup_v1.20.0.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
-更新はポップアップの **GitHubから更新**、または[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)から取得します。バージョン番号を選ばず、展開 → Install.bat → 本拡張機能の ↻ → GDH画面でF5。デスクトップにファイルは作成せず、以前本ツールが作った未変更の更新ショートカットだけを削除します。ブラウザーは自動選択します。
+v1.20.0では、今回だけ[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
+
+次回からは起動時にGitHubの最新版を確認し、「はい」で取得・SHA-256照合・一式置換・拡張機能再読み込み・起動元GDH画面のF5相当まで自動で行います。別のページに移動したGDHタブは更新しません。ポップアップの **更新・設定** にはEdge／Chrome別の案内とヘルパー接続確認があります。デスクトップへの配置はありません。
 
 導入案内はWindowsの表示言語から自動選択します。日本語のWindowsでは日本語、それ以外では英語になります。`START_HERE.txt` が入口です。日本語は `README_ja.txt`、英語は `README_en.txt` を参照してください。検索画面の表示言語は画面内の言語選択で切り替えられます。
 
-**English:** Extract the setup ZIP and double-click **Install.bat**. Setup uses Japanese for Japanese Windows UI and English otherwise. Edge/Chrome is selected automatically. For first-time installation, manually enable **Developer mode**, click **Load unpacked**, and paste the copied folder path. For future updates, use Update from GitHub in the popup; extract the latest setup ZIP, run Install.bat, then reload the extension and GDH page. No desktop files are created. Previous files are backed up. Administrator rights are not required. Company-managed restrictions still apply. Open **START_HERE.txt**, then **README_en.txt** for English instructions or **README_ja.txt** for Japanese.
+**English:** Extract the setup ZIP and double-click **Install.bat**. Setup uses Japanese for Japanese Windows UI and English otherwise. Edge/Chrome is selected automatically. For first-time installation, manually enable **Developer mode**, click **Load unpacked**, and paste the copied folder path. Setup also registers the per-user Windows update helper. Keep Developer mode enabled. Future startup prompts need only Yes; files, the extension and the original GDH page are reloaded automatically. Updates and setup provides browser-specific help. No desktop files are created. Previous files are backed up. Administrator rights are not required. Company-managed restrictions still apply. Open **START_HERE.txt**, then **README_en.txt** for English instructions or **README_ja.txt** for Japanese.
 
 **開発者モードをオン → 展開して読み込み → パスを貼り付けてフォルダーを選択**の操作は手動です。管理者権限は不要で、管理ポリシーやPCの恒久的な実行ポリシーは変更しません。導入用PowerShellのプロセスだけ実行を許可します。会社の管理ポリシーが優先されます。スクリプト実行が制限されているPCでは、以下の手動導入を使ってください。
 
@@ -97,7 +99,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 【実行前と実行後の表示 / Before and after running setup】
 最初に、これから作成する保存先、ファイル配置、一時フォルダー、更新前のバックアップ、クリップボード変更、管理画面を開くことを表示します。内容を確認し、Enterキーで配置を開始します。中止する場合はCtrl+Cを押します。
 ブラウザーで設定・動作確認を終え、この黒い画面に戻ってEnterキーを押すと、この実行で実際に配置した場所、作成したフォルダー、バックアップ先、クリップボードの変更、ブラウザーを開く要求の結果を表示します。失敗時も分かる範囲の変更を表示します。
-このBATはファイルを配置するだけで、ブラウザーへの拡張機能のインストール・登録・有効化は行いません。既存の登録状態も判定しません。手動での登録または再読み込みが必要です。
+Install.batはアプリ配置と利用者専用の更新ヘルパー登録を行います。Chrome／EdgeのNativeMessagingHostsをHKCUに登録しますが、管理ポリシー・ブラウザープロファイルは変更しません。最初の拡張機能登録・権限承認・開発者モードの設定は手動です。通常のCSV取得は維持します。
 
 Before making changes, setup shows the planned storage folder, file placement, temporary folder, update backup, clipboard change, and opening the browser management page. Review the plan and press Enter to proceed, or Ctrl+C to cancel.
 After completing setup and checks in the browser, return to the console and press Enter to see what actually happened: file location, folders created, backup location, clipboard changes, and the request to open the browser. Known changes are also reported if an error occurs.
@@ -319,7 +321,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.19.1)から **GDH_Search_Extension_v1.19.1.zip** をダウンロードします。
+1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.0)から **GDH_Search_Extension_v1.20.0.zip** をダウンロードします。
 2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
 3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
 4. **「開発者モード」または「デベロッパー モード」**をオンにします。

@@ -1,12 +1,11 @@
 GDH Search — Windows / Edge・Chrome
 
-更新：GitHubの最新版Setup ZIPを展開 → Install.bat → 本拡張機能の ↻ → GDHでF5。
-https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip
-拡張機能ポップアップの「GitHubから更新」からも取得できます。
-デスクトップにファイルは作りません。初回のみ開発者モード → 展開して読み込み。
+今回だけ：ZIPをすべて展開 → Install.bat → 開発者モードをオン → 本拡張機能の ↻ → GDHでF5。
+Windows更新ヘルパーも利用者専用に登録されます。デスクトップには配置しません。
+次回から：拡張ツール起動時に最新版を確認。「はい」で取得・置換・拡張機能とGDH画面の再読み込みまで実行します。
+案内と接続確認：ポップアップの「更新・設定」。
 
-Update: extract the latest Setup ZIP from GitHub > Install.bat > Reload extension > F5 on GDH.
-Use Update from GitHub in the extension popup. No desktop files are created.
-First installation only: Developer mode > Load unpacked.
-
-詳細 / Details: README_ja.txt / README_en.txt
+One-time setup: Extract All > Install.bat > keep Developer mode enabled > reload extension > F5 on GDH.
+The per-user Windows update helper is registered. No desktop files are created.
+Future updates: open the tool, then choose Yes when prompted. Files and the original GDH page update automatically.
+Instructions and connection test: Updates and setup in the popup.

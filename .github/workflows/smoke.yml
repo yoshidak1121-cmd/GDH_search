@@ -13,6 +13,7 @@ jobs:
       - run: node tests/export-results.cjs
       - run: node tests/getdata.cjs
       - run: node tests/getdata-batch.cjs
+      - run: node tests/update-controller.cjs
       - run: node tests/english-headers.cjs
       - run: node tests/smoke.cjs
       - run: node tests/countries.cjs
@@ -39,6 +40,7 @@ jobs:
       - run: node tests/gdh-export.cjs
       - run: node tests/extension.cjs
       - run: node tests/getdata-live.cjs
+      - run: node tests/update-browser.cjs
 
   installer:
     runs-on: windows-latest

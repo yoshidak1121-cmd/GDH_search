@@ -84,6 +84,7 @@ try {
     . (Join-Path $base 'NativeHost.ps1')
     $null = Install-GdhNativeHost -Base $base -ExtensionPath $target
     if($AutomatedUpdate){exit 0}
+    Write-Host (T '自動更新ヘルパーの登録が完了しました。' 'Automatic update helper registered.')
     if ((Test-Path -LiteralPath $preferences) -and ((Get-Item -LiteralPath $preferences).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Settings path must not be a link' }
     @{ Browser = $Browser } | ConvertTo-Json | Set-Content -LiteralPath $preferences -Encoding UTF8
     try { Remove-GdhLegacyShortcut -Desktop ([Environment]::GetFolderPath('Desktop')) -Updater (Join-Path $base 'Update.bat') } catch {}

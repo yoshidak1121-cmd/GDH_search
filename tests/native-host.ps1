@@ -11,6 +11,7 @@ try{
  @{name='GDH 機械情報 拡張検索';manifest_version=3;version='0.9.0'}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $testRoot 'Extension\manifest.json') -Encoding UTF8
  $hostInfo=Install-GdhNativeHost -Base $testRoot -ExtensionPath (Join-Path $testRoot 'Extension') -SkipRegistration
  Assert ((Get-GdhExtensionId 'c:\GDH\Extension') -eq 'immllbhlcfkcidcejhbpjdfpmkmfkokc') 'Chromium SHA256 UTF16 path fixture'
+ Assert (([IO.File]::ReadAllBytes($hostInfo.Manifest))[0] -eq 123) 'Native host manifest uses BOM-free JSON'
  Assert ($hostInfo.Id -match '^[a-p]{32}$') 'Chromium path-derived ID'
  Assert ((Get-GdhExtensionId 'c:\GDH\Extension') -eq (Get-GdhExtensionId 'C:\GDH\Extension')) 'Drive letter normalization'
  if(@($registryKeys|Where-Object{Test-Path -LiteralPath $_}).Count -eq 0){

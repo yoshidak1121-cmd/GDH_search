@@ -15,10 +15,10 @@ if(!appCode.includes(inlineWorker))throw Error('Worker bootstrap changed; extens
 fs.writeFileSync(path.join(destination,'worker.js'),worker[1]);
 fs.writeFileSync(path.join(destination,'viewer.js'),appCode.replace(inlineWorker,"const worker=new Worker('worker.js');"));
 fs.writeFileSync(path.join(destination,'viewer.css'),css[1]+'\n.validation-link{margin-left:auto;font-size:12px;color:#1768dc;padding:6px 10px;border:1px solid #cbd6e5;border-radius:6px;text-decoration:none;white-space:nowrap}');
-const viewer=html.replace('</header>','<a class="validation-link" href="validation.html" target="_blank" rel="noopener" data-ja="検証" data-en="Validate">検証</a></header>').replace(css[0],'<link rel="stylesheet" href="viewer.css">').replace(worker[0],'').replace(app[0],'<script src="bridge.js"></script>\n<script src="viewer.js"></script>');
+const viewer=html.replace('</header>','<a class="validation-link" href="validation.html" target="_blank" rel="noopener" data-ja="検証" data-en="Validate">検証</a></header>').replace(css[0],'<link rel="stylesheet" href="viewer.css"><link rel="stylesheet" href="update.css">').replace(worker[0],'').replace(app[0],'<script src="bridge.js"></script>\n<script src="viewer.js"></script><script src="update-ui.js"></script>');
 if(/<script(?![^>]*src=)[^>]*>/i.test(viewer))throw Error('Inline script remains in extension viewer');
 fs.writeFileSync(path.join(destination,'viewer.html'),viewer);
-for(const name of ['manifest.json','content.js','bridge.js','popup.html','popup.js','popup.css','getdata-adapter.js','getdata-validation.js','getdata-validation-ui.js','validation.html','background.js','getdata-live.js','getdata-schema.js','getdata-catalog.js'])fs.copyFileSync(path.join(root,'extension',name),path.join(destination,name));
+for(const name of ['manifest.json','content.js','bridge.js','popup.html','popup.js','popup.css','getdata-adapter.js','getdata-validation.js','getdata-validation-ui.js','validation.html','background.js','getdata-live.js','getdata-schema.js','getdata-catalog.js','update-controller.js','update-ui.js','update.css','update.html','update-guide.js'])fs.copyFileSync(path.join(root,'extension',name),path.join(destination,name));
 fs.copyFileSync(path.join(root,'gdh-export.js'),path.join(destination,'gdh-export.js'));
 if(fs.existsSync(path.join(root,'EXTENSION_INSTALL.md')))fs.copyFileSync(path.join(root,'EXTENSION_INSTALL.md'),path.join(destination,'INSTALL.md'));
 console.log('Built: '+destination);
