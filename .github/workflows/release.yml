@@ -47,7 +47,7 @@ jobs:
         working-directory: dist/release
         run: sha256sum -c "SHA256SUMS_${RELEASE_TAG}.txt"
       - name: Prepare release notes
-        run: python3 -c "from pathlib import Path; Path('dist/release-notes.md').write_text(Path('CHANGELOG.md').read_text().split('\n## ', 1)[0] + '\n')"
+        run: python3 -c "from pathlib import Path; Path('dist/release-notes.md').write_text('Download: [GDH_Search_Setup.zip](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip). Other assets support automatic updates.\n\n' + Path('CHANGELOG.md').read_text().split('\n## ', 1)[0] + '\n')"
       - name: Create draft for a version update
         if: github.event_name == 'push'
         run: |
@@ -65,7 +65,7 @@ jobs:
           git fetch --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
           test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"
       - name: Attach packages to draft
-        run: gh release upload "$RELEASE_TAG" dist/release/*.zip dist/release/gdh-release.json "dist/release/SHA256SUMS_${RELEASE_TAG}.txt" --clobber
+        run: gh release upload "$RELEASE_TAG" dist/release/GDH_Search_Setup.zip "dist/release/GDH_Search_Setup_${RELEASE_TAG}.zip" dist/release/gdh-release.json "dist/release/SHA256SUMS_${RELEASE_TAG}.txt" --clobber
       - name: Publish version update
         if: github.event_name == 'push'
         run: gh release edit "$RELEASE_TAG" --draft=false --latest

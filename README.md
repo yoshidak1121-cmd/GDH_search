@@ -80,7 +80,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.5)の `GDH_Search_Setup_v1.20.5.zip` を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.5)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 v1.20.5では、今回だけ[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
 
@@ -321,14 +321,12 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張機能を有効にする（Chrome / Edge）
 
-1. [ダウンロードページ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.5)から **GDH_Search_Extension_v1.20.5.zip** をダウンロードします。
-2. ZIPファイルを右クリックし、**「すべて展開」**を選びます。展開したフォルダーは、拡張機能を使う間は削除・移動しないでください。
-3. ブラウザーのアドレス欄に、Edgeの場合は `edge://extensions/`、Chromeの場合は `chrome://extensions/` を入力して開きます。
-4. **「開発者モード」または「デベロッパー モード」**をオンにします。
-5. **「展開して読み込み」または「パッケージ化されていない拡張機能を読み込む」**をクリックします。
-6. 展開先の **GDH_Search_Extension** フォルダーを選びます。`manifest.json` が入っているフォルダーを指定してください。ZIPファイル自体は選びません。
-7. 追加された **GDH 機械情報 拡張検索** のスイッチがオンになっていることを確認します。
+1. [最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)をダウンロードし、「すべて展開」します。
+2. **Install.bat** を実行します。ヘルパーを登録し、専用フォルダーへ配置します。
+3. 初回は拡張機能管理で開発者モードをオンにし、「展開して読み込み」で **`%LOCALAPPDATA%\GDH_Search\Extension`** を選択します。Downloads内のフォルダーは選びません。
+4. GDH画面を再読み込みします。次回からは更新確認の「はい」で更新できます。
 
+配布ZIPはSetupへ一本化しました。版番号付きSetup ZIP・SHA256SUMS・gdh-release.jsonは既存の自動更新との互換性のために残しています。
 すでに登録済みの場合は、拡張機能管理画面でスイッチをオンにしてください。
 
 ### 拡張検索画面を開く
