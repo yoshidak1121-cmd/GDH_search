@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CNC機械情報ビューア | G-DataHub</title>
+<title>機械情報検索 | G-DataHub</title>
 <style>
 :root{color-scheme:light;--ink:#14243c;--muted:#67768c;--blue:#1768dc;--blue2:#0e4da9;--line:#dce5ef;--surface:#fff;--soft:#f4f7fb;--green:#16865e;--radius:13px}
 *{box-sizing:border-box}body{margin:0;background:#f2f5fa;color:var(--ink);font-family:"Meiryo","Yu Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px}
@@ -57,11 +57,32 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
 .blank-pop[hidden]{display:none!important}#referenceSearch{margin-top:16px;border-top:1px solid #e4ebf3;padding-top:12px}#referenceTitle{font-size:14px;color:#70521d}#referenceFields .facet-card{grid-column:auto;grid-row:auto}#referenceFields .facet-help{display:none}#referenceFields .facet-title label{white-space:normal;overflow-wrap:anywhere}#blankRates{overflow-x:auto}#blankRates td,#blankRates th{white-space:normal}
 #salesView .dash-cards{grid-template-columns:repeat(3,minmax(0,1fr))}#salesView .dash-charts{grid-template-columns:repeat(2,minmax(0,1fr))}#salesAvailable,#salesUnavailable{width:100%;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}#salesUnavailable{grid-template-columns:repeat(4,minmax(0,1fr))}#salesFilters select{width:100%}#salesFilters small{max-width:260px;line-height:1.6;overflow-wrap:anywhere}#salesFilters input{max-width:100%;min-width:0;padding:8px;border:1px solid #cfdaea;border-radius:6px}#salesView .dash-table{min-width:1700px}#salesView .dash-table td{white-space:pre-wrap}#salesView .dash-table th:nth-child(10){width:260px}#salesRule{line-height:1.8;overflow-wrap:anywhere}@media(max-width:1000px){#salesAvailable,#salesUnavailable{grid-template-columns:repeat(2,minmax(0,1fr))}#salesView .dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}#salesView .dash-charts{grid-template-columns:1fr}}@media(max-width:480px){#salesAvailable,#salesUnavailable{grid-template-columns:minmax(0,1fr)}#salesView .dash-cards{grid-template-columns:1fr}#salesFilters label{min-width:0}}
 
-/* Compact navigation delegates to the existing search/dashboard handlers. */
-.topbar{flex-wrap:wrap;height:auto;min-height:64px}.menu-tree{display:flex;align-items:flex-start;gap:12px;margin:8px 0 8px 24px;white-space:normal}.menu-tree details{min-width:140px}.menu-tree summary{cursor:pointer;padding:5px 8px;font-size:12px;color:#52647c}.menu-tree button{display:block;width:100%;height:34px;text-align:left;padding:0 12px 0 24px;border:0;border-radius:5px;background:transparent;color:#52647c;cursor:pointer;font:inherit;font-size:12px}.menu-tree button:hover{background:#eef5ff}.menu-tree button[aria-current=page]{background:#e3efff;color:#1768dc;font-weight:700}.menu-tree :focus-visible{outline:2px solid #1768dc;outline-offset:2px}
-.embedded .topbar{display:flex}.embedded .topbar>.brand,.embedded .topbar>.top-right{display:none}.embedded .menu-tree{margin-left:0}
+/* Shared navigation and progressive loading reuse the search/dashboard handlers. */
+:root{--muted:#52647c}
+.topbar,.embedded .topbar{display:flex;flex-wrap:wrap;height:auto;min-height:0;padding:8px 24px;gap:8px 24px;align-items:flex-start}
+.brand{font-size:14px;align-self:center}.brand-sub{color:#52647c}.brandmark{width:28px;height:28px}
+.menu-tree,.embedded .menu-tree{display:flex;flex:1;flex-direction:column;gap:4px;margin:0;min-width:0}
+.menu-primary,.menu-secondary{display:flex;gap:6px;flex-wrap:wrap}.menu-primary{border-bottom:1px solid var(--line)}
+.menu-tree button{height:auto;min-height:36px;text-align:left;padding:7px 12px;border:0;border-radius:4px;background:transparent;color:#435773;font:inherit;white-space:normal}
+.menu-tree button:hover{background:#eef5ff}.menu-primary button[aria-pressed=true]{color:#1058b8;font-weight:700;box-shadow:inset 0 -3px #1768dc;border-radius:0}
+.menu-secondary button[aria-current=page]{background:#e3efff;color:#1058b8;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.header-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:3px 0}.language-control{color:#435773;font-size:12px}.language-control select{min-height:36px}
+.embedded .topbar>.brand{display:none}
 main>.view-tabs,#dashboardModes{display:none}
-@media(max-width:700px){.menu-tree{order:3;flex:1 0 100%;margin:8px 0;gap:4px}.menu-tree details{min-width:0;flex:1}.menu-tree button{padding-left:12px}.menu-tree summary{padding:5px 2px}}
+main,.embedded main{padding:16px 24px 28px}.intro,.embedded .intro{display:block;margin-bottom:12px}.intro h1,.embedded .intro h1{font-size:22px;line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
+.data-load{padding:14px 18px;margin-bottom:10px}.data-load h2{font-size:15px;margin:0 0 6px}.data-load #loadPrompt{margin:0 0 12px;color:#435773;line-height:1.7}
+.load-actions{gap:12px 20px;align-items:flex-start}.load-actions .fetch-area,.load-actions .file-area{width:340px;max-width:100%;min-width:0}.file-area>.btn{width:100%}
+.load-actions .btn{min-height:40px;white-space:normal;line-height:1.5}.load-actions svg{flex-shrink:0}.load-guidance,#gdh-home-csv-note{font-size:12px!important;color:#435773!important;line-height:1.6;margin:6px 0 0!important;overflow-wrap:anywhere}.fetch-help{font-size:12px;color:#435773}
+.beta-notice{display:block;font-size:12px;padding:8px 12px;line-height:1.6}.beta-notice summary{cursor:pointer}.beta-notice p{margin:8px 0;max-width:90ch}
+.metrics{flex-wrap:wrap;align-items:start}.metrics .metric{padding:8px 12px;max-width:100%;flex-wrap:wrap}.metrics .metric:nth-child(4){flex:1 1 240px}.metric-file{max-width:100%;overflow-wrap:anywhere;white-space:normal}.metric-label{display:block;font-size:12px}.metric-value span{color:#52647c}
+.source-note{flex-basis:100%;font-size:12px;line-height:1.6;color:#52647c;margin:0;padding:0 12px 8px}.searchpanel{padding:14px 18px}.search-heading{gap:12px;flex-wrap:wrap;margin-bottom:8px}.search-top-actions{flex-wrap:wrap;gap:8px}
+#collapsedSummary{margin:5px 0;color:#435773;line-height:1.6}.fixed-search .facet-card input:not([type=checkbox]),.fixed-search .facet-card select{height:36px;min-height:36px}.fixed-search .facet-options{top:39px}.fixed-search .facet-title label{white-space:normal}.fixed-search .facet-note,.facet-help,.blank-pop,.search-bottom,.search-await,.filter-count{color:#435773}
+.resultshead{gap:12px;flex-wrap:wrap}.results-tools{min-width:0}.results-tools select{max-width:100%;min-height:36px}.results-tools .btn{white-space:normal}.export-hint{padding:8px 14px;margin:0;color:#435773;line-height:1.6;background:#f4f7fb}.tablebottom,.empty,.facet-count{color:#52647c}.tablewrap{min-height:180px;max-width:100%}.footer{color:#52647c;line-height:1.7}
+button:disabled,.btn:disabled{opacity:1;color:#52647c;background:#e8edf3;border-color:#c8d2df;box-shadow:none}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid #1259b3;outline-offset:3px}
+@media(max-width:1100px){.topbar>.brand{display:none}}
+@media(max-width:700px){.topbar,.embedded .topbar{padding:10px 12px;gap:8px}.header-tools{order:0;justify-content:flex-end;width:100%}.menu-tree{order:1;flex:1 0 100%}.menu-tree button{padding:7px 10px}.language-control span{display:inline}main,.embedded main{padding:12px}.load-actions .fetch-area,.load-actions .file-area{width:100%}.data-load,.searchpanel{padding:12px}.fixed-search .facet-card,html[lang=en] .fixed-search .facet-card{grid-template-columns:100px minmax(0,1fr)}.metric:last-child{max-width:100%}.results-tools label{white-space:normal}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}.btn{transition:none}}
 </style>
 </head>
 <body>
@@ -69,26 +90,29 @@ main>.view-tabs,#dashboardModes{display:none}
 <header class="topbar">
  <div class="brand"><div class="brandmark">C</div><div><div>CNC Machine Viewer</div><div class="brand-sub">GLOBAL SERVICE · G-DATAHUB</div></div></div>
  <nav class="nav menu-tree" aria-label="メインメニュー">
- <details open><summary>⌕ <span data-ja="検索" data-en="Search">検索</span></summary><button type="button" data-view="search" aria-current="page" data-ja="機械情報" data-en="Machine information">機械情報</button></details>
- <details open><summary>▥ <span data-ja="ダッシュボード" data-en="Dashboard">ダッシュボード</span></summary><button type="button" data-view="stats" data-ja="機械情報" data-en="Machine information">機械情報</button><button type="button" data-view="sales" data-ja="輸出統計" data-en="Export statistics">輸出統計</button></details>
- <details open><summary>▤ <span data-ja="データ管理" data-en="Data management">データ管理</span></summary><button type="button" data-view="quality" data-ja="データ品質" data-en="Data quality">データ品質</button></details>
+ <div class="menu-primary"><button type="button" data-menu="search" aria-pressed="true" data-ja="検索" data-en="Search">検索</button><button type="button" data-menu="dashboard" aria-pressed="false" data-ja="ダッシュボード" data-en="Dashboard">ダッシュボード</button><button type="button" data-menu="quality" aria-pressed="false" data-ja="データ管理" data-en="Data management">データ管理</button></div>
+ <div class="menu-secondary"><button type="button" data-view="search" aria-current="page" data-ja="機械情報検索" data-en="Machine search">機械情報検索</button><button type="button" data-view="stats" hidden data-ja="機械統計" data-en="Machine statistics">機械統計</button><button type="button" data-view="sales" hidden data-ja="輸出統計" data-en="Export statistics">輸出統計</button><button type="button" data-view="quality" hidden data-ja="データ品質" data-en="Data quality">データ品質</button></div>
  </nav>
- <div class="top-right"><span class="pill">ローカル処理 / サーバー送信なし</span></div>
+ <div class="header-tools"><label class="language-control"><span>Language / 言語</span><select id="languageSelect" aria-label="Language / 言語"><option value="ja">日本語</option><option value="en">English</option></select></label><!-- extension-tools --></div>
 </header>
 <main>
  <section class="intro" aria-label="ページ概要">
- <div><div class="eyebrow">MACHINE INFORMATION SEARCH</div><h1>CNC機械情報ビューア</h1></div>
- <div class="actions">
-  <label class="language-control"><span>言語 / Language</span><select id="languageSelect" aria-label="言語 / Language"><option value="ja">日本語</option><option value="en">English</option></select></label>
-  <div class="fetch-area"><button id="fetchBtn" class="btn primary" title="GDH内の検索フォーム連携後に利用できます"><svg viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>GDHから最新データを取得</button>
+ <h1>機械情報検索</h1>
+ </section>
+ <section id="dataLoad" class="panel data-load" aria-labelledby="dataLoadTitle">
+ <h2 id="dataLoadTitle" data-ja="データの読込" data-en="Load data">データの読込</h2>
+ <p id="loadPrompt" data-ja="まだデータを読み込んでいません。まず、検索するデータを選んでください。読込後に検索・CSV出力を利用できます。" data-en="No data loaded yet. Choose a source below to start searching and exporting results.">まだデータを読み込んでいません。まず、検索するデータを選んでください。読込後に検索・CSV出力を利用できます。</p>
+ <div class="actions load-actions">
+  <div class="fetch-area"><button id="fetchBtn" class="btn primary" title="GDHでCSV出力を確認して読み込みます"><svg viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>GDHから最新データを取得</button>
+   <p id="fetchGuidance" class="load-guidance" data-ja="GDHのCSV出力確認で「決定」を選ぶと読み込みます。" data-en="Confirm CSV export in GDH to load the data.">GDHのCSV出力確認で「決定」を選ぶと読み込みます。</p>
    <div id="fetchStatus" class="statusline" role="status" aria-live="polite"></div>
-   <p id="fetchHelp" class="fetch-help" hidden><span id="fetchDuration">データ取得には通常30秒〜1分かかります。</span><br><span id="fetchFallback">5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。</span></p>
+   <p id="fetchHelp" class="fetch-help" hidden><span id="fetchDuration">データ取得には通常30秒〜1分かかります。</span><br><span id="fetchFallback">5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「PCのCSVファイルを読み込む」で読み込んでください。</span></p>
   </div>
-  <button id="fileBtn" class="btn"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 6v10H4zM14 4v6h6"/></svg>ローカルからデータ取得</button>
-  <input id="csvFile" class="sr-only" type="file" accept=".csv,text/csv" aria-label="CSVファイル選択">
+  <div class="file-area"><button id="fileBtn" class="btn"><svg viewBox="0 0 24 24"><path d="M4 4h10l6 6v10H4zM14 4v6h6"/></svg>PCのCSVファイルを読み込む</button><p class="load-guidance" data-ja="保存済みのGDHのCSVファイルを選択します。" data-en="Choose a GDH CSV file saved on this PC.">保存済みのGDHのCSVファイルを選択します。</p></div>
+  <input id="csvFile" hidden type="file" accept=".csv,text/csv" aria-label="CSVファイル選択">
  </div>
  </section>
- <div class="beta-notice" role="note"><span id="betaStatement">本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。</span><span id="betaContact">同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。</span></div>
+ <details class="beta-notice"><summary data-ja="GDH標準機能外・ベータ版・動作保証／サポートなし（詳細）" data-en="Non-standard GDH tool · Beta · No warranty or support (details)">GDH標準機能外・ベータ版・動作保証／サポートなし（詳細）</summary><div><p id="betaStatement">本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。</p><p id="betaContact">同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。</p></div></details>
 
  <div class="view-tabs" role="tablist" aria-label="表示 / View"><button id="searchTab" class="btn" role="tab" aria-selected="true" aria-controls="searchView">機械情報検索</button><button id="dashboardTab" class="btn" role="tab" aria-selected="false" aria-controls="dashboard" tabindex="-1">登録機械情報・確認対象</button></div>
  <section id="dashboard" role="tabpanel" aria-labelledby="dashboardTab" hidden>
@@ -107,25 +131,31 @@ main>.view-tabs,#dashboardModes{display:none}
    <section id="salesList" class="panel" tabindex="-1"><div class="resultshead"><h3 id="salesListTitle"></h3><label><span id="salesSortLabel"></span> <select id="salesSort"><option value="original"></option><option value="serial"></option></select></label></div><div class="tablewrap"><table class="dash-table"><thead id="salesHead"></thead><tbody id="salesBody"></tbody></table></div><div class="tablebottom"><span id="salesPageInfo"></span><div class="paging"><button id="salesPrev" type="button"></button><span id="salesPage"></span><button id="salesNext" type="button"></button></div></div></section>
   </section>
  </section>
- <section class="metrics" aria-label="データ概要">
+ <section class="metrics" aria-label="データ概要" hidden>
   <div class="metric"><div class="metric-label">取込レコード数</div><div class="metric-value" id="totalCount">—<span>件</span></div></div>
   <div class="metric"><div class="metric-label">検索結果</div><div class="metric-value" id="matchedCount">—<span>件</span></div></div>
-  <div class="metric"><div class="metric-label">データ取得日時</div><div class="metric-value" id="loadTime" style="font-size:16px;margin-top:5px">未取得</div></div>
+  <div class="metric"><div class="metric-label">読込日時</div><div class="metric-value" id="loadTime" style="font-size:16px;margin-top:5px">未取得</div></div>
   <div class="metric"><div class="metric-label">検索元ファイル</div><div class="metric-file" id="filename">未読み込み</div><div class="metric-sub" id="fileMeta">GDH接続設定、またはCSVの選択が必要です</div></div>
+  <div class="metric"><div class="metric-label" data-ja="読込元" data-en="Source">読込元</div><div id="sourceKind" class="metric-file">—</div></div>
+  <p class="source-note" data-ja="読込日時は、このツールに読み込んだ日時です。GDH側のデータ更新日時は取得していません。" data-en="Loaded at is when this tool read the file. The GDH source update time is not available.">読込日時は、このツールに読み込んだ日時です。GDH側のデータ更新日時は取得していません。</p>
  </section>
- <section id="searchView" role="tabpanel" aria-labelledby="searchTab" class="panel searchpanel" aria-label="検索条件">
-  <div class="search-heading"><div><h2>機械を検索</h2><p>入力した条件をすべて満たす機械を探します。同じ項目に複数指定すると「いずれか（OR）」です。</p></div><div class="search-top-actions"><span id="facetCount" class="facet-count">条件なし</span></div></div>
-  <div id="facetFields" class="facet-grid fixed-search"><p class="search-await">「GDHから最新データを取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。</p></div>
+ <section id="searchView" role="tabpanel" aria-labelledby="searchTab" class="panel searchpanel" aria-label="検索条件" hidden>
+  <div class="search-heading"><div><h2>機械を検索</h2><p>入力した条件をすべて満たす機械を探します。同じ項目に複数指定すると「いずれか（OR）」です。</p></div><div class="search-top-actions"><span id="facetCount" class="facet-count">条件なし</span><button id="toggleFilters" type="button" class="btn sm" aria-expanded="true" aria-controls="searchEditor">条件を折りたたむ</button></div></div>
+  <p id="collapsedSummary" hidden></p>
+  <div id="searchEditor">
+  <div id="facetFields" class="facet-grid fixed-search"><p class="search-await">「GDHから最新データを取得」または「PCのCSVファイルを読み込む」で検索データを読み込んでください。検索候補はCSVから毎回作成します。</p></div>
   <section id="referenceSearch" hidden><h3 id="referenceTitle">参考検索（データ空欄が多く参考データ）</h3><div id="referenceFields" class="facet-grid fixed-search show-advanced"></div></section>
   <div class="search-submit"><div class="searchBtns"><button id="resetBtn" class="btn" type="button">条件をクリア</button><button id="searchBtn" class="btn primary" type="button" disabled>この条件で検索</button></div></div>
   <div class="search-bottom"><div class="search-bottom-info"><label class="advanced-toggle"><input id="advancedToggle" type="checkbox"> 詳細条件</label><label id="duplicatesOnlyControl" class="duplicate-only-control" hidden><input id="duplicatesOnly" type="checkbox"> 重複ありのみ表示</label><span id="searchSummary" role="status">条件なし：すべての機械を表示</span></div></div>
   <div hidden><input id="keyword"><select id="columnSelect"><option value="all">主要項目</option></select><select id="queryJoin"><option value="AND">AND</option><option value="OR">OR</option></select><input type="radio" name="searchMode" value="standard" checked><input type="radio" name="searchMode" value="fuzzy"></div>
+  </div>
  </section>
  <div id="status" class="statusline" role="status" aria-live="polite"></div>
  <div class="content">
-  <section class="panel resultspanel">
-   <div class="resultshead"><h2>検索結果 <span id="resultTitle" class="count">—</span></h2><div class="results-tools"><button id="exportResults" type="button" class="btn sm" disabled title="検索条件を適用後、検索結果の全件・全列を出力します。">検索結果をCSV出力</button><label for="sortOrder">並び順</label><select id="sortOrder"><option value="original">CSV順</option><option value="nc">NCシリアル番号順</option></select><label for="pageSize">表示数</label><select id="pageSize"><option>20</option><option>50</option><option>100</option></select></div></div>
-   <div class="tablewrap" id="tableWrap"><table class="data-table"><thead><tr><th>機械メーカー</th><th>機械シリアル</th><th>NCシリアル</th><th>エンドユーザー</th><th>輸入国</th><th>輸出国</th><th>契約タイプ</th></tr></thead><tbody id="resultsBody"><tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr></tbody></table></div>
+  <section class="panel resultspanel" hidden>
+   <div class="resultshead"><h2>検索結果 <span id="resultTitle" class="count">—</span></h2><div class="results-tools"><button id="exportResults" type="button" class="btn sm" disabled title="検索条件を適用後、検索結果の全件・全列を出力します。">検索結果をCSV出力</button><label for="sortOrder">並び順</label><select id="sortOrder"><option value="original">読み込んだ順</option><option value="nc">NCシリアル番号順</option></select><label for="pageSize">表示数</label><select id="pageSize"><option>20</option><option>50</option><option>100</option></select></div></div>
+   <p id="exportHint" class="export-hint" role="status" hidden></p>
+   <div class="tablewrap" id="tableWrap" tabindex="0" role="region" aria-label="検索結果 / Search results"><table class="data-table"><thead><tr><th>機械メーカー</th><th>機械シリアル</th><th>NCシリアル</th><th>エンドユーザー</th><th>輸入国</th><th>輸出国</th><th>契約タイプ</th></tr></thead><tbody id="resultsBody"><tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr></tbody></table></div>
    <div class="tablebottom"><span id="pageInfo">0件</span><div class="paging"><button id="firstPage" aria-label="先頭ページ">«</button><button id="prevPage" aria-label="前ページ">‹</button><span id="pageIndicator" style="padding:0 9px">— / —</span><button id="nextPage" aria-label="次ページ">›</button><button id="lastPage" aria-label="最終ページ">»</button></div></div>
   </section>
   <aside class="panel detail"><div class="detail-head"><h2>選択レコード詳細</h2><button id="closeDetail" type="button" class="btn sm">閉じる</button></div><div id="detailBody" class="detail-body"><div class="detail-placeholder"><div>▤</div>検索結果の行を選択すると、<br>機械情報の詳細を表示します。</div></div></aside>
@@ -407,7 +437,7 @@ function runSearch(query,selected,mode,sort,page,pageSize,join='AND',filters=[],
  rowScores=scores;
  if(sort==='nc')result.sort((a,b)=>cap(rows[a][headings.indexOf('NCシリアル番号')]).localeCompare(cap(rows[b][headings.indexOf('NCシリアル番号')])));
  else if(sort==='relevance' && terms.length>0)result.sort((a,b)=>(rowScores.get(b)??0)-(rowScores.get(a)??0)||a-b);
- // CSV order remains stable when no sorting is needed.
+ // File order remains stable when no sorting is needed.
  resultIndexes=result;currentSort=sort;lastQuery=query;lastColumn=selected;lastMode=mode;
  outputPage(page,pageSize);
 }
@@ -597,17 +627,17 @@ const english={
  "CSV以外のファイルが返されました。":"A non-CSV file was returned.",
  "実CSVを読み込んでいます…":"Loading the supplied CSV\u2026",
  "添付CSVを読み取れませんでした。":"The supplied CSV could not be read.",
- 'GDHから最新データを取得':'Get data from GDH','ローカルからデータ取得':'Load local data','GDH内の検索フォーム連携後に利用できます':'Available after connecting the GDH search form',
- 'CNC機械情報ビューア':'CNC Machine Viewer',
- 'ローカル処理 / サーバー送信なし':'Local processing / No server upload','取込レコード数':'Records','検索結果':'Results','データ取得日時':'Loaded at','検索元ファイル':'Source file','未取得':'Not loaded','未読み込み':'Not loaded','機械を検索':'Search machines','条件をクリア':'Clear','データ取得には通常30秒〜1分かかります。':'Data retrieval usually takes 30 seconds to 1 minute.','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。':'If there is no activity for more than 5 minutes, download the CSV manually from GDH and select Load local data to open it.','この条件で検索':'Search','検索結果をCSV出力':'Export results as CSV','検索条件を適用後、検索結果の全件・全列を出力します。':'Apply search conditions, then export all matching rows and columns.','出力する検索結果がありません。':'There are no search results to export.','詳細条件':'Advanced options','重複ありのみ表示':'Show duplicates only','並び順':'Sort by','CSV順':'CSV order','NCシリアル番号順':'NC serial number','表示数':'Rows per page','選択レコード詳細':'Record details','閉じる':'Close',
+ 'GDHから最新データを取得':'Get data from GDH','PCのCSVファイルを読み込む':'Open CSV from this PC','GDHでCSV出力を確認して読み込みます':'Confirm CSV export in GDH to load data',
+ '機械情報検索':'Machine search',
+ 'ローカル処理 / サーバー送信なし':'Local processing / No server upload','取込レコード数':'Records','検索結果':'Results','読込日時':'Loaded at','検索元ファイル':'Source file','未取得':'Not loaded','未読み込み':'Not loaded','機械を検索':'Search machines','条件をクリア':'Clear','データ取得には通常30秒〜1分かかります。':'Data retrieval usually takes 30 seconds to 1 minute.','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「PCのCSVファイルを読み込む」で読み込んでください。':'If there is no activity for more than 5 minutes, download the CSV manually from GDH and select Open CSV from this PC to open it.','この条件で検索':'Search','検索結果をCSV出力':'Export results as CSV','検索条件を適用後、検索結果の全件・全列を出力します。':'Apply search conditions, then export all matching rows and columns.','出力する検索結果がありません。':'There are no search results to export.','詳細条件':'Advanced options','重複ありのみ表示':'Show duplicates only','並び順':'Sort by','読み込んだ順':'File order','NCシリアル番号順':'NC serial number','表示数':'Rows per page','選択レコード詳細':'Record details','閉じる':'Close',
  '機械メーカー':'Machine manufacturer','機械メーカ':'Machine manufacturer','工作機械名（モデル番号）':'Machine name (model number)','値の一部、または値全体を入力':'Enter part or all of a value','工作機械シリアル番号':'Machine serial number','機械シリアル':'Machine serial','機械シリアル番号':'Machine serial number','NCシリアル番号':'NC serial number','NCシリアル':'NC serial','エンドユーザー':'End user','エンドユーザ':'End user','輸入国':'Import country','輸出国':'Export country','契約タイプ':'Contract type','NCシリーズ名':'NC series','NCシステム型名':'NC system model','工作機械モデル番号':'Machine model','サービス拠点':'Service location','契約番号':'Contract number','契約期間（月）':'Contract duration (months)','契約開始日':'Contract start date','契約終了日':'Contract end date','契約元拠点':'Contract location','契約者名':'Contract holder','販売日':'Sale date','販売会社':'Sales company','機械代理店':'Machine distributor','機械出荷日':'Shipment date','設置日':'Installation date','NCモデルID':'NC model ID','工作機械ID':'Machine ID','契約ID':'Contract ID','契約者ID':'Contract holder ID','販売ID':'Sale ID','機械代理店ID':'Distributor ID','機械代理店住所ID':'Distributor address ID','出荷ID':'Shipment ID','エンドユーザーID':'End user ID','設置先住所ID':'Installation address ID','設置ID':'Installation ID',
  '条件なし':'No filters','条件なし：すべての機械':'No filters: all machines','条件なし：すべての機械を表示':'No filters: showing all machines','重複のみ':'Duplicates only','重複ありのみ':'Duplicates only','重複あり':'Duplicate data','空欄':'Blank','完全一致':'Exact match','前方一致':'Starts with','部分一致':'Contains','表記揺れを吸収':'Name variations','完全一致：':'Exact: ','前方一致：':'Starts with: ','含む：':'Contains: ','元の表記：':'Original: ','元のCSV値':'Original CSV value','原本データ':'Source data',' · 類似候補':' · Similar suggestion','入力語をOR条件に追加':'Add another OR term','候補を選択してください。':'Choose a suggestion.',
  '会社名の一部を入力。表記揺れも検索できます':'Type part of a company name; variations are supported','番号の一部、または番号全体を入力':'Enter all or part of the serial number','全半角・かな・空白・(株)等を吸収。候補を選ぶと元の表記で完全一致。':'Normalizes character width, kana, spaces and company abbreviations. Selecting a suggestion matches its original spelling.','ハイフンを保持して検索します。':'Hyphens are kept when matching serial numbers.','このCSVではすべて空欄です。':'This column is empty in the CSV.','候補はありません。入力した語で表記揺れ検索できます。':'No suggestions. You can search name variations using the entered term.','候補がありません。別の語でお試しください。':'No suggestions. Try another term.','このCSVに対応する列がありません。':'This column is missing from the CSV.',
  '条件を変更しました。「この条件で検索」で反映します。':'Filters changed. Select Search to apply them.','検索データがまだありません':'No data loaded','GDHと接続するか、CSVを読み込んでください。':'Connect to GDH or open a CSV file.','一致する機械情報がありません':'No matching machines','入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。':'Change the filters. Use the End user field to search name variations.','レコード詳細を表示':'Show record details','検索結果の行を選択すると、':'Select a result row','機械情報の詳細を表示します。':'to view all record details.','機械情報':'Machine information','表示内容は元CSVの値です。':'Values are shown as stored in the CSV.','カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。':'Comma-separated values are shown individually. Relationships between fields are not inferred.','複数値を含むセル、または同一NCシリアルの複数行があります':'Contains multiple values or shares an NC serial with another row',
  '検索データはブラウザ内だけで処理します':'Search data is processed only in your browser','CSVをGitHubや外部サービスに送信しません':'CSV data is not uploaded to GitHub or other services','v1.20.10 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要':'v1.20.10 · Multi-value search / Duplicate indicators · GDH setup required',
- '「GDHから最新データを取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。':'Use Get data from GDH or Load local data to load records. Suggestions are rebuilt from the CSV.',
+ '「GDHから最新データを取得」または「PCのCSVファイルを読み込む」で検索データを読み込んでください。検索候補はCSVから毎回作成します。':'Use Get data from GDH or Open CSV from this PC to load records. Suggestions are rebuilt from the CSV.',
  'GDH接続設定、またはCSVの選択が必要です':'Connect to GDH or select a CSV file','CSVファイル選択':'Select a CSV file','先頭ページ':'First page','前ページ':'Previous page','次ページ':'Next page','最終ページ':'Last page',
- '検索しています…':'Searching…','結果を読み込んでいます…':'Loading results…','CSV形式のファイルを指定してください。':'Choose a CSV file.','CSVを解析しています。大容量ファイルでは少し時間がかかります。':'Reading CSV. Large files may take a moment.','CSVファイルを読み込み、検索用データを準備しています…':'Loading CSV and preparing search data…','検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。':'Search failed. Reload the page and open the CSV again.','GDHから機械情報CSVを取得しています…':'Retrieving the machine CSV from GDH…','GDH自動取得の接続先が未設定です。GDH内の追加画面として組み込み、検索フォームと出力アダプターを接続してください。ローカルでは「ローカルからデータ取得」をご利用ください。':'GDH retrieval is not configured. Connect the search form and export adapter, or use Load local data locally.','GDH連携アダプターがCSV Blobを返していません。':'The GDH adapter did not return a CSV Blob.','空のCSVファイルが返されました。':'An empty CSV file was returned.','GDHとの接続がタイムアウトしました。':'The connection to GDH timed out.','GDHからCSVデータを受け取れませんでした。':'No CSV data was received from GDH.','CSV取得中です。完了までお待ちください。':'CSV retrieval is in progress. Please wait.',
+ '検索しています…':'Searching…','結果を読み込んでいます…':'Loading results…','CSV形式のファイルを指定してください。':'Choose a CSV file.','CSVを解析しています。大容量ファイルでは少し時間がかかります。':'Reading CSV. Large files may take a moment.','CSVファイルを読み込み、検索用データを準備しています…':'Loading CSV and preparing search data…','検索処理でエラーが発生しました。ページを再読み込みしてCSVを開き直してください。':'Search failed. Reload the page and open the CSV again.','GDHから機械情報CSVを取得しています…':'Retrieving the machine CSV from GDH…','GDH上で拡張ツールを開いてご利用ください。PCに保存したCSVファイルも読み込めます。':'Open this tool from GDH to retrieve data. You can also open a CSV file saved on this PC.','GDH連携アダプターがCSV Blobを返していません。':'The GDH adapter did not return a CSV Blob.','空のCSVファイルが返されました。':'An empty CSV file was returned.','GDHとの接続がタイムアウトしました。':'The connection to GDH timed out.','GDHからCSVデータを受け取れませんでした。':'No CSV data was received from GDH.','CSV取得中です。完了までお待ちください。':'CSV retrieval is in progress. Please wait.',
  '検索元CSVが読み込まれていません。':'No source CSV has been loaded.','CSVにヘッダーとデータ行がありません。':'The CSV must contain a header and data rows.','CSVヘッダーを読み取れません。':'Cannot read the CSV header.','CSVヘッダーに重複した列名があります。':'The CSV contains duplicate column headers.','CSVに空行が含まれています。':'The CSV contains empty rows.','主要項目が判別できません。ヘッダー定義を確認してください。':'No recognized fields were found. Check the CSV headers.','CSVの引用符の形式が不正です。':'Invalid quotation marks in the CSV.','CSVの引用符が閉じられていません。':'An opening CSV quote is not closed.','CSV出力を取り消しました。':'CSV export was cancelled.','CSV取得を実行中です。完了までお待ちください。':'CSV retrieval is in progress. Please wait.','GDHのCSV出力がタイムアウトしました。再実行する前に出力状況を確認してください。':'GDH CSV export timed out. Check its status before retrying.',
  '引用符を閉じ、空でない検索語を指定してください。':'Close the quote and enter a non-empty term.','検索条件が多すぎます。条件を減らしてください。':'Too many search conditions. Remove some conditions.','括弧の入れ子が深すぎます。':'Too many nested parentheses.','検索式の括弧が対応していません。':'Search parentheses do not match.','AND・ORの前後に検索語を指定してください。':'Enter a term before and after AND or OR.','検索式の括弧または演算子を確認してください。':'Check the parentheses and operators.','項目条件が不正です。':'Invalid field filters.','検索対象の項目が不正です。':'Invalid search field.','選択値が多すぎます。':'Too many selected values.','入力語が多すぎます。':'Too many search terms.','この項目では範囲を指定できません。':'Ranges are not supported for this field.'
 };
@@ -654,15 +684,32 @@ function highlight(value,query){const s=String(value??'').trim();const terms=(qu
  const escaped=escapeHTML(s);for(const term of terms){const i=escaped.toLowerCase().indexOf(escapeHTML(term).toLowerCase());if(i>=0)return escaped.slice(0,i)+'<mark>'+escaped.slice(i,i+escapeHTML(term).length)+'</mark>'+escaped.slice(i+escapeHTML(term).length);}
  return escaped||'—';
 }
-let fetchingFromGdh=false,exportingResults=false,searchPending=false;
-function updateExportButton(){const button=$('exportResults');button.disabled=current.busy||!current.loaded||current.total===0||filtersDirty||searchPending||exportingResults;button.title=tr('検索条件を適用後、検索結果の全件・全列を出力します。');}
+let fetchingFromGdh=false,exportingResults=false,searchPending=false,pendingSource='local',loadedSource='local';
+function updateSearchDisclosure(){
+ const collapsed=$('searchEditor').hidden;
+ $('toggleFilters').setAttribute('aria-expanded',String(!collapsed));
+ $('toggleFilters').textContent=uiLanguage==='en'?(collapsed?'Show filters':'Collapse filters'):(collapsed?'条件を表示':'条件を折りたたむ');
+ $('collapsedSummary').hidden=!collapsed;$('collapsedSummary').textContent=$('searchSummary').textContent;
+}
+function updateLoadState(){
+ for(const selector of ['.metrics','#searchView','.resultspanel'])document.querySelector(selector).hidden=!current.loaded;
+ $('loadPrompt').hidden=current.loaded;$('dataLoad').setAttribute('aria-busy',String(current.busy));
+ for(const id of ['resetBtn','sortOrder','pageSize'])$(id).disabled=current.busy||!current.loaded;
+}
+function updateExportButton(){
+ const button=$('exportResults');button.disabled=current.busy||!current.loaded||current.total===0||filtersDirty||searchPending||exportingResults;
+ button.title=tr('検索条件を適用後、検索結果の全件・全列を出力します。');button.setAttribute('aria-describedby','exportHint');
+ const en=uiLanguage==='en';
+ $('exportHint').textContent=!current.loaded?(en?'Load data to export results.':'データ読込後にCSV出力できます。'):current.busy||searchPending||exportingResults?(en?'CSV export is available when processing finishes.':'処理完了後にCSV出力できます。'):filtersDirty?(en?'Apply the changed filters with Search before exporting.':'条件を変更しています。「この条件で検索」で反映するとCSV出力できます。'):current.total===0?(en?'There are no search results to export.':'出力する検索結果がありません。'):'';
+ $('exportHint').hidden=!button.disabled;updateSearchDisclosure();
+}
 function status(message,style='',target=fetchingFromGdh?'fetchStatus':'status'){if(style==='err'&&current.loaded&&(/CSV|GDH/.test(message)))dashboardFailure();const el=$(target);el.className='statusline show '+style;lastStatus={message,style,target};el.innerHTML=localizeMarkup(message);}
 function clearStatus(){lastStatus=null;for(const id of ['status','fetchStatus']){const el=$(id);el.className='statusline';el.textContent='';}}
-function setBusy(value){current.busy=value;updateExportButton();if(typeof dashboardState!=='undefined'){renderDashboardState();renderSalesState();}$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value||!current.loaded;}
+function setBusy(value){current.busy=value;updateExportButton();updateLoadState();if(typeof dashboardState!=='undefined'){renderDashboardState();renderSalesState();}$('fetchBtn').disabled=value;$('fileBtn').disabled=value;$('searchBtn').disabled=value||!current.loaded;}
 function requestSearch(page=1){if(!current.loaded || current.busy)return;const pending=pendingChoice();if(pending){status(escapeHTML(pending.label)+'は候補から選択してください。','err');pending.input.focus();return;}searchPending=true;updateExportButton();const query=$('keyword').value;status('<span class="spinner"></span>検索しています…');worker.postMessage({type:'search',query,duplicatesOnly:$('duplicatesOnly').checked,filters:collectFilters(),join:$('queryJoin').value,column:$('columnSelect').value,mode:document.querySelector('input[name="searchMode"]:checked').value,sort:$('sortOrder').value,page,pageSize:current.pageSize});}
 function requestPage(page){if(!current.loaded || current.busy)return;status('<span class="spinner"></span>結果を読み込んでいます…');worker.postMessage({type:'page-request',page,pageSize:current.pageSize});}
 function loadFile(file){if(!file){setBusy(false);return;}if(!/\.csv$/i.test(file.name||'')){setBusy(false);status('CSV形式のファイルを指定してください。','err');return;}
- setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
+ pendingSource=fetchingFromGdh?'gdh':'local';setBusy(true);status('<span class="spinner"></span>CSVを解析しています。大容量ファイルでは少し時間がかかります。');worker.postMessage({type:'load',file});}
 function updateSelect(headings){const s=$('columnSelect'),v=s.value;s.innerHTML='<option value="all">主要項目（横断検索）</option><option value="all-columns">全項目（横断検索）</option>';
  headings.forEach((h,i)=>{const op=document.createElement('option');op.value=String(i);op.textContent=h||`列${i+1}`;s.appendChild(op);});
  s.value=Array.from(s.options).some(o=>o.value===v)?v:'all';}
@@ -677,7 +724,7 @@ function showDetail(record){lastDetailRecord=record;document.querySelector('.con
  $('detailBody').innerHTML=`<div class="detailtop">${duplicateBadge(record)}<span class="tag">${record.score==null?tr('原本データ'):record.score+'%'}</span><strong>${escapeHTML(title||'機械情報')}</strong><small>${record.ncRows>1?tr('同一NCシリアルがCSV内に'+record.ncRows+'行あります。 '):''}${record.multiColumns?.length?tr('カンマで連結された値を個別表示しています。項目間の対応関係は推定しません。'):tr('表示内容は元CSVの値です。')}</small></div><div class="detailrows">${rows}</div>`;
  document.querySelectorAll('#resultsBody tr[data-index]').forEach(tr=>tr.classList.toggle('selected',Number(tr.dataset.index)===record.index));
 }
-function renderPage(m){searchPending=false;filtersDirty=false;lastPageMessage=m;clearStatus();current.query=m.query||'';const summary=$('searchSummary');if(summary)summary.textContent=filterDescription()+'：'+recordCount(m.total);current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
+function renderPage(m){const preserveDraft=filtersDirty&&!searchPending;searchPending=false;if(!preserveDraft)filtersDirty=false;lastPageMessage=m;clearStatus();current.query=m.query||'';const summary=$('searchSummary');if(summary)summary.textContent=preserveDraft?tr('条件を変更しました。「この条件で検索」で反映します。'):filterDescription()+'：'+recordCount(m.total);current.total=m.total;current.totalPages=m.totalPages;current.page=m.page;current.lastEntries=m.entries;
  $('matchedCount').innerHTML=`${formatNum(m.total)}<span>${uiLanguage==='en'?'records':'件'}</span>`;$('resultTitle').textContent=recordCount(m.total);
  const tbody=$('resultsBody');
  if(!m.entries.length){tbody.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>一致する機械情報がありません</strong>入力内容や選択条件を変更してください。表記揺れはエンドユーザー欄で検索できます。</div></td></tr>');}
@@ -695,8 +742,8 @@ function renderPage(m){searchPending=false;filtersDirty=false;lastPageMessage=m;
 worker.onmessage=event=>{
  const m=event.data;
  if(m.type==='progress')status('<span class="spinner"></span>'+escapeHTML(m.message));
- else if(m.type==='loaded'){lastMetadata=m;
-   current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);initFacets(m.facets);$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
+ else if(m.type==='loaded'){lastMetadata=m;loadedSource=pendingSource;$('searchEditor').hidden=false;
+   current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);initFacets(m.facets);filtersDirty=false;searchPending=false;$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
    renderMetadata(m);
    status(`${formatNum(m.count)}件のCSV読込が完了しました。検索できます。`,'ok');fetchingFromGdh=false;setTimeout(()=>{if($('status').classList.contains('ok')||$('fetchStatus').classList.contains('ok'))clearStatus()},7000);
  }
@@ -731,7 +778,7 @@ function collectFilters(){
 }
 function activeFilterCount(){return collectFilters().filter(f=>f.values.length||f.queries.length||f.blank).length;}
 function filterDescription(){const count=activeFilterCount(),dup=$('duplicatesOnly').checked;return (count?tr(count+'項目の条件をANDで組み合わせ'):dup?'':tr('条件なし：すべての機械'))+(dup?(count?'・':'')+tr('重複ありのみ'):'');}
-function updateFacetCount(){filtersDirty=true;updateExportButton();const n=activeFilterCount(),dup=$('duplicatesOnly').checked;$('facetCount').textContent=(n?tr(n+'項目を指定'):dup?'':tr('条件なし'))+(dup?(n?'・':'')+tr('重複のみ'):'');$('searchSummary').textContent=n||dup?tr('条件を変更しました。「この条件で検索」で反映します。'):tr('条件なし：すべての機械を表示');}
+function updateFacetCount(){filtersDirty=true;updateExportButton();const n=activeFilterCount(),dup=$('duplicatesOnly').checked;$('facetCount').textContent=(n?tr(n+'項目を指定'):dup?'':tr('条件なし'))+(dup?(n?'・':'')+tr('重複のみ'):'');$('searchSummary').textContent=n||dup?tr('条件を変更しました。「この条件で検索」で反映します。'):tr('条件なし：すべての機械を表示');updateSearchDisclosure();}
 
 function pendingChoice(){return Array.from(facetStates.values()).find(f=>f.kind==='suggest'&&f.input.value.trim());}
 function requestCandidates(f){f.requestId=++facetSequence;worker.postMessage({type:'candidates',column:f.index,query:f.input?.value||'',requestId:f.requestId});}
@@ -800,6 +847,7 @@ function clearFacetValues(){$('duplicatesOnly').checked=false;updateAdvancedCont
 document.addEventListener('pointerdown',event=>{for(const f of facetStates.values())if(f.kind!=='checkbox'&&!f.card.contains(event.target))hideOptions(f);});
 
 function updateAdvancedControls(){$('referenceSearch').hidden=!$('advancedToggle').checked;$('facetFields').classList.toggle('show-advanced',$('advancedToggle').checked);$('duplicatesOnlyControl').hidden=!$('advancedToggle').checked&&!$('duplicatesOnly').checked;}
+$('toggleFilters').onclick=()=>{$('searchEditor').hidden=!$('searchEditor').hidden;updateSearchDisclosure();};
 $('advancedToggle').onchange=updateAdvancedControls;
 $('duplicatesOnly').onchange=()=>{updateAdvancedControls();updateFacetCount();};
 $('closeDetail').onclick=detailPlaceholder;
@@ -808,7 +856,7 @@ $('csvFile').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.
 $('fetchBtn').addEventListener('click',async()=>{
  // The GDH host should register a function returning a Blob, Response, or {blob,fileName}.
  const adapter=window.GDH_CSV_EXPORT_ADAPTER;
- if(typeof adapter!=='function'){status('GDH自動取得の接続先が未設定です。GDH内の追加画面として組み込み、検索フォームと出力アダプターを接続してください。ローカルでは「ローカルからデータ取得」をご利用ください。','err');return;}
+ if(typeof adapter!=='function'){status('GDH上で拡張ツールを開いてご利用ください。PCに保存したCSVファイルも読み込めます。','err');return;}
  fetchingFromGdh=true;clearStatus();$('fetchHelp').hidden=false;setBusy(true);status('<span class="spinner"></span>GDHから機械情報CSVを取得しています…');
  try{
   const data=await adapter();let blob,name='GDH_machine_export.csv';
@@ -835,6 +883,7 @@ $('firstPage').addEventListener('click',()=>requestPage(1));$('prevPage').addEve
 ['firstPage','prevPage','nextPage','lastPage'].forEach(id=>$(id).disabled=true);
 
 function renderMetadata(m){
+ $('sourceKind').textContent=loadedSource==='gdh'?'GDH':(uiLanguage==='en'?'CSV on this PC':'PCのCSVファイル');
  $('totalCount').innerHTML=formatNum(m.count)+'<span>'+(uiLanguage==='en'?'':'件')+'</span>';
  $('loadTime').textContent=new Date(m.loadedAt).toLocaleString(uiLanguage==='en'?'en-US':'ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
  $('filename').textContent=m.fileName;
@@ -842,12 +891,12 @@ function renderMetadata(m){
 }
 function applyLanguage(){
  const dirty=filtersDirty,savedStatus=lastStatus,detail=lastDetailRecord;
- document.documentElement.lang=uiLanguage;document.title=uiLanguage==='en'?'CNC Machine Viewer | G-DataHub':'CNC機械情報ビューア | G-DataHub';$('languageSelect').value=uiLanguage;
- const labels=[['#exportResults','検索結果をCSV出力'],['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','CNC機械情報ビューア'],['#fetchBtn','GDHから最新データを取得'],['#fileBtn','ローカルからデータ取得'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','データ取得日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.20.10 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
+ document.documentElement.lang=uiLanguage;document.title=uiLanguage==='en'?'Machine search | G-DataHub':'機械情報検索 | G-DataHub';$('languageSelect').value=uiLanguage;
+ const labels=[['#exportResults','検索結果をCSV出力'],['#fetchDuration','データ取得には通常30秒〜1分かかります。'],['#fetchFallback','5分以上動きがない場合は、GDHからCSVを手動でダウンロードし、「PCのCSVファイルを読み込む」で読み込んでください。'],['#betaStatement','本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。'],['#betaContact','同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。'],['.top-right .pill','ローカル処理 / サーバー送信なし'],['.intro h1','機械情報検索'],['#fetchBtn','GDHから最新データを取得'],['#fileBtn','PCのCSVファイルを読み込む'],['.metric:nth-child(1) .metric-label','取込レコード数'],['.metric:nth-child(2) .metric-label','検索結果'],['.metric:nth-child(3) .metric-label','読込日時'],['.metric:nth-child(4) .metric-label','検索元ファイル'],['.search-heading h2','機械を検索'],['#resetBtn','条件をクリア'],['#searchBtn','この条件で検索'],['.advanced-toggle','詳細条件'],['#duplicatesOnlyControl','重複ありのみ表示'],['.resultshead h2','検索結果'],['label[for=sortOrder]','並び順'],['label[for=pageSize]','表示数'],['.detail-head h2','選択レコード詳細'],['#closeDetail','閉じる'],['.offline','検索データはブラウザ内だけで処理します'],['.footer>div:last-child','v1.20.10 · 複数値検索 / 重複表示対応 · GDH自動取得には接続設定が必要']];
  for(const [selector,text] of labels)setUiLabel(document.querySelector(selector),text);
  const footer=document.querySelector('.footer>div:first-child');const tail=Array.from(footer.childNodes).find(n=>n.nodeType===3&&n.textContent.includes('｜'));if(tail)tail.textContent=' ｜ '+tr('CSVをGitHubや外部サービスに送信しません');
- const attrs=[['.nav','aria-label','メインメニュー'],['.intro','aria-label','ページ概要'],['.metrics','aria-label','データ概要'],['.searchpanel','aria-label','検索条件'],['#fetchBtn','title','GDH内の検索フォーム連携後に利用できます'],['#csvFile','aria-label','CSVファイル選択'],['#firstPage','aria-label','先頭ページ'],['#prevPage','aria-label','前ページ'],['#nextPage','aria-label','次ページ'],['#lastPage','aria-label','最終ページ']];for(const [selector,key,text] of attrs)document.querySelector(selector)?.setAttribute(key,tr(text));
- for(const op of $('sortOrder').options)op.textContent=tr(op.value==='nc'?'NCシリアル番号順':'CSV順');
+ const attrs=[['.nav','aria-label','メインメニュー'],['.intro','aria-label','ページ概要'],['.metrics','aria-label','データ概要'],['.searchpanel','aria-label','検索条件'],['#fetchBtn','title','GDHでCSV出力を確認して読み込みます'],['#csvFile','aria-label','CSVファイル選択'],['#firstPage','aria-label','先頭ページ'],['#prevPage','aria-label','前ページ'],['#nextPage','aria-label','次ページ'],['#lastPage','aria-label','最終ページ']];for(const [selector,key,text] of attrs)document.querySelector(selector)?.setAttribute(key,tr(text));
+ for(const op of $('sortOrder').options)op.textContent=tr(op.value==='nc'?'NCシリアル番号順':'読み込んだ順');
  document.querySelectorAll('#tableWrap .data-table thead th').forEach((th,i)=>th.textContent=tr(['機械メーカー','機械シリアル','NCシリアル','エンドユーザー','輸入国','輸出国','契約タイプ'][i]));
  for(const f of facetStates.values()){
   f.card.querySelector('.facet-title label').textContent=tr(f.label);f.blankText.textContent=tr('空欄');
@@ -862,8 +911,9 @@ function applyLanguage(){
  for(const card of document.querySelectorAll('.missing-field')){const config=searchFields.find(f=>f.name===card.dataset.field);card.querySelector('strong').textContent=tr(config?.label||card.dataset.field);card.querySelector('p').textContent=tr('このCSVに対応する列がありません。');}
  if(lastMetadata)renderMetadata(lastMetadata);else{$('totalCount').innerHTML='—<span>'+(uiLanguage==='en'?'records':'件')+'</span>';$('matchedCount').innerHTML=$('totalCount').innerHTML;setUiLabel($('loadTime'),'未取得');setUiLabel($('filename'),'未読み込み');setUiLabel($('fileMeta'),'GDH接続設定、またはCSVの選択が必要です');}
  if(lastPageMessage){renderPage(lastPageMessage);if(detail)showDetail(detail);}
- else{const empty=$('resultsBody');empty.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr>');const awaiting=document.querySelector('.search-await');if(awaiting)awaiting.textContent=tr('「GDHから最新データを取得」または「ローカルからデータ取得」で検索データを読み込んでください。検索候補はCSVから毎回作成します。');detailPlaceholder();$('pageInfo').textContent=recordCount(0);updateFacetCount();}
- filtersDirty=dirty;updateExportButton();if(dirty)$('searchSummary').textContent=tr('条件を変更しました。「この条件で検索」で反映します。');
+ else{const empty=$('resultsBody');empty.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr>');const awaiting=document.querySelector('.search-await');if(awaiting)awaiting.textContent=tr('「GDHから最新データを取得」または「PCのCSVファイルを読み込む」で検索データを読み込んでください。検索候補はCSVから毎回作成します。');detailPlaceholder();$('pageInfo').textContent=recordCount(0);updateFacetCount();}
+ for(const element of document.querySelectorAll('[data-ja][data-en]'))element.textContent=uiLanguage==='en'?element.dataset.en:element.dataset.ja;
+ filtersDirty=dirty;if(dirty)$('searchSummary').textContent=tr('条件を変更しました。「この条件で検索」で反映します。');updateExportButton();updateLoadState();
  if(savedStatus)status(savedStatus.message,savedStatus.style,savedStatus.target);
 }
 function setUiLanguage(language){if(!['ja','en'].includes(language))return;uiLanguage=language;applyLanguage();try{const url=new URL(location.href);url.searchParams.set('lang',language);history.replaceState(null,'',url);}catch{}window.dispatchEvent(new CustomEvent('gdh-language-changed',{detail:language}));}
@@ -927,7 +977,7 @@ function renderDashboard(){
  $('dashNote').textContent=d('登録レコード数を表示しています。稼働設備台数・世界全体の台数を示すものではありません。','Counts represent registered CSV records, not operating machines or a worldwide installed base.');
  $('dashMeta').textContent=d('対象：読込CSVの範囲 | 元データ更新日時：不明','Scope: loaded CSV only | Source data updated: unknown')+(lastMetadata?' | '+lastMetadata.fileName+' | '+d('読込日時：','Loaded: ')+new Date(lastMetadata.loadedAt).toLocaleString(uiLanguage==='en'?'en-US':'ja-JP',{timeZoneName:'short'}):'');
  for(const [id,text] of Object.entries({dashMakerLabel:dashName(1),dashExportLabel:dashName(5),dashEndUserLabel:dashName(4),dashContractLabel:dashName(6),dashServiceLabel:dashName(2),dashCountryLabel:dashName(3),dashMissingLabel:d('値なし対象','Missing value filter'),dashRepeatLabel:d('NCシリアル再登場のみ','Recurring NC serial only'),dashApply:d('適用','Apply'),dashClear:d('解除','Clear'),dashListTitle:a.mode==='stats'?d('対象レコード一覧','Records'):d('確認対象レコード一覧','Review records'),dashSortLabel:d('並び順','Sort'),dashPrev:d('前ページ','Previous page'),dashNext:d('次ページ','Next page')}))$(id).textContent=text;
- $('dashSort').options[0].textContent=d('CSV元順','CSV order');$('dashSort').options[1].textContent=d('NCシリアル昇順','NC serial ascending');dashboardControls();
+ $('dashSort').options[0].textContent=d('CSV元順','File order');$('dashSort').options[1].textContent=d('NCシリアル昇順','NC serial ascending');dashboardControls();
  const labels=[d('読込レコード数','Loaded records'),d('対象レコード数','Filtered records'),d('重要項目に値なし','Important fields with no value'),d('NCシリアル再登場','Recurring NC serial')];
  const values=r?[r.loaded,r.total,r.any,r.repeated]:[null,null,null,null];
  $('dashCards').innerHTML=labels.map((label,i)=>{const unavailable=r&&i===2&&r.any==null?r.absent:r&&i===3&&r.repeated==null?[dashNames[0]]:null;return '<'+(i>1?'button type="button"':'div')+' class="panel dash-card"'+(i>1?' data-card="'+i+'" data-unavailable="'+!!unavailable+'"':'')+'>'+escapeHTML(label)+'<strong>'+ (values[i]==null?'—':formatNum(values[i]))+'</strong><small>'+(i>1?dashRate(values[i],r?.total)+' · ':'')+escapeHTML(unavailable?dashUnavailable(unavailable):i===0?d('CSV全体の固定値','All loaded CSV rows'):i===1?dashDescription(a.applied):i===2?d('5項目のいずれか / 行単位','Any of five fields / per row'):d('CSV全体で再登場する非空値の行。誤登録・完全重複とは限りません。','Nonempty serial recurring in the full CSV; does not imply incorrect or identical records.'))+'</small></'+(i>1?'button':'div')+'>';}).join('');
@@ -954,9 +1004,9 @@ function renderDashboard(){
  else{const row=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.className='dash-empty';td.textContent=d('対象データなし。CSV読込または条件解除を行ってください。','No records. Load a CSV or clear filters.');row.appendChild(td);$('dashBody').appendChild(row);}
  $('dashPageInfo').textContent=r?formatNum(r.total)+d('件 / 20件ずつ表示',' records / 20 per page'):'—';$('dashPage').textContent=r?r.page+' / '+r.totalPages:'— / —';renderDashboardState();
 }
-function setDashboardTab(active){const a=dashboardState;a.active=active;a.rowRequestId++;salesState.rowRequestId++;document.body.classList.toggle('dashboard-active',active);$('dashboard').hidden=!active;$('searchTab').setAttribute('aria-selected',String(!active));$('dashboardTab').setAttribute('aria-selected',String(active));$('searchTab').tabIndex=active?-1:0;$('dashboardTab').tabIndex=active?0:-1;detailPlaceholder();}
+function setDashboardTab(active){const a=dashboardState;a.active=active;a.rowRequestId++;salesState.rowRequestId++;document.body.classList.toggle('dashboard-active',active);$('dashboard').hidden=!active;$('searchTab').setAttribute('aria-selected',String(!active));$('dashboardTab').setAttribute('aria-selected',String(active));$('searchTab').tabIndex=active?-1:0;$('dashboardTab').tabIndex=active?0:-1;detailPlaceholder();syncMenuTree();}
 const dashboardModes=[['statsTab','stats'],['qualityTab','quality'],['salesTab','sales']];
-for(const [i,[id,mode]] of dashboardModes.entries()){$(id).onclick=()=>{dashboardState.mode=mode;dashboardState.rowRequestId++;salesState.rowRequestId++;detailPlaceholder();renderDashboard();if(mode==='sales'){if(!salesState.result)requestSales();}else requestDashboard({});};$(id).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?2:(i+(e.key==='ArrowLeft'?2:1))%3;$(dashboardModes[next][0]).click();$(dashboardModes[next][0]).focus();}};}
+for(const [i,[id,mode]] of dashboardModes.entries()){$(id).onclick=()=>{dashboardState.mode=mode;dashboardState.rowRequestId++;salesState.rowRequestId++;detailPlaceholder();renderDashboard();syncMenuTree();if(mode==='sales'){if(!salesState.result)requestSales();}else requestDashboard({});};$(id).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?2:(i+(e.key==='ArrowLeft'?2:1))%3;$(dashboardModes[next][0]).click();$(dashboardModes[next][0]).focus();}};}
 $('searchTab').onclick=()=>setDashboardTab(false);$('dashboardTab').onclick=()=>setDashboardTab(true);
 for(const id of ['searchTab','dashboardTab'])$(id).onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const active=e.key==='Home'?false:e.key==='End'?true:!dashboardState.active;setDashboardTab(active);$(active?'dashboardTab':'searchTab').focus();}};
 $('dashFilters').onsubmit=e=>{e.preventDefault();requestDashboard();};$('dashClear').onclick=()=>requestDashboard({});
@@ -1012,7 +1062,7 @@ function renderSales(){
   small.textContent=d('取得不可：現行33項目に対応する定義がありません。','Unavailable: no confirmed mapping in the 33 fields.');label.append(span,input,small);$('salesUnavailable').appendChild(label);
  }
  for(const [id,text] of Object.entries({salesApply:d('適用','Apply'),salesClear:d('解除','Clear'),salesListTitle:d('輸出フォロー対象一覧（元レコード）','Export follow-up (source records)'),salesSortLabel:d('並び順','Sort'),salesPrev:d('前ページ','Previous page'),salesNext:d('次ページ','Next page')}))$(id).textContent=text;
- $('salesSort').options[0].textContent=d('CSV元順','CSV order');$('salesSort').options[1].textContent=d('機械シリアル昇順','Machine serial ascending');$('salesSort').value=a.sort;
+ $('salesSort').options[0].textContent=d('CSV元順','File order');$('salesSort').options[1].textContent=d('機械シリアル昇順','Machine serial ascending');$('salesSort').value=a.sort;
  const exportReason=d('輸出日・輸出対象の定義が未確認。機械出荷日で代用しません。','Export date and scope are unconfirmed. Shipment date is not a substitute.');
  const installationReason=d('設置先会社の対応列がありません。住所IDだけでは判定できません。','No installation company column; an address ID alone is insufficient.');
  const contractReason=d('有効契約の判定仕様と機械・契約の対応が未確認。期間から終了日を推測しません。','Active contract rules and machine/contract links are unconfirmed. End dates are not inferred.');
@@ -1068,16 +1118,22 @@ applyLanguage();
 
 function syncMenuTree(){
  const selected=dashboardState.active?dashboardState.mode:'search';
+ const group=view=>view==='stats'||view==='sales'?'dashboard':view;
  for(const button of document.querySelectorAll('[data-view]')){
+  button.hidden=group(button.dataset.view)!==group(selected);
   if(button.dataset.view===selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
  }
+ for(const button of document.querySelectorAll('[data-menu]'))button.setAttribute('aria-pressed',String(button.dataset.menu===group(selected)));
  for(const element of document.querySelectorAll('.menu-tree [data-ja]'))element.textContent=uiLanguage==='en'?element.dataset.en:element.dataset.ja;
+ document.querySelector('.intro h1').textContent=document.querySelector('[data-view="'+selected+'"]').textContent;
 }
-for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>{
- if(button.dataset.view==='search')$('searchTab').click();
- else{$('dashboardTab').click();$(dashboardModes.find(([,mode])=>mode===button.dataset.view)[0]).click();}
+function selectMenuView(view){
+ if(view==='search')$('searchTab').click();
+ else{$('dashboardTab').click();$(dashboardModes.find(([,mode])=>mode===view)[0]).click();}
  syncMenuTree();
-};
+}
+for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>selectMenuView(button.dataset.view);
+for(const button of document.querySelectorAll('[data-menu]'))button.onclick=()=>selectMenuView(button.dataset.menu==='dashboard'?(dashboardState.mode==='sales'?'sales':'stats'):button.dataset.menu);
 window.addEventListener('gdh-language-changed',syncMenuTree);
 syncMenuTree();
 </script>

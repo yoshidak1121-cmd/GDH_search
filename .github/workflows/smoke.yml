@@ -37,11 +37,20 @@ jobs:
       - run: node tests/english-headers-browser.cjs
       - run: node tests/export-results-browser.cjs
       - run: node tests/navigation.cjs
+      - run: node tests/usability.cjs
+        env:
+          TEST_SCREENSHOT: dist/usability-review.png
       - run: node tests/dashboard.cjs
       - run: node tests/gdh-export.cjs
       - run: node tests/extension.cjs
       - run: node tests/getdata-live.cjs
       - run: node tests/update-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: usability-review
+          path: dist/usability-review*.png
+          if-no-files-found: ignore
 
   installer:
     runs-on: windows-latest

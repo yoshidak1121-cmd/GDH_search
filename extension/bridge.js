@@ -8,8 +8,8 @@
  if(channel && hostOrigin===allowed && window.parent!==window){
   if(params.get('home')==='1'){
    const note=document.createElement('p');note.id='gdh-home-csv-note';note.setAttribute('role','status');
-   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'Get data opens the machine search page, then retrieves its CSV.':'取得ボタンを押すと機械情報検索画面へ移動し、CSVを取得して拡張画面に表示します。';};
-   document.querySelector('.fetch-area')?.before(note);translate();window.addEventListener('gdh-language-changed',translate);
+   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'Opens the GDH machine search page. Confirm CSV export there to load the data.':'機械情報検索画面へ移動します。CSV出力確認で「決定」を選ぶと、この画面にデータを読み込みます。';};
+   document.getElementById('fetchGuidance')?.replaceWith(note);translate();window.addEventListener('gdh-language-changed',translate);
   }
 
   if(params.get('autoFetch')==='1')window.addEventListener('load',()=>document.getElementById('fetchBtn')?.click(),{once:true});

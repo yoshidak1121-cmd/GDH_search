@@ -14,7 +14,7 @@ For guided file preparation, use `GDH_Search_Setup.zip` and read `START_HERE.txt
 3. Enable **Developer mode**, click **Load unpacked**, and select the folder containing `manifest.json`.
 4. Confirm that **GDH 機械情報 拡張検索** is enabled. Its registered name is Japanese.
 5. Reload the GDH machine information search page and click **Search** / **拡張検索** at the bottom right.
-6. Select English in the search screen. Use **Get data from GDH** or **Load local data**, then **Search**.
+6. Select English in the search screen. Use **Get data from GDH** or **Open CSV from this PC**, then **Search**.
 
 Updates: replace files in the same folder, click **Reload** for the extension, check the version,
 then reload GDH and retrieve the data again. Downloading the ZIP alone does not update it.
@@ -57,9 +57,9 @@ ZIPをそのまま選択するのではなく、展開したフォルダーを�
 
 ## 表示言語
 
-右上の「言語 / Language」で日本語／Englishを選択できます。検索条件・読み込んだCSV・表示結果を保持して切り替えます。CSV内の値は元の表記を維持します。ポップアップにも言語選択があります。
+右上の「Language / 言語」で日本語／Englishを選択できます。検索条件・読み込んだCSV・表示結果を保持して切り替えます。CSV内の値は元の表記を維持します。ポップアップにも言語選択があります。
 
-GDHのCSVは「GDHからデータ取得」、このPCのCSVファイルは「ローカルからデータ取得」で読み込みます。
+GDHのCSVは「GDHからデータ取得」、このPCのCSVファイルは「PCのCSVファイルを読み込む」で読み込みます。
 
 ## 複数値・重複
 
@@ -92,8 +92,8 @@ Edge 156の独立したテストプロファイルに実際のManifest V3パッ�
 
 画面上部に「本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。」「同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。」を表示します。
 
-GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
-Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.
+GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「PCのCSVファイルを読み込む」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
+Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Open CSV from this PC. You may also switch to manual retrieval if a connection error appears earlier.
 
 IDで終わる列を含め、CSVの全項目を保持します。現在の33列CSVは33列すべてを読み込み、詳細表示・全項目検索でも利用できます。元CSVは変更しません。
 All CSV columns, including those ending in ID, are retained. All 33 columns in the current CSV remain available for record details and all-column search. Original CSV files are unchanged.
