@@ -6,18 +6,32 @@ async function inspectGdhTables(command, config) {
  const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',base='/cncservice/',key='__gdhTableTourV1';
  let evidence={};
  const fail=code=>({ok:false,code,...evidence});
- if(location.origin!==origin||location.pathname!==base+'tablemaintenance/table_list')return fail('WRONG_PAGE');
+ const isList=location.pathname===base+'tablemaintenance/table_list';
+ const isAnchor=location.pathname===base+'tablemaintenance/table_edit/ZALS/ZGDDTB_CONTRACT_INFO';
+ if(location.origin!==origin||(!isList&&!isAnchor))return fail('WRONG_PAGE');
  const previous=window[key];
- if(command==='stop'){if(previous?.session===config.session){previous.cancelled=true;previous.xhr?.abort();}return {ok:true};}
- if(command==='start'){
+ if(command==='stop'){if(previous?.session===config.session){previous.cancelled=true;clearTimeout(previous.timer);previous.xhr?.abort();}return {ok:true};}
+ if(command==='open'){
+  if(!isList)return fail('WRONG_PAGE');
+  const form=document.createElement('form');form.method='POST';form.action=origin+base+'tablemaintenance/table_edit/ZALS/ZGDDTB_CONTRACT_INFO';
+  for(const [name,value] of Object.entries({keyword:'',page:'1',rowNum:'50',sortOrder:'asc',sortName:'table_name',fromlist:'true'})){const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;form.append(input);}
+  document.body.append(form);const pending={session:config.session,cancelled:false,expires:0};window[key]=pending;pending.timer=setTimeout(()=>{if(!pending.cancelled)HTMLFormElement.prototype.submit.call(form);},50);return {ok:true};
+ }
+ if(command==='start'||command==='start-anchor'){
   if(previous&&!previous.cancelled&&previous.expires>Date.now())return fail('BUSY');
   if(!/^[a-zA-Z0-9-]{16,80}$/.test(config.session||''))return fail('INVALID_REQUEST');
-  if(document.querySelector('#sources')?.value!=='ZALS')return fail('SELECT_ZALS');
-  if(document.querySelector('#keyword')?.value.trim())return fail('CLEAR_FILTER');
+  if(command==='start'){
+   if(!isList)return fail('WRONG_PAGE');
+   if(document.querySelector('#sources')?.value!=='ZALS')return fail('SELECT_ZALS');
+   if(document.querySelector('#keyword')?.value.trim())return fail('CLEAR_FILTER');
+  }else{
+   if(!isAnchor||document.querySelector('input[name="db_source"]')?.value!=='ZALS'||document.querySelector('input[name="tablename"]')?.value!=='ZGDDTB_CONTRACT_INFO')return fail('WRONG_TABLE');
+   if(typeof window.ImJson?.toJSONString!=='function'||typeof window.ImAjax?.setContentTypeAndReqHeaders!=='function'||typeof window.ImJsspRpc?.receive!=='function')return fail('PAGE_NOT_READY');
+  }
   const allowed=config.catalog;
   if(!Array.isArray(allowed)||allowed.length!==16||allowed.some(t=>!/^Z[A-Z0-9_]+$/.test(t.table)||!Array.isArray(t.columns)||t.columns.some(c=>!/^[a-z][a-z0-9_]*$/.test(c))))return fail('INVALID_REQUEST');
   const links=Array.from(document.querySelectorAll('#table-list a'));
-  const tables=allowed.filter(t=>links.some(a=>a.textContent.trim()===t.table&&/^javascript:tableEdit\('\d+',\s*'table-list'\);?$/.test(a.getAttribute('href')||'')));
+  const tables=command==='start-anchor'?allowed:allowed.filter(t=>links.some(a=>a.textContent.trim()===t.table&&/^javascript:tableEdit\('\d+',\s*'table-list'\);?$/.test(a.getAttribute('href')||'')));
   if(tables.length!==16)return fail('LIST_MISMATCH');
   window[key]={session:config.session,tables,cancelled:false,expires:Date.now()+600000,done:new Set(),xhr:null};
   return {ok:true,tables:tables.map(t=>t.table)};
@@ -26,7 +40,7 @@ async function inspectGdhTables(command, config) {
  if(!state||state.session!==config.session||state.cancelled)return fail('STOPPED');
  if(command!=='read'||state.expires<Date.now()||!Number.isFinite(config.deadline)||config.deadline<Date.now())return fail('EXPIRED');
  if(state.xhr)return fail('BUSY');
- if(document.querySelector('#sources')?.value!=='ZALS')return fail('SELECT_ZALS');
+ if(!isAnchor||document.querySelector('input[name="db_source"]')?.value!=='ZALS'||document.querySelector('input[name="tablename"]')?.value!=='ZGDDTB_CONTRACT_INFO')return fail('WRONG_TABLE');
  const table=state.tables.find(t=>t.table===config.table);
  if(!table||state.done.has(table.table))return fail('INVALID_REQUEST');
  state.done.add(table.table);
