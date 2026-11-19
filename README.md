@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.20.11
+# CNC機械情報ビューア / GDH拡張検索 v1.20.12
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -84,7 +84,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.11)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.12)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 自動更新ヘルパーが未登録の場合は、[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
 
@@ -386,3 +386,7 @@ All CSV columns, including those ending in ID, are retained. All 33 columns in t
 「詳細条件」を開くと「参考検索（データ空欄が多く参考データ）」を表示します。NCシステム型名、工作機械名（CSVの工作機械モデル番号）、サービス拠点、契約期間（月）、契約開始日、契約元拠点、契約者名、販売会社、機械出荷日を検索できます。項目同士はAND、同一項目の追加条件はORです。契約期間・日付は入力値の部分一致／前方一致／完全一致で検索します。日付の入力形式はCSVの表記に合わせてください。
 
 データ保守の「各項目の空欄率」は、適用済み条件の対象レコード数を分母として、読み込んだ全列の空欄件数と割合を表示します。空白文字のみのセルも空欄です。対象0件では割合を「—」と表示します。
+
+## 登録画面の調査（v1.20.12）
+
+ブラウザの拡張機能アイコン →「登録画面の調査」→「GDHのタブを探す」→登録画面のタブを選択→「調査を開始」。GDHで参照画面を開き、候補を選ぶと項目の変化を自動記録します。「停止して結果を保存」からコピーまたはJSON出力できます。登録・更新・削除・仮採番は自動実行しません。実GDHでの動作は未確認です。
