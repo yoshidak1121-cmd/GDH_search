@@ -11,6 +11,7 @@ jobs:
         with:
           node-version: '24'
       - run: node tests/export-results.cjs
+      - run: node tests/source-inspector.cjs
       - run: node tests/getdata.cjs
       - run: node tests/getdata-batch.cjs
       - run: node tests/update-controller.cjs
@@ -46,6 +47,7 @@ jobs:
       - run: node tests/getdata-live.cjs
       - run: node tests/form-investigation.cjs
       - run: node tests/form-tour.cjs
+      - run: node tests/table-tour.cjs
       - run: node tests/update-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()

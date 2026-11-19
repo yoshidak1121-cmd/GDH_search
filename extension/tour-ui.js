@@ -10,8 +10,11 @@
  function draw(){controls();$('results').replaceChildren();if(!report)return;$('status').textContent=explanations[report.status]||'未対応の状態で停止しました';for(const page of report.pages){const li=document.createElement('li');li.textContent=(page.scope==='machine'?'NC情報':page.scope)+'：'+(explanations[page.status]||page.status);$('results').append(li);for(const entry of page.log||[]){const row=document.createElement('li');row.textContent='　'+entry.label+'：'+(explanations[entry.status]||entry.status);$('results').append(row);}}$('output').value=JSON.stringify(report,null,2);}
  function save(){const value=JSON.parse(JSON.stringify(report));saveQueue=saveQueue.then(async()=>{try{await bounded(chrome.storage.local.set({[key]:value}));$('saved').textContent='途中結果を保存しました。';}catch{$('saved').textContent='自動保存できません。結果をファイルに保存してください。';}});return saveQueue;}
  async function attach(tabId,scope,run){
-  const record={scope,status:'running',log:[],observation:null};report.pages.push(record);
+  const record={scope,status:'running',log:[],observation:null,sourceReview:null};report.pages.push(record);
   const item={tabId,scope,record};stack.push(item);
+  await bounded(chrome.scripting.executeScript({target:{tabId},world:'ISOLATED',files:['source-inspector.js']}));
+  record.sourceReview=(await execute(tabId,inspectGdhSource,[])).report;
+  if(run!==generation)throw Error('stopped');
   record.observation=(await execute(tabId,observeGdhRegistration,['start',session,scope])).report;
   if(run!==generation)throw Error('stopped');
   const engine=await execute(tabId,stepGdhFormTour,['start',session,{scope}]);record.status=engine.status;
