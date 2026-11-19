@@ -31,13 +31,18 @@ async function until(fn,predicate,message,timeout=120000){const end=Date.now()+t
   assert.equal(context.pages().filter(p=>p.url().includes('tour-child')).length,0,'only owned child windows closed');
   assert.equal(await host.locator('[role=dialog]').count(),0);
   await ui.reload();await until(()=>ui.locator('#copy').isEnabled(),Boolean,'restored');assert.equal(await host.evaluate(()=>opens),3,'no restart on reopen');
-  // Unknown/ambiguous icons are skipped and never mistaken for save controls.
+  // Unknown icons are skipped and never mistaken for save controls.
   await host.evaluate(()=>{document.querySelectorAll('[data-scope]').forEach(b=>b.remove());for(const b of document.querySelectorAll('.lookup')){b.removeAttribute('aria-label');b.querySelector('span').removeAttribute('title');b.type='submit';}});
   await ui.locator('#find').click();await ui.locator('#start').click();
   const partial=await until(read,r=>r?.sessionId!==report.sessionId&&r?.status!=='running','unrecognized results');assert.equal(partial.status,'partial');assert.equal(await host.evaluate(()=>writes),0);
   // Explicit stop while a lookup is open retains the result without further actions.
   await host.reload();await ui.locator('#start').click();await until(()=>host.locator('[role=dialog]').count(),n=>n===1,'lookup open');await ui.locator('#stop').click();
   await until(read,r=>r?.status==='stopped','stop saved');const opened=await host.evaluate(()=>opens);await new Promise(r=>setTimeout(r,1200));assert.equal(await host.evaluate(()=>opens),opened);
+  await host.reload();await ui.locator('#start').click();await until(()=>host.locator('[role=dialog]').count(),n=>n===1,'second lookup open');
+  await host.evaluate(()=>document.querySelector('input').value='SYNTHETIC-PRIVATE-CHANGED');
+  await until(read,r=>r?.status==='form-changed','input side effect stops tour');
+  await host.reload();await ui.locator('#start').click();await until(()=>host.locator('[role=dialog]').count(),n=>n===1,'third lookup open');
+  await host.locator('h1').click();await until(read,r=>r?.status==='user-interaction','manual action stops tour');
   console.log('form tour: MV3, four popup windows, nested iframe details, 16 lookups, no writes/selection, private output, unknown controls, stop and reload passed');
  }finally{await context.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

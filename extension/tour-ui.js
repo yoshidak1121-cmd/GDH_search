@@ -17,7 +17,7 @@
   const engine=await execute(tabId,stepGdhFormTour,['start',session,{scope}]);record.status=engine.status;
  }
  async function finish(status){
-  running=false;busy=true;generation++;report.status=status;draw();
+  running=false;busy=true;generation++;report.status=status;for(const item of stack)if(item.record.status==='running')item.record.status=status;draw();
   // No automatic close on interruption: leave the page available for inspection.
   await Promise.allSettled(stack.map(async item=>{
    await execute(item.tabId,stepGdhFormTour,['stop',session]);
