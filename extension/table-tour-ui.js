@@ -20,9 +20,10 @@
    const start=await execute('start',{catalog:GDH_TABLE_CATALOG});if(run!==generation)return;if(!start.ok)throw Error(start.code);
    await execute('stop');if(run!==generation)return;
    $('status').textContent='調査用タブでテーブル内容画面を準備しています。';
-   const created=await chrome.tabs.create({url:'https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/tablemaintenance/table_list',active:false});
+   const created=await chrome.tabs.create({url:'about:blank',active:false});
    if(run!==generation){await chrome.tabs.remove(created.id);return;}
    ownedTabId=created.id;tabId=created.id;
+   await chrome.tabs.update(tabId,{url:'https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/tablemaintenance/table_list'});if(run!==generation)return;
    await waitPage(tabId,'/cncservice/tablemaintenance/table_list',run);
    const opened=await execute('open');if(run!==generation)return;if(!opened.ok)throw Error(opened.code);
    await waitPage(tabId,'/cncservice/tablemaintenance/table_edit/ZALS/ZGDDTB_CONTRACT_INFO',run);
