@@ -78,10 +78,10 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
   await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
   mode='english';const englishDownload=page.waitForEvent('download');await frame.locator('#fetchBtn').click();assert.deepEqual(fs.readFileSync(await (await englishDownload).path()),englishFixture);await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
   const resultsDownload=page.waitForEvent('download');await frame.locator('#exportResults').click();const resultsFile=await resultsDownload;assert.match(resultsFile.suggestedFilename(),/^GDH_search_results_.*\.csv$/);const resultsCSV=fs.readFileSync(await resultsFile.path(),'utf8');assert.ok(resultsCSV.startsWith('\ufeff'+require('./english-headers.json').map(h=>'"'+h+'"').join(',')));assert.match(resultsCSV,/"X1001"/);mode='csv';
-  await frame.locator('[data-view=stats]').click();await frame.locator('#dashBody tr[data-dashboard-index]').first().waitFor();
+  await frame.locator('[data-menu=dashboard]').click();await frame.locator('[data-view=stats]').click();await frame.locator('#dashBody tr[data-dashboard-index]').first().waitFor();
   assert.equal(await frame.locator('#dashBody tr[data-dashboard-index]').count(),3);
   await frame.locator('#dashBody tr[data-dashboard-index]').first().getByRole('button').click();await frame.locator('.detailrow').first().waitFor();assert.equal(await frame.locator('.detailrow').count(),33);
-  await frame.locator('[data-view=search]').click();
+  await frame.locator('[data-menu=search]').click();
   await frame.locator('#languageSelect').selectOption('en');await frame.locator('#resultTitle').filter({hasText:'3 records'}).waitFor();await page.getByRole('button',{name:'Close search',exact:true}).waitFor();assert.match(await frame.locator('#fetchBtn').textContent(),/Get data from GDH/);
   await frame.locator('#languageSelect').selectOption('ja');await frame.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.getByRole('button',{name:'拡張ツールを閉じる',exact:true}).waitFor();
   assert.deepEqual(posts[0].fields.getAll('keyword'),['first','second']);assert.equal(posts[0].fields.get('iszip'),'false');assert.equal(posts[0].method,'POST');
@@ -118,14 +118,14 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
    await page.setViewportSize({width,height:900});
    let box;
    for(let attempt=0;attempt<20;attempt++){
-    box=await frame.getByRole('link',{name:'検証',exact:true}).boundingBox();
+    box=await frame.getByRole('link',{name:'データ取得の検証',exact:true}).boundingBox();
     if(box&&box.x>=0&&box.x+box.width<=width)break;
     await page.waitForTimeout(50); // Wait for the iframe renderer to apply the viewport resize.
    }
    assert(box&&box.x>=0&&box.x+box.width<=width,JSON.stringify({width,box}));
   }
   await page.setViewportSize({width:1440,height:900});
-  const validationTab=context.waitForEvent('page');await frame.getByRole('link',{name:'検証',exact:true}).click();
+  const validationTab=context.waitForEvent('page');await frame.getByRole('link',{name:'データ取得の検証',exact:true}).click();
   const validation=await validationTab;await validation.waitForLoadState();
   const validationPosts=posts.length,validationBlocked=blocked.length;
   assert.equal(await validation.locator('#validationEnabled').isChecked(),false);

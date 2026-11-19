@@ -4,6 +4,10 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ## 検索画面
 
+未読込時はデータ読込の案内を表示します。「GDHから最新データを取得」または「PCのCSVファイルを読み込む」で読み込むと、検索条件・結果・読込元・読込日時が表示されます。読込日時はツールでの読込時刻であり、GDH側の更新日時ではありません。再読込に失敗した場合は、前回成功時のデータと読込元を維持します。
+
+上部は「検索／ダッシュボード／データ管理」と選択中カテゴリの項目を表示する2段メニューです。言語切替は共通ヘッダー、拡張版の専用確認機能は「データ取得の検証」から開きます。注意事項は要点を常時表示し、詳細を展開できます。「条件を折りたたむ」で入力値を保持したまま結果の領域を広げられます。CSV出力が無効な場合は、その理由を表示します。
+
 基本検索項目は7つです。左列に機械シリアル、NCシリアル、機械メーカー、エンドユーザー、右列に契約タイプ、輸入国、輸出国を配置します。各項目は左に項目名、右に入力欄を並べ、「この条件で検索」は入力欄全体の下に配置しています。狭い画面では1列になります。一致方法・説明・空欄指定は「詳細条件」を開いたときに表示します。
 
 | 項目 | 操作 |
@@ -28,9 +32,9 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ## 日本語／英語の切替
 
-画面右上の「言語 / Language」で日本語とEnglishを切り替えられます。項目名、案内、詳細、件数・日時、重複表示などを切り替えます。読み込んだデータ、入力条件、選択値、現在のページと詳細表示を保持します。CSV内の会社名・国名・契約タイプ・シリアル等の値は翻訳・書き換えしません。言語設定は画面URLのlangに反映し、CSVを保存する処理は追加しません。
+画面右上の「Language / 言語」で日本語とEnglishを切り替えられます。項目名、案内、詳細、件数・日時、重複表示などを切り替えます。読み込んだデータ、入力条件、選択値、現在のページと詳細表示を保持します。CSV内の会社名・国名・契約タイプ・シリアル等の値は翻訳・書き換えしません。言語設定は画面URLのlangに反映し、CSVを保存する処理は追加しません。
 
-取得ボタンは「GDHからデータ取得」／「Get data from GDH」、ファイル選択ボタンは「ローカルからデータ取得」／「Load local data」と表示します。既存の取得・ダウンロード・自動反映機能は残しています。
+取得ボタンは「GDHからデータ取得」／「Get data from GDH」、ファイル選択ボタンは「PCのCSVファイルを読み込む」／「Open CSV from this PC」と表示します。既存の取得・ダウンロード・自動反映機能は残しています。
 
 拡張機能のポップアップにも言語切替があり、検索画面と外枠の表示言語へ反映します。GDH本体の既存画面やOSのファイル選択ダイアログは、この切替の対象外です。
 
@@ -190,9 +194,9 @@ First-time setup: exactly where to click
 - すでに開いていた場合も、画面上部の丸い矢印、またはCtrl+Rでページを再読み込みします。
 - GDHページ右下の「拡張検索」を押します。検索用の追加画面が開けば設定完了です。
 - 「GDHからデータ取得」でGDHのデータを取得します。「CSVファイルを出力します。よろしいですか？」の確認では内容を確認して決定します。
-- PCに保存済みのCSVを使う場合は「ローカルからデータ取得」を押し、CSVを選びます。
+- PCに保存済みのCSVを使う場合は「PCのCSVファイルを読み込む」を押し、CSVを選びます。
 - 取得が終わったら条件を選び、「この条件で検索」を押します。
-- 右上の「言語 / Language」から検索画面の日本語／英語を切り替えられます。
+- 右上の「Language / 言語」から検索画面の日本語／英語を切り替えられます。
 
 **2回目以降・更新するとき**
 
@@ -248,7 +252,7 @@ After Step 6 and the final checks, return to the console and press Enter to disp
 Log in to GDH using the browser and profile you selected. Installation does not apply to other browsers or profiles.
 Open the GDH machine information search page. Reload it using the circular arrow button or Ctrl+R, even if it was already open.
 Click the extension search button at the bottom right of the GDH page. The added search screen should open.
-Choose Get data from GDH and accept the CSV export confirmation after checking it. Alternatively, choose Load local data and select a saved CSV file.
+Choose Get data from GDH and accept the CSV export confirmation after checking it. Alternatively, choose Open CSV from this PC and select a saved CSV file.
 After loading, set your filters and click the search button. The Language selector at the top right switches the search screen between Japanese and English.
 
 Everyday use and updates
@@ -279,7 +283,7 @@ Blocked by company restrictions: do not force a settings change. Contact Yoshida
 続いて、実際のデータで動作を確認します。
 
 □ 5. 「GDHからデータ取得」を押し、CSV出力確認で決定すると、ダウンロードと画面への読み込みが完了する。
-      保存済みCSVを使う場合は「ローカルからデータ取得」で読み込みます。この場合、GDHからの取得動作は未確認です。
+      保存済みCSVを使う場合は「PCのCSVファイルを読み込む」で読み込みます。この場合、GDHからの取得動作は未確認です。
 □ 6. 画面の読込件数を確認する。0件の場合はGDH側の検索条件やCSVの内容を確認する。
 □ 7. 取り込んだデータにある機械シリアルまたはNCシリアルを1つ入力し、「この条件で検索」を押すと、該当する行が表示される。
 □ 8. 表示された行を押して詳細を開き、入力したシリアルとCSVの内容が一致していることを確認する。
@@ -305,7 +309,7 @@ Check each item in order:
 If items 1–4 pass, registration and screen setup are complete. Next, check basic operation with real data:
 
 [ ] 5. Choose Get data from GDH, accept the CSV export confirmation, and confirm that the download and loading complete.
-        Alternatively, use Load local data with a saved CSV. This does not verify retrieval from GDH.
+        Alternatively, use Open CSV from this PC with a saved CSV. This does not verify retrieval from GDH.
 [ ] 6. Check the loaded row count. If it is zero, check the GDH filters or CSV contents.
 [ ] 7. Enter a machine serial or NC serial known to be in the loaded CSV and search. Confirm that the expected row appears.
 [ ] 8. Open the row details and compare the serial and contents with the CSV.
@@ -336,7 +340,7 @@ GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` 
 1. GDHにログインし、**機械情報検索画面を開いて再読み込み**します。
 2. ページ右下の **「拡張検索」**をクリックすると、検索画面が開きます。
 3. ブラウザー右上の **拡張機能マーク（パズルの形）→ GDH 拡張検索 →「拡張検索を開く／閉じる」**からも開けます。
-4. **「GDHからデータ取得」**でGDHのCSVを取得するか、**「ローカルからデータ取得」**でPCに保存済みのCSVを選びます。
+4. **「GDHからデータ取得」**でGDHのCSVを取得するか、**「PCのCSVファイルを読み込む」**でPCに保存済みのCSVを選びます。
 
 ボタンが表示されない場合は、拡張機能が有効か確認し、GDHの機械情報検索画面を再読み込みしてください。対象のGDH画面以外では開けません。
 
@@ -346,7 +350,7 @@ GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` 
 
 詳細は [拡張機能の導入手順](EXTENSION_INSTALL.md)を参照してください。
 
-単独利用は `index.html` をEdge / Chromeで開き、「ローカルからデータ取得」から読み込みます。開発サーバーやnpmは不要です。
+単独利用は `index.html` をEdge / Chromeで開き、「PCのCSVファイルを読み込む」から読み込みます。開発サーバーやnpmは不要です。
 
 GDHからの自動取得は、提供された画面HTMLで確認した既存CSV出力フォームを使います。圧縮なしのCSVをダウンロードし、同じデータを検索へ反映します。ユーザーからGDH本番での取得成功の報告があります。フォーム仕様は `GDH_INTEGRATION.md` を参照してください。
 
@@ -362,8 +366,8 @@ CSVはWorker内で処理し、外部サービス、localStorage、IndexedDBへ�
 
 画面上部に「本画面は個人が作成した拡張画面であり、GDHの標準機能ではありません。ベータ版のため、動作保証およびサポートは提供していません。」「同様の拡張画面の独自制作をご希望の場合は、NC戦略 吉田までご相談ください。」を表示します。
 
-GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「ローカルからデータ取得」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
-Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Load local data. You may also switch to manual retrieval if a connection error appears earlier.
+GDHからの取得中のメッセージは取得ボタン直下に表示します。通常30秒〜1分かかります。5分以上動きがない場合はGDHからCSVを手動でダウンロードし、「PCのCSVファイルを読み込む」で読み込んでください。通信エラーが先に表示された場合も、手動取得へ切り替えられます。
+Retrieval status appears below Get data from GDH. Retrieval usually takes 30 seconds to 1 minute. If there is no activity for more than 5 minutes, download the CSV manually and use Open CSV from this PC. You may also switch to manual retrieval if a connection error appears earlier.
 
 導入操作の参考 / Installation references: [Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/getting-started/extension-sideloading), [Google Chrome](https://support.google.com/chrome/answer/2664769?hl=en).
 
