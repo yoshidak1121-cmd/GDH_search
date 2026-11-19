@@ -26,13 +26,19 @@ function analyzeGdhSource(sources, fields) {
   }
   return out;
  }
+ function maskNonCode(raw){
+  const chars=raw.split('');let quote=null,line=false,block=false;
+  for(let i=0;i<raw.length;i++){const c=raw[i],n=raw[i+1];if(line){chars[i]=' ';if(c==='\n')line=false;continue;}if(block){chars[i]=' ';if(c==='*'&&n==='/'){chars[++i]=' ';block=false;}continue;}if(quote){chars[i]=' ';if(c==='\\'){if(i+1<raw.length)chars[++i]=' ';}else if(c===quote)quote=null;continue;}if(c==='"'||c==="'"||c==='`'){quote=c;chars[i]=' ';continue;}if(c==='/'&&n==='/'){line=true;chars[i]=chars[++i]=' ';continue;}if(c==='/'&&n==='*'){block=true;chars[i]=chars[++i]=' ';}}
+  return chars.join('');
+ }
  const functions=[],seen=new Set();let skipped=0,truncated=false,total=0;
  for(const original of sources.slice(0,80)){
   if(original.length>1000000){skipped++;continue;}
   // Extract each named routine separately so an unrelated library regex does
   // not discard all application routines. Scanner handles strings/comments.
+  const masked=maskNonCode(original);
   const pattern=/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]{0,400})\)\s*\{/g;let m;
-  while((m=pattern.exec(original))){
+  while((m=pattern.exec(masked))){
    const name=m[1];if(!/save|submit|regist|update|insert|create|number|serial|sequence|allocate|remove|request|edit|select/i.test(name))continue;
    if(functions.length>=30){truncated=true;break;}
    let i=pattern.lastIndex,depth=1,quote=null,line=false,block=false;
@@ -52,7 +58,9 @@ async function inspectGdhSource() {
  'use strict';
  if(location.origin!=='https://global-service.fa-cnc.idc-t.melco.co.jp'||!location.pathname.startsWith('/cncservice/'))return {ok:false,code:'WRONG_PAGE'};
  const docs=[document];for(let i=0;i<docs.length&&i<16;i++)for(const frame of docs[i].querySelectorAll('iframe'))try{if(frame.contentDocument&&frame.contentWindow.location.origin===location.origin&&!docs.includes(frame.contentDocument))docs.push(frame.contentDocument);}catch{}
- const sources=[],fields=[];let external=0;
- for(const doc of docs.slice(0,16)){for(const s of doc.scripts){if(s.src)external++;else sources.push(s.textContent);}for(const e of doc.querySelectorAll('input[name],select[name],textarea[name]'))fields.push(e.name);}
- return {ok:true,report:{...analyzeGdhSource(sources,fields),externalScriptsNotRead:external,scope:'inline-browser-code',notes:['外部スクリプトの取得・サーバー処理の呼び出しは行っていません。']}};
+ const sources=[],fields=[],urls=new Set();let external=0;
+ for(const doc of docs.slice(0,16)){for(const s of doc.scripts){if(s.src){external++;try{const u=new URL(s.src);if(u.origin===location.origin&&u.pathname.startsWith('/cncservice/')&&u.pathname.endsWith('.js')&&!/\/(?:ui\/libs|csjs)\/|(?:jquery|imui|bootstrap|theme|im_json|im_window|tinymce|chardinjs|lightbox|tmpl)(?:[.-]|\.js)/i.test(u.pathname))urls.add(u.href);}catch{}}else sources.push(s.textContent);}for(const e of doc.querySelectorAll('input[name],select[name],textarea[name]'))fields.push(e.name);}
+ let fetched=0;
+ await Promise.all(Array.from(urls).slice(0,4).map(async url=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),1500);try{const r=await fetch(url,{method:'GET',credentials:'same-origin',redirect:'error',signal:controller.signal});if(!r.ok||/html/i.test(r.headers.get('Content-Type')||''))return;const text=await r.text();if(text.length>1000000)return;sources.push(text);fetched++;}catch{}finally{clearTimeout(timer);}}));
+ return {ok:true,report:{...analyzeGdhSource(sources,fields),externalScriptsRead:fetched,externalScriptsNotRead:Math.max(0,external-fetched),scope:'browser-code',notes:['現在の画面が参照する同一サイトの業務用.jsを最大4件、読取専用で取得します。取得コードは実行しません。','共通ライブラリ・別サイト・取得不能のスクリプトとサーバー内部は未確認です。']}};
 }

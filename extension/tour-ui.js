@@ -10,7 +10,7 @@
  function draw(){controls();$('results').replaceChildren();if(!report)return;$('status').textContent=explanations[report.status]||'未対応の状態で停止しました';for(const page of report.pages){const li=document.createElement('li');li.textContent=(page.scope==='machine'?'NC情報':page.scope)+'：'+(explanations[page.status]||page.status);$('results').append(li);for(const entry of page.log||[]){const row=document.createElement('li');row.textContent='　'+entry.label+'：'+(explanations[entry.status]||entry.status);$('results').append(row);}}$('output').value=JSON.stringify(report,null,2);}
  function save(){const value=JSON.parse(JSON.stringify(report));saveQueue=saveQueue.then(async()=>{try{await bounded(chrome.storage.local.set({[key]:value}));$('saved').textContent='途中結果を保存しました。';}catch{$('saved').textContent='自動保存できません。結果をファイルに保存してください。';}});return saveQueue;}
  async function attach(tabId,scope,run){
-  const record={scope,status:'running',log:[],observation:null,sourceReview:null};report.pages.push(record);
+  const record={scope,status:'running',log:[],observation:null,sourceReview:null,lookupSourceReviews:[]};report.pages.push(record);
   const item={tabId,scope,record};stack.push(item);
   await bounded(chrome.scripting.executeScript({target:{tabId},world:'ISOLATED',files:['source-inspector.js']}));
   record.sourceReview=(await execute(tabId,inspectGdhSource,[])).report;
@@ -39,6 +39,7 @@
     const item=stack.at(-1),r=await execute(item.tabId,stepGdhFormTour,['step',session,{expiresAt:Date.now()+2500,childDone:item.childDone===true}]);item.childDone=false;
     if(run!==generation)return;
     item.record.status=r.status;item.record.log=r.log;
+    if(r.captureSource){const review=await execute(item.tabId,inspectGdhSource,[]);if(run!==generation)return;item.record.lookupSourceReviews.push({label:r.label,review:review.report});}
     item.record.observation=(await execute(item.tabId,observeGdhRegistration,['snapshot',session])).report;
     if(run!==generation)return;
     if(r.awaiting==='form'){
