@@ -2,10 +2,11 @@
 let language='ja';
 const englishError='Open the GDH home or machine search page, reload it, and try again.';
 document.getElementById('popupLanguage').addEventListener('change',event=>{
+ document.getElementById('investigationLink').textContent=event.target.value==='en'?'Investigate registration form':'登録画面の調査';
  document.getElementById('updateLink').textContent=event.target.value==='en'?'Updates and setup':'更新・設定';
  language=event.target.value;document.documentElement.lang=language;
  document.querySelector('h1').textContent=language==='en'?'GDH Search':'GDH 拡張検索';
- document.querySelector('body>p').textContent=language==='en'?'Use this on the GDH home or machine search page.':'GDHのホームまたは機械情報検索画面で使用します。';
+ document.querySelector('h1+p').textContent=language==='en'?'Use this on the GDH home or machine search page.':'GDHのホームまたは機械情報検索画面で使用します。';
  document.getElementById('open').textContent=language==='en'?'Open / close search':'拡張検索を開く／閉じる';document.getElementById('status').textContent='';
 });
 document.getElementById('open').addEventListener('click',async()=>{
@@ -17,3 +18,4 @@ document.getElementById('open').addEventListener('click',async()=>{
   window.close();
  }catch{status.textContent=language==='en'?englishError:'GDHのホームまたは機械情報検索画面を開き、ページを再読み込みしてからお試しください。';}
 });
+
