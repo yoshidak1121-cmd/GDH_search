@@ -59,8 +59,10 @@ const root=path.resolve(__dirname,'..');
   const download=page.waitForEvent('download');await page.locator('#fetchBtn').click();await download;
   await page.waitForFunction(()=>document.getElementById('filename').textContent==='synthetic-gdh.csv');
   assert.equal(await page.locator('#sourceKind').innerText(),'GDH');
+  assert.equal(await page.locator('#fetchHelp').isVisible(),false,'Retrieval guidance closes after success');
   for(const lang of ['en','ja']){
    await page.selectOption('#languageSelect',lang);
+   assert.doesNotMatch(await page.locator('#searchSummary').innerText(),/条件を変更しました|Filters changed/,'Language changes must preserve the applied state');
    for(const width of [1440,720,390,320]){
     await page.setViewportSize({width,height:1000});
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No page overflow: '+lang+'/'+width);

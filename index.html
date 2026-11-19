@@ -61,7 +61,7 @@ html[lang=en] .fixed-search .input-and-mode select{flex:0 0 150px;width:150px;ma
 :root{--muted:#52647c}
 .topbar,.embedded .topbar{display:flex;flex-wrap:wrap;height:auto;min-height:0;padding:8px 24px;gap:8px 24px;align-items:flex-start}
 .brand{font-size:14px;align-self:center}.brand-sub{color:#52647c}.brandmark{width:28px;height:28px}
-.menu-tree,.embedded .menu-tree{display:flex;flex:1;flex-direction:column;gap:4px;margin:0;min-width:0}
+.menu-tree,.embedded .menu-tree{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:4px;margin:0;min-width:0}
 .menu-primary,.menu-secondary{display:flex;gap:6px;flex-wrap:wrap}.menu-primary{border-bottom:1px solid var(--line)}
 .menu-tree button{height:auto;min-height:36px;text-align:left;padding:7px 12px;border:0;border-radius:4px;background:transparent;color:#435773;font:inherit;white-space:normal}
 .menu-tree button:hover{background:#eef5ff}.menu-primary button[aria-pressed=true]{color:#1058b8;font-weight:700;box-shadow:inset 0 -3px #1768dc;border-radius:0}
@@ -742,7 +742,7 @@ function renderPage(m){const preserveDraft=filtersDirty&&!searchPending;searchPe
 worker.onmessage=event=>{
  const m=event.data;
  if(m.type==='progress')status('<span class="spinner"></span>'+escapeHTML(m.message));
- else if(m.type==='loaded'){lastMetadata=m;loadedSource=pendingSource;$('searchEditor').hidden=false;
+ else if(m.type==='loaded'){lastMetadata=m;loadedSource=pendingSource;$('searchEditor').hidden=false;$('fetchHelp').hidden=true;
    current.loaded=true;current.headings=m.headings;current.selected=null;current.query='';$('keyword').value='';setBusy(false);updateSelect(m.headings);initFacets(m.facets);filtersDirty=false;searchPending=false;$('columnSelect').value='all';$('queryJoin').value='AND';$('sortOrder').value='original';$('pageSize').value='20';current.pageSize=20;document.querySelector('input[name="searchMode"][value="fuzzy"]').checked=true;
    renderMetadata(m);
    status(`${formatNum(m.count)}件のCSV読込が完了しました。検索できます。`,'ok');fetchingFromGdh=false;setTimeout(()=>{if($('status').classList.contains('ok')||$('fetchStatus').classList.contains('ok'))clearStatus()},7000);
@@ -910,6 +910,7 @@ function applyLanguage(){
  $('referenceTitle').textContent=uiLanguage==='en'?'Reference search (many fields are blank; reference data only)':'参考検索（データ空欄が多く参考データ）';
  for(const card of document.querySelectorAll('.missing-field')){const config=searchFields.find(f=>f.name===card.dataset.field);card.querySelector('strong').textContent=tr(config?.label||card.dataset.field);card.querySelector('p').textContent=tr('このCSVに対応する列がありません。');}
  if(lastMetadata)renderMetadata(lastMetadata);else{$('totalCount').innerHTML='—<span>'+(uiLanguage==='en'?'records':'件')+'</span>';$('matchedCount').innerHTML=$('totalCount').innerHTML;setUiLabel($('loadTime'),'未取得');setUiLabel($('filename'),'未読み込み');setUiLabel($('fileMeta'),'GDH接続設定、またはCSVの選択が必要です');}
+ filtersDirty=dirty;
  if(lastPageMessage){renderPage(lastPageMessage);if(detail)showDetail(detail);}
  else{const empty=$('resultsBody');empty.innerHTML=localizeMarkup('<tr><td colspan="7"><div class="empty"><div class="empty-icon">⌕</div><strong>検索データがまだありません</strong>GDHと接続するか、CSVを読み込んでください。</div></td></tr>');const awaiting=document.querySelector('.search-await');if(awaiting)awaiting.textContent=tr('「GDHから最新データを取得」または「PCのCSVファイルを読み込む」で検索データを読み込んでください。検索候補はCSVから毎回作成します。');detailPlaceholder();$('pageInfo').textContent=recordCount(0);updateFacetCount();}
  for(const element of document.querySelectorAll('[data-ja][data-en]'))element.textContent=uiLanguage==='en'?element.dataset.en:element.dataset.ja;
