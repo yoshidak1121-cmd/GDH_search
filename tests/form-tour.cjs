@@ -24,6 +24,8 @@ async function until(fn,predicate,message,timeout=120000){const end=Date.now()+t
   const report=await until(read,r=>r&&r.status!=='running','automatic completion');
   assert.equal(report.status,'completed',JSON.stringify(report.pages.map(p=>({scope:p.scope,status:p.status,log:p.log}))));
   assert.equal(report.pages.length,5,'follows four new popup windows');
+  assert.equal(report.pages.reduce((n,p)=>n+p.lookupSourceReviews.length,0),16,'source inspection before lookup close');
+  assert(report.pages.every(p=>p.sourceReview.numbering.status==='unconfirmed')); 
   assert.equal(report.pages.reduce((n,p)=>n+p.log.filter(x=>x.status==='collected').length,0),16);
   assert(report.pages.every(p=>p.observation.schemas.some(s=>s.fields.some(f=>f.label==='顧客住所ID'))),'expanded iframe lookup schema on each page');
   assert.equal(JSON.stringify(report).includes('SYNTHETIC-PRIVATE'),false);

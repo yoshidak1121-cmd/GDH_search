@@ -117,6 +117,7 @@ function stepGdhFormTour(command, sessionId, options) {
    if(!exact('一覧選択画面',dialog).length){stop('unexpected-dialog');return response();}
    if(!waiting.expanded){waiting.expanded=true;const control=detail(dialog);if(control){if(!click(control,'detail'))stop('detail-unrecognized');waiting.captureAt=Date.now()+1200;return response();}waiting.captureAt=Date.now()+1200;}
    if(Date.now()<waiting.captureAt)return response();
+   if(!waiting.sourceCaptured){waiting.sourceCaptured=true;return response({captureSource:true,label:waiting.label});}
    const count=fields(dialog).filter(x=>!x.field.hidden).length;
    add('lookup',waiting.label,count?'collected':'no-recognized-fields');
    const close=closeButton(dialog);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}
