@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.20.12
+# CNC機械情報ビューア / GDH拡張検索 v1.20.13
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -84,7 +84,7 @@ GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.12)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.13)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 自動更新ヘルパーが未登録の場合は、[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
 
@@ -390,3 +390,13 @@ All CSV columns, including those ending in ID, are retained. All 33 columns in t
 ## 登録画面の調査（v1.20.12）
 
 ブラウザの拡張機能アイコン →「登録画面の調査」→「GDHのタブを探す」→登録画面のタブを選択→「調査を開始」。GDHで参照画面を開き、候補を選ぶと項目の変化を自動記録します。「停止して結果を保存」からコピーまたはJSON出力できます。登録・更新・削除・仮採番は自動実行しません。実GDHでの動作は未確認です。
+
+
+
+## 登録画面の自動巡回（v1.20.13）
+
+GDHで登録済み機械の「機械情報 登録／更新」を開き、拡張機能のGアイコン→「登録画面の調査」→「画面を自動巡回する」を開きます。「GDHのタブを探す」で対象を選び、「自動巡回を開始」を押してください。終了後は「結果をファイルに保存」でJSONを取得できます。
+
+NC情報と契約・販売・出荷・設置先の入力画面、参照画面の詳細項目を順番に調べます。別ウィンドウも追跡します。契約などの入力画面だけを調べる場合は「開始画面」で該当区分を選んでください。
+
+候補選択、条件入力、登録・更新・削除・仮採番は行いません。巡回中はGDHを操作しないでください。手動操作・入力変化・想定外の画面では停止し、判断できないボタンは未確認として残します。実GDHの画面構造との適合は利用者端末での確認が必要です。

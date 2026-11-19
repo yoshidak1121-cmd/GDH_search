@@ -1,0 +1,7 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GDH 自動巡回</title><link rel="stylesheet" href="popup.css"><link rel="stylesheet" href="investigation.css"></head><body class="investigation-page">
+<h1>登録画面の自動巡回</h1><p>登録済みの機械をGDHで開いてから開始してください。NC情報と契約・販売・出荷・設置先の入力画面を巡回し、虫眼鏡・詳細検索を開いて項目を記録します。現在の画面だけを調べることもできます。</p>
+<p class="notice">候補選択、検索条件の入力、登録・更新・削除・仮採番は行いません。GDH標準の画面を開くための通信は発生します。巡回中はGDHを操作せず、調査タブも開いたままにしてください。判別できない項目は未確認として残します。</p>
+<div class="controls"><button id="find">GDHのタブを探す</button><label for="target">調査するタブ</label><select id="target"></select><label for="scope">開始画面</label><select id="scope"><option value="machine">機械情報 登録／更新（関連4画面を含む）</option><option>契約情報</option><option>販売情報</option><option>出荷情報</option><option>設置先情報</option></select><button id="start" disabled>自動巡回を開始</button><button id="stop" class="secondary" disabled>停止</button></div>
+<p id="status" role="status">開始前です。</p><p id="saved" role="status"></p><ul id="results"></ul>
+<div class="actions"><button id="copy" disabled>結果をコピー</button><button id="download" disabled>結果をファイルに保存</button><button id="clear" class="secondary" disabled>保存した結果を削除</button></div><textarea id="output" rows="12" readonly hidden aria-label="巡回結果"></textarea>
+<script src="form-investigation.js"></script><script src="form-tour.js"></script><script src="tour-ui.js"></script></body></html>

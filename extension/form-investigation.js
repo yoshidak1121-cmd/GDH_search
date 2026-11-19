@@ -1,8 +1,9 @@
 /* Self-contained, injected into the selected GDH tab's ISOLATED world.
  * Observes DOM only: never clicks, changes inputs, submits, or calls GDH APIs.
  * Input values remain in temporary comparison memory and never enter reports. */
-function observeGdhRegistration(command, sessionId) {
+function observeGdhRegistration(command, sessionId, formScope) {
  'use strict';
+ formScope ??= "machine";
  const origin='https://global-service.fa-cnc.idc-t.melco.co.jp';
  const key='__gdhRegistrationObservationV1';
  if(location.origin!==origin||!location.pathname.startsWith('/cncservice/'))return {ok:false,code:'WRONG_PAGE'};
@@ -16,7 +17,7 @@ function observeGdhRegistration(command, sessionId) {
  if(prior?.active)return {ok:false,code:'ALREADY_RUNNING'};
  if(typeof sessionId!=='string'||!/^[a-zA-Z0-9-]{16,80}$/.test(sessionId))return {ok:false,code:'INVALID_SESSION'};
  const normalize=value=>String(value||'').normalize('NFKC').replace(/[\s＊*：:]/g,'');
- const labels=['NCシリアル番号','NCシステム型名','工作機械モデル番号','NC構成品番号','NC納入仕様書番号','販売会社','サービスセンター','機械メモ','工作機械ID','工作機械シリアル番号','機械メーカー','機械メーカーID','NCシリーズ名','機種名','制御ユニット','表示ユニット','NCモデルID','サービスセンター名','国コード','契約ID','契約番号','契約タイプ','契約期間','契約期間（月）','契約開始日','契約終了日','契約元拠点','契約者','契約メモ','販売ID','販売日','機械代理店','機械代理店住所','販売メモ','出荷ID','輸出国','輸入国','機械出荷日','出荷メモ','設置ID','設置日','エンドユーザー','設置先住所','エンドユーザーメモ'];
+ const labels=['NCシリアル番号','NCシステム型名','工作機械モデル番号','NC構成品番号','NC納入仕様書番号','販売会社','サービスセンター','機械メモ','工作機械ID','工作機械シリアル番号','機械メーカー','機械メーカーID','NCシリーズ名','機種名','制御ユニット','表示ユニット','NCモデルID','サービスセンター名','サービスセンター名称','国コード','顧客ID','顧客名','工場・事務所名','部署名','顧客メモ','顧客住所ID','住所','エンドユーザー（Yes/No）','機械代理店（Yes/No）','機械メーカー（Yes/No）','契約タイプ（FULL/PARTS）','契約ID','契約番号','契約タイプ','契約期間','契約期間（月）','契約開始日','契約終了日','契約元拠点','契約者','契約メモ','販売ID','販売日','機械代理店','機械代理店住所','販売メモ','出荷ID','輸出国','輸入国','機械出荷日','出荷メモ','設置ID','設置日','エンドユーザー','設置先住所','エンドユーザーメモ'];
  const known=new Map(labels.map(label=>[normalize(label),label]));
  const canonical=text=>known.get(normalize(text))||null;
  const actions=new Set(['検索','クリア','登録','更新','削除','新規登録','仮採番','戻る','閉じる','キャンセル','取消','取り消し','決定','選択','詳細検索']);
@@ -30,7 +31,8 @@ function observeGdhRegistration(command, sessionId) {
  const schemas=[],events=[],transitions=[],documents=new Map(),docIds=new WeakMap(),fieldIds=new Map(),schemaKeys=new Set();
  const limits={fields:false,documents:false,events:false,transitions:false,schemas:false};
  const registrationText=normalize(collectDocuments().list.map(doc=>doc.title+' '+Array.from(doc.querySelectorAll('h1,h2,h3')).map(e=>e.textContent).join(' ')+' '+(doc.body?.innerText||'').slice(0,5000)).join(' '));
- if(!/機械情報登録[\/／]?更新/.test(registrationText))return {ok:false,code:'WRONG_SCREEN'};
+ const childScope=['契約情報','販売情報','出荷情報','設置先情報'].includes(formScope)&&registrationText.includes(normalize(formScope))&&registrationText.includes('NCシリアル番号');
+ if(!/機械情報登録[\/／]?更新/.test(registrationText)&&!childScope)return {ok:false,code:'WRONG_SCREEN'};
  function visible(element){
   if(!element.isConnected||!element.getClientRects().length)return false;
   const style=element.ownerDocument.defaultView.getComputedStyle(element);
@@ -151,7 +153,7 @@ function observeGdhRegistration(command, sessionId) {
   for(const [doc,entry] of documents){doc.removeEventListener('click',entry.handler,true);doc.removeEventListener('change',entry.handler,true);}
   documents.clear();lastValues.clear();
  }
- window[key]={sessionId,get active(){return active;},snapshot,stop};
+ window[key]={sessionId,get active(){return active;},snapshot,stop,resolve:(screen,path)=>{for(const doc of documents.keys())if(docIds.get(doc)===screen)return doc.querySelector(path);return null;}};
  scan();timer=setInterval(scan,250);
  return {ok:true,report:snapshot()};
 }
