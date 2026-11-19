@@ -2,7 +2,7 @@
 {
  const $=id=>document.getElementById(id),storageKey='gdhRegistrationInvestigation';
  const pattern='https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*';
- let latest=null,target=null,session=null,recording=false,busy=false,timer=null,polling=false,persistedRevision=-1,generation=0,saving=Promise.resolve();
+ let latest=null,target=null,session=null,recording=false,busy=false,timer=null,polling=false,persistedKey=null,generation=0,saving=Promise.resolve();
  const messages={WRONG_PAGE:'GDHのタブを選んでください。',WRONG_SCREEN:'選んだタブで「機械情報 登録／更新」を開いてください。',ALREADY_RUNNING:'このGDHタブでは別の調査が記録中です。開始済みの調査画面から停止してください。',SESSION_LOST:'GDH画面が移動・再読み込みされ、記録が終了しました。ここまでの結果を保存します。'};
  const bounded=async(promise,ms=5000)=>{let handle;try{return await Promise.race([promise,new Promise((_,reject)=>{handle=setTimeout(()=>reject(Error('接続の応答がありません。')),ms);})]);}finally{clearTimeout(handle);}};
  function controls(){
@@ -27,8 +27,8 @@
  function save(){
   const value=latest;
   saving=saving.then(async()=>{
-   if(!value||value.revision===persistedRevision)return;
-   try{await bounded(chrome.storage.local.set({[storageKey]:value}));persistedRevision=value.revision;$('saveStatus').textContent='途中結果をこのブラウザに保存しました。';}
+   if(!value||value.sessionId+":"+value.revision===persistedKey)return;
+   try{await bounded(chrome.storage.local.set({[storageKey]:value}));persistedKey=value.sessionId+":"+value.revision;$('saveStatus').textContent='途中結果をこのブラウザに保存しました。';}
    catch{$('saveStatus').textContent='自動保存できません。終了前にコピーまたはファイル保存をしてください。';}
   });return saving;
  }
@@ -60,7 +60,7 @@
  $('startInvestigation').addEventListener('click',async()=>{
   if(busy||recording||!$('targetTab').value)return;
   busy=true;generation++;target=Number($('targetTab').value);session=crypto.randomUUID();controls();
-  try{const result=await call('start');latest=result;persistedRevision=-1;recording=true;display();await save();$('investigationStatus').textContent='記録中。GDHの参照画面を開く・候補を選ぶ操作を行ってください。';timer=setInterval(poll,1000);}
+  try{const result=await call('start');latest=result;persistedKey=null;recording=true;display();await save();$('investigationStatus').textContent='記録中。GDHの参照画面を開く・候補を選ぶ操作を行ってください。';timer=setInterval(poll,1000);}
   catch(error){$('investigationStatus').textContent=error.message;chrome.scripting.executeScript({target:{tabId:target},world:'ISOLATED',func:observeGdhRegistration,args:['stop',session]}).catch(()=>{});}
   finally{busy=false;controls();}
  });
@@ -78,8 +78,8 @@
   if(!latest)return;const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='GDH_registration_investigation.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
  $('clearInvestigation').addEventListener('click',async()=>{
-  if(recording||busy)return;busy=true;controls();try{await saving;await bounded(chrome.storage.local.remove(storageKey));latest=null;persistedRevision=-1;$('saveStatus').textContent='保存した記録を削除しました。';$('reportText').value='';$('reportText').hidden=true;display();}catch{$('saveStatus').textContent='記録を削除できませんでした。';}finally{busy=false;controls();}
+  if(recording||busy)return;busy=true;controls();try{await saving;await bounded(chrome.storage.local.remove(storageKey));latest=null;persistedKey=null;$('saveStatus').textContent='保存した記録を削除しました。';$('reportText').value='';$('reportText').hidden=true;display();}catch{$('saveStatus').textContent='記録を削除できませんでした。';}finally{busy=false;controls();}
  });
  window.addEventListener('pagehide',()=>{if(recording)chrome.scripting.executeScript({target:{tabId:target},world:'ISOLATED',func:observeGdhRegistration,args:['stop',session]}).catch(()=>{});});
- (async()=>{busy=true;controls();try{const data=await bounded(chrome.storage.local.get(storageKey));if(data[storageKey]?.format==='gdh-registration-observation-v1'){latest=data[storageKey];persistedRevision=latest.revision;display();$('investigationStatus').textContent='前回保存した結果を表示しています。調査は自動再開しません。';}}catch{$('saveStatus').textContent='前回の記録を読み込めませんでした。';}finally{busy=false;controls();}})();
+ (async()=>{busy=true;controls();try{const data=await bounded(chrome.storage.local.get(storageKey));if(data[storageKey]?.format==='gdh-registration-observation-v1'){latest=data[storageKey];persistedKey=latest.sessionId+":"+latest.revision;display();$('investigationStatus').textContent='前回保存した結果を表示しています。調査は自動再開しません。';}}catch{$('saveStatus').textContent='前回の記録を読み込めませんでした。';}finally{busy=false;controls();}})();
 }
