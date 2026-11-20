@@ -1,12 +1,12 @@
 'use strict';
 {
  const $=id=>document.getElementById(id),pattern='https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*',key='gdhFormTourReport';
- const explanations={running:'巡回中',completed:'巡回終了',partial:'巡回終了（一部未確認）',stopped:'停止しました',interrupted:'接続が切れたため停止しました',WRONG_SCREEN:'開始画面の選択とGDHの画面を確認してください',WRONG_PAGE:'GDHの画面を選んでください',CLOSE_DIALOG_FIRST:'開いている参照画面を閉じてから開始してください',ALREADY_RUNNING:'この画面では別の調査が実行中です',SESSION_LOST:'画面が移動したため停止しました','open-timeout':'画面が開きません。ポップアップ制限または未対応の構造です','close-unrecognized':'閉じるボタンを識別できないため停止しました','unexpected-dialog':'想定外の画面で停止しました','ambiguous-dialog':'複数の画面が開いたため停止しました','user-interaction':'GDHの手動操作を検出したため停止しました','form-changed':'元の入力内容に変化があったため停止しました','submit-blocked':'フォーム送信を止め、巡回を停止しました','controller-lost':'調査画面との接続が切れたため停止しました','time-limit':'10分の上限で停止しました',unrecognized:'未確認（ボタンを特定できません）','no-recognized-fields':'未確認（項目を取得できません）',collected:'取得済み','collected-window':'別ウィンドウを取得済み',opening:'開いています',opened:'開きました'};
+ const explanations={'skipped-empty':'スキップ（現在値が空欄または項目が不明）','skipped-no-match':'スキップ（表示中の一覧に完全一致なし）','skipped-ambiguous':'スキップ（同じ表示値が複数）','skipped-identity':'スキップ（現在選択中の候補を特定できません）','skipped-control':'スキップ（行の選択ボタンが不明）','selecting-current':'現在の候補を選択','same-value-observed':'再選択後の画面値が不変（保存は未検証）','selection-changed':'選択後に項目が変化したため停止','selection-unconfirmed':'選択結果を確認できません','selection-timeout':'選択画面が閉じず停止しました',running:'巡回中',completed:'巡回終了',partial:'巡回終了（一部未確認）',stopped:'停止しました',interrupted:'接続が切れたため停止しました',WRONG_SCREEN:'開始画面の選択とGDHの画面を確認してください',WRONG_PAGE:'GDHの画面を選んでください',CLOSE_DIALOG_FIRST:'開いている参照画面を閉じてから開始してください',ALREADY_RUNNING:'この画面では別の調査が実行中です',SESSION_LOST:'画面が移動したため停止しました','open-timeout':'画面が開きません。ポップアップ制限または未対応の構造です','close-unrecognized':'閉じるボタンを識別できないため停止しました','unexpected-dialog':'想定外の画面で停止しました','ambiguous-dialog':'複数の画面が開いたため停止しました','user-interaction':'GDHの手動操作を検出したため停止しました','form-changed':'元の入力内容に変化があったため停止しました','submit-blocked':'フォーム送信を止め、巡回を停止しました','controller-lost':'調査画面との接続が切れたため停止しました','time-limit':'10分の上限で停止しました',unrecognized:'未確認（ボタンを特定できません）','no-recognized-fields':'未確認（項目を取得できません）',collected:'取得済み','collected-window':'別ウィンドウを取得済み',opening:'開いています',opened:'開きました'};
  let report=null,running=false,busy=false,session=null,generation=0,stack=[],owned=new Set(),knownTabs=new Set(),saveQueue=Promise.resolve();
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  const bounded=async promise=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('interrupted')),5000);})]);}finally{clearTimeout(timer);}};
  const execute=async(tabId,func,args)=>{const result=await bounded(chrome.scripting.executeScript({target:{tabId},world:'ISOLATED',func,args}));const r=result?.[0]?.result;if(!r?.ok)throw Error(r?.code||'interrupted');return r;};
- function controls(){for(const id of ['find','target','scope'])$(id).disabled=running||busy;$('start').disabled=running||busy||!$('target').value;$('stop').disabled=!running;for(const id of ['copy','download'])$(id).disabled=!report;$('clear').disabled=running||busy||!report;}
+ function controls(){for(const id of ['find','target','scope','reselect'])$(id).disabled=running||busy;$('start').disabled=running||busy||!$('target').value;$('stop').disabled=!running;for(const id of ['copy','download'])$(id).disabled=!report;$('clear').disabled=running||busy||!report;}
  function draw(){controls();$('results').replaceChildren();if(!report)return;$('status').textContent=explanations[report.status]||'未対応の状態で停止しました';for(const page of report.pages){const li=document.createElement('li');li.textContent=(page.scope==='machine'?'NC情報':page.scope)+'：'+(explanations[page.status]||page.status);$('results').append(li);for(const entry of page.log||[]){const row=document.createElement('li');row.textContent='　'+entry.label+'：'+(explanations[entry.status]||entry.status);$('results').append(row);}}$('output').value=JSON.stringify(report,null,2);}
  function save(){const value=JSON.parse(JSON.stringify(report));saveQueue=saveQueue.then(async()=>{try{await bounded(chrome.storage.local.set({[key]:value}));$('saved').textContent='途中結果を保存しました。';}catch{$('saved').textContent='自動保存できません。結果をファイルに保存してください。';}});return saveQueue;}
  async function attach(tabId,scope,run){
@@ -17,7 +17,7 @@
   if(run!==generation)throw Error('stopped');
   record.observation=(await execute(tabId,observeGdhRegistration,['start',session,scope])).report;
   if(run!==generation)throw Error('stopped');
-  const engine=await execute(tabId,stepGdhFormTour,['start',session,{scope}]);record.status=engine.status;
+  const engine=await execute(tabId,stepGdhFormTour,['start',session,{scope,reselectCurrent:report.reselectCurrent}]);record.status=engine.status;
  }
  async function finish(status){
   running=false;busy=true;generation++;report.status=status;for(const item of stack)if(item.record.status==='running')item.record.status=status;draw();
@@ -65,7 +65,7 @@
  $('target').onchange=controls;
  $('start').onclick=async()=>{
   if(running||busy)return;busy=true;running=true;controls();session=crypto.randomUUID();const run=++generation;
-  report={format:'gdh-form-tour-v1',sessionId:session,extensionVersion:chrome.runtime.getManifest().version,status:'running',startedAt:Date.now(),pages:[],notes:['自動操作は参照画面・新規入力画面を開く、詳細検索を展開する、閉じる操作のみ。候補選択・入力・保存はしません。','入力実値・顧客名・実ID・URL・認証値は出力しません。HTML属性は業務上の必須条件を確定するものではありません。','画面を開く際にはGDH標準の読取通信が発生します。登録APIや連動する候補の検証は対象外です。']};stack=[];owned=new Set();
+  report={format:'gdh-form-tour-v1',sessionId:session,reselectCurrent:$('reselect').checked,extensionVersion:chrome.runtime.getManifest().version,status:'running',startedAt:Date.now(),pages:[],notes:['通常巡回は参照画面・新規入力画面を開く、詳細検索を展開する、閉じる操作です。同じ候補の確認モードでは機械情報3項目の表示値と選択中表示を照合して選択します。入力・保存はしません。','入力実値・顧客名・実ID・URL・認証値は出力しません。HTML属性は業務上の必須条件を確定するものではありません。','画面を開く際にはGDH標準の読取通信が発生します。登録API、別候補への変更、保存成功は未検証です。同じ表示値の再選択結果は内部IDの同一性やサーバー保存を保証しません。']};stack=[];owned=new Set();
   try{knownTabs=new Set((await bounded(chrome.tabs.query({}))).map(t=>t.id));await attach(Number($('target').value),$('scope').value,run);if(run!==generation)return;busy=false;draw();await save();loop(run);}
   catch(error){if(run===generation)await finish(explanations[error.message]?error.message:'interrupted');}
  };

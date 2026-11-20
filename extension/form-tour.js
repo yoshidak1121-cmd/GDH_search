@@ -1,4 +1,4 @@
-/* One bounded, allowlisted UI action per invocation. No input, selection, submit or API replay. */
+/* One bounded, allowlisted UI action per invocation. Optional current-selection recheck; no input, submit or API replay. */
 function stepGdhFormTour(command, sessionId, options) {
  'use strict';
  options ??= {};
@@ -17,6 +17,8 @@ function stepGdhFormTour(command, sessionId, options) {
  if(!observer?.active||observer.sessionId!==sessionId)return {ok:false,code:'NO_OBSERVER'};
  const sections=['契約情報','販売情報','出荷情報','設置先情報'];
  const scope=options.scope==='machine'?'machine':sections.includes(options.scope)?options.scope:null;
+ const reselect=options.reselectCurrent===true;
+ if(reselect&&scope!=='machine')return {ok:false,code:'WRONG_SCREEN'};
  if(!scope)return {ok:false,code:'WRONG_SCREEN'};
  const norm=x=>String(x||'').normalize('NFKC').replace(/[\s＊*：:]/g,'');
  const names={machine:['NCシステム型名','工作機械モデル番号','サービスセンター'],契約情報:['契約ID','契約元拠点','契約者'],販売情報:['販売ID','販売会社','機械代理店','機械代理店住所'],出荷情報:['出荷ID','輸出国','輸入国'],設置先情報:['設置ID','エンドユーザー','設置先住所']};
@@ -43,13 +45,14 @@ function stepGdhFormTour(command, sessionId, options) {
  function stop(why){active=false;reason=why;clearInterval(watchdog);for(const [d,h] of guards){d.removeEventListener('click',h,true);d.removeEventListener('keydown',h,true);d.removeEventListener('input',h,true);d.removeEventListener('submit',blockSubmit,true);}guards.clear();for(const f of stack)f.values.clear();}
  function blockSubmit(event){event.preventDefault();event.stopImmediatePropagation();stop('submit-blocked');}
  function protect(){for(const d of docs())if(!guards.has(d)){const h=e=>{if(e.isTrusted)stop('user-interaction');};guards.set(d,h);for(const type of ['click','keydown','input'])d.addEventListener(type,h,true);d.addEventListener('submit',blockSubmit,true);}}
- function frame(region,label){const own=fields(region);return {region,label,queue:[...names[label].map(name=>({kind:'lookup',label:name})),...(label==='machine'?sections.map(name=>({kind:'form',label:name})):[])],values:new Map(own.map(x=>[x.element,value(x.element)]))};}
+ function frame(region,label){const own=fields(region);return {region,label,queue:[...names[label].map(name=>({kind:'lookup',label:name})),...(label==='machine'&&!reselect?sections.map(name=>({kind:'form',label:name})):[])],values:new Map(own.map(x=>[x.element,value(x.element)]))};}
  function changed(f){return Array.from(f.values).some(([e,v])=>!e.isConnected||value(e)!==v);}
  function safe(e,kind){
   if(!visible(e)||e.disabled||e.getAttribute('aria-disabled')==='true')return false;
   const button=e.closest('button,input');
   if(button&&(['submit','reset','image'].includes(button.type)||button.disabled))return false;
   const text=norm(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent||e.value);
+  if(kind==='reselect')return e.matches('button[type="button"],input[type="button"]')&&text==='選択';
   if(/削除|更新|保存|仮採番|決定|選択/.test(text))return false;
   if(/登録/.test(text)&&!(kind==='form'&&text==='新規登録'))return false;
   return true;
@@ -69,6 +72,30 @@ function stepGdhFormTour(command, sessionId, options) {
    }
   }
   return buttons.length===1?buttons[0]:null;
+ }
+ // Match exact display value AND an explicit current-selection marker. Never
+ // infer an ID from a label or choose the first matching row. Values stay in memory.
+ function currentCandidate(dialog,label,current){
+  const matches=[];
+  for(const table of all('table',dialog).filter(visible)){
+   const rows=Array.from(table.rows).filter(r=>r.closest('table')===table);
+   const headers=rows.filter(r=>Array.from(r.cells).some(c=>c.tagName==='TH'));
+   if(headers.length!==1)continue;
+   const cells=Array.from(headers[0].cells);
+   if(cells.some(c=>c.colSpan!==1||c.rowSpan!==1))continue;
+   const indices=cells.map((c,i)=>norm(c.textContent)===norm(label)?i:-1).filter(i=>i>=0);
+   if(indices.length!==1)continue;
+   for(const row of rows){
+    if(row===headers[0]||!visible(row)||row.cells.length!==cells.length)continue;
+    if(Array.from(row.cells).some(c=>c.colSpan!==1||c.rowSpan!==1))continue;
+    if(row.cells[indices[0]].textContent.trim()===current)matches.push(row);
+   }
+  }
+  if(matches.length!==1)return {status:matches.length?'skipped-ambiguous':'skipped-no-match'};
+  const row=matches[0];
+  if(row.getAttribute('aria-selected')!=='true'&&!row.querySelector('input[type="radio"]:checked'))return {status:'skipped-identity'};
+  const controls=Array.from(row.querySelectorAll('button[type="button"],input[type="button"]')).filter(e=>e.closest('tr')===row&&safe(e,'reselect'));
+  return controls.length===1?{button:controls[0]}:{status:'skipped-control'};
  }
  function openForm(label){
   const heads=exact(label),buttons=all('button,input[type="button"],a,[role="button"]').filter(e=>visible(e)&&norm(e.value||e.textContent)==='新規登録'&&safe(e,'form'));
@@ -98,7 +125,13 @@ function stepGdhFormTour(command, sessionId, options) {
   lastCall=Date.now();if(!active)return response();
   if(Date.now()-started>600000){stop('time-limit');return response();}
   protect();const f=stack.at(-1);
-  if(changed(f)){stop('form-changed');return response();}
+  if(changed(f)){if(waiting?.kind==='verify')add('selection',waiting.label,'selection-changed');stop('form-changed');return response();}
+  if(waiting?.kind==='verify'){
+   if(Date.now()-waiting.at<1500)return response();
+   if(visible(waiting.dialog)){if(Date.now()-waiting.at>8000){add('selection',waiting.label,'selection-unconfirmed');stop('selection-timeout');}return response();}
+   if(dialogs().length){stop('unexpected-dialog');return response();}
+   add('selection',waiting.label,'same-value-observed');waiting=null;return response();
+  }
   if(waiting){
    if(childPending&&waiting.kind==='form'){waiting.at=Date.now();return response();}
    if(waiting.kind==='close'){
@@ -118,6 +151,16 @@ function stepGdhFormTour(command, sessionId, options) {
    if(!waiting.expanded){waiting.expanded=true;const control=detail(dialog);if(control){if(!click(control,'detail'))stop('detail-unrecognized');waiting.captureAt=Date.now()+1200;return response();}waiting.captureAt=Date.now()+1200;}
    if(Date.now()<waiting.captureAt)return response();
    if(!waiting.sourceCaptured){waiting.sourceCaptured=true;return response({captureSource:true,label:waiting.label});}
+   if(reselect){
+    const candidate=currentCandidate(dialog,waiting.label,waiting.current);
+    if(candidate.button){
+     const label=waiting.label;waiting={kind:'verify',label,dialog,at:Date.now()};
+     add('selection',label,'selecting-current');
+     if(!click(candidate.button,'reselect'))stop('control-unrecognized');
+     return response();
+    }
+    add('selection',waiting.label,candidate.status);
+   }
    const count=fields(dialog).filter(x=>!x.field.hidden).length;
    add('lookup',waiting.label,count?'collected':'no-recognized-fields');
    const close=closeButton(dialog);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}
@@ -126,11 +169,17 @@ function stepGdhFormTour(command, sessionId, options) {
   const action=f.queue.shift();
   if(!action){
    if(stack.length>1){const close=closeButton(f.region);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}f.values.clear();stack.pop();waiting={kind:'close',dialog:f.region,at:Date.now()};return response();}
-   stop(log.some(x=>x.status==='unrecognized'||x.status==='no-recognized-fields')?'partial':'completed');return response();
+   stop(log.some(x=>x.status==='unrecognized'||x.status==='no-recognized-fields'||x.status.startsWith('skipped-'))?'partial':'completed');return response();
   }
   const button=action.kind==='form'?openForm(action.label):lookup(f,action.label);
   if(!button){add(action.kind,action.label,'unrecognized');return response();}
-  waiting={...action,at:Date.now()};add(action.kind,action.label,'opening');
+  let current;
+  if(reselect){
+   const own=fields(f.region).filter(x=>!x.field.hidden&&x.field.label===action.label&&x.field.type==='text');
+   if(own.length!==1||!value(own[0].element).trim()){add('selection',action.label,'skipped-empty');return response();}
+   current=value(own[0].element);
+  }
+  waiting={...action,current,at:Date.now()};add(action.kind,action.label,'opening');
   if(!click(button,action.kind)){stop('control-unrecognized');return response();}
   return response({awaiting:action.kind,label:action.label});
  }
