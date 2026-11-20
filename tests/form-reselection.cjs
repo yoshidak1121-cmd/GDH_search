@@ -7,7 +7,7 @@ const path=require('node:path');
  try{
  const page=await browser.newPage();
  await page.route('https://global-service.fa-cnc.idc-t.melco.co.jp/**',r=>r.fulfill({contentType:'text/html',body:'<h1>機械情報 登録／更新</h1>'}));
- for(const scenario of ['same','duplicate','unmarked','absent','empty','changed','timeout','stop','manual','diag-split','diag-empty','diag-cap','diag-stop']){
+ for(const scenario of ['same','duplicate','unmarked','absent','empty','changed','timeout','stop','manual','diag-split','diag-empty','diag-cap','diag-stop','diag-search','diag-search-timeout','diag-search-ambiguous','diag-search-stop']){
   await page.goto('https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/test');
   await page.evaluate(scenario=>{
    const labels=['NCシステム型名','工作機械モデル番号','サービスセンター'];
@@ -27,6 +27,17 @@ const path=require('node:path');
      grid.innerHTML='<div class="ui-jqgrid-hdiv"><table><tr><th>'+label+'</th><th>PRIVATE-UNKNOWN-HEADER</th></tr></table></div><div class="ui-jqgrid-bdiv"><table><tr class="jqgfirstrow"><td></td><td></td></tr>'+Array.from({length:scenario==='diag-cap'?510:1},()=>'<tr aria-selected="true" id="PRIVATE-ID" onclick="window.writes++"><td>'+input.value+'</td><td><a href="https://private.invalid/?token=PRIVATE-TOKEN">PRIVATE-CUSTOMER</a><button type="button">選択</button></td></tr>').join('')+'</table></div>';
      old.replaceWith(grid);
     }
+    if(scenario.startsWith('diag-search')){
+     const search=document.createElement('div');search.innerHTML='<input type="text"><button type="button">検索</button>';
+     if(scenario==='diag-search-ambiguous')search.append(document.createElement('input'));
+     d.prepend(search);
+     const body=d.querySelector('.ui-jqgrid-bdiv table');
+     body.querySelectorAll('tr:not(.jqgfirstrow) td:first-child').forEach(c=>c.textContent='OTHER');
+     search.querySelector('button').onclick=()=>{
+      if(scenario==='diag-search-timeout')return;
+      setTimeout(()=>{body.querySelector('tr:not(.jqgfirstrow) td').textContent=search.querySelector('input').value;},200);
+     };
+    }
     document.body.append(d);
    };
   },scenario);
@@ -34,11 +45,12 @@ const path=require('node:path');
   await page.addScriptTag({path:path.resolve('extension/form-tour.js')});
   const id='synthetic-session-123456';const diagnostic=scenario.startsWith('diag-');
   assert((await page.evaluate(id=>observeGdhRegistration('start',id,'machine'),id)).ok);
-  assert((await page.evaluate(({id,diagnostic})=>stepGdhFormTour('start',id,{scope:'machine',reselectCurrent:true,diagnoseLookup:diagnostic}),{id,diagnostic})).ok);
+  assert((await page.evaluate(({id,diagnostic,searchCurrent})=>stepGdhFormTour('start',id,{scope:'machine',reselectCurrent:true,diagnoseLookup:diagnostic,searchCurrent}),{id,diagnostic,searchCurrent:scenario.startsWith('diag-search')})).ok);
   let result;const end=Date.now()+25000;
   do{
    result=await page.evaluate(id=>stepGdhFormTour('step',id,{expiresAt:Date.now()+2500}),id);
    if((scenario==='stop'||scenario==='diag-stop')&&result.actions===1)await page.evaluate(id=>stepGdhFormTour('stop',id),id);
+   if(scenario==='diag-search-stop'&&result.log.some(x=>x.status==='searching-current'))await page.evaluate(id=>stepGdhFormTour('stop',id),id);
    if(scenario==='manual'&&result.actions===1)await page.locator('h1').click();
    if(result.status!=='running')break;
    await page.waitForTimeout(100);
@@ -46,16 +58,20 @@ const path=require('node:path');
   const selected=await page.evaluate(()=>selected);
   if(diagnostic){
    assert.equal(selected,0);
-   if(scenario==='diag-stop'){assert.equal(result.status,'stopped');assert.equal(result.lookupDiagnostics.length,0);}
+   if(scenario==='diag-search-timeout'){assert.equal(result.status,'search-timeout');assert.equal(result.lookupDiagnostics.length,0);}
+   else if(scenario==='diag-search-stop'){assert.equal(result.status,'stopped');assert.equal(result.lookupDiagnostics.length,0);}
+   else if(scenario==='diag-stop'){assert.equal(result.status,'stopped');assert.equal(result.lookupDiagnostics.length,0);}
    else{
-    assert.equal(result.status,'completed');assert.equal(result.lookupDiagnostics.length,3);
+    assert.equal(result.status,scenario==='diag-search-ambiguous'?'partial':'completed');assert.equal(result.lookupDiagnostics.length,3);
     for(const d of result.lookupDiagnostics){
      const body=d.tables.find(t=>t.headerAndBodySeparated);
      assert(body,'split header detected');assert.equal(body.matchingColumnCount,1);
      assert.equal(body.inlineClickRows,scenario==='diag-cap'?500:1);
-     assert.equal(body.matchingRows,scenario==='diag-empty'?0:scenario==='diag-cap'?500:1);
+     assert.equal(body.matchingRows,['diag-empty','diag-search-ambiguous'].includes(scenario)?0:scenario==='diag-cap'?500:1);
      assert.equal(d.truncated,scenario==='diag-cap');
      assert(body.splitHeaderColumns.includes('unknown'));
+     if(scenario==='diag-search')assert.equal(d.searchStatus,'search-results-observed');
+     if(scenario==='diag-search-ambiguous')assert.equal(d.searchStatus,'search-unrecognized');
     }
    }
   }
