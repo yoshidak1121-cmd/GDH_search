@@ -17,8 +17,9 @@ function stepGdhFormTour(command, sessionId, options) {
  if(!observer?.active||observer.sessionId!==sessionId)return {ok:false,code:'NO_OBSERVER'};
  const sections=['契約情報','販売情報','出荷情報','設置先情報'];
  const scope=options.scope==='machine'?'machine':sections.includes(options.scope)?options.scope:null;
- const reselect=options.reselectCurrent===true;
- if(reselect&&scope!=='machine')return {ok:false,code:'WRONG_SCREEN'};
+ const diagnose=options.diagnoseLookup===true;
+ const reselect=!diagnose&&options.reselectCurrent===true;
+ if((reselect||diagnose)&&scope!=='machine')return {ok:false,code:'WRONG_SCREEN'};
  if(!scope)return {ok:false,code:'WRONG_SCREEN'};
  const norm=x=>String(x||'').normalize('NFKC').replace(/[\s＊*：:]/g,'');
  const names={machine:['NCシステム型名','工作機械モデル番号','サービスセンター'],契約情報:['契約ID','契約元拠点','契約者'],販売情報:['販売ID','販売会社','機械代理店','機械代理店住所'],出荷情報:['出荷ID','輸出国','輸入国'],設置先情報:['設置ID','エンドユーザー','設置先住所']};
@@ -40,12 +41,12 @@ function stepGdhFormTour(command, sessionId, options) {
  // Do not act on an already-open dialog or another task's active recorder.
  if(dialogs().length)return {ok:false,code:'CLOSE_DIALOG_FIRST'};
  let active=true,reason='running',waiting=null,actions=0,lastCall=Date.now();
- const started=Date.now(),log=[],guards=new Map(),stack=[];
+ const started=Date.now(),lookupDiagnostics=[],log=[],guards=new Map(),stack=[];
  function add(kind,label,status){log.push({ms:Date.now()-started,kind,label,status});}
  function stop(why){active=false;reason=why;clearInterval(watchdog);for(const [d,h] of guards){d.removeEventListener('click',h,true);d.removeEventListener('keydown',h,true);d.removeEventListener('input',h,true);d.removeEventListener('submit',blockSubmit,true);}guards.clear();for(const f of stack)f.values.clear();}
  function blockSubmit(event){event.preventDefault();event.stopImmediatePropagation();stop('submit-blocked');}
  function protect(){for(const d of docs())if(!guards.has(d)){const h=e=>{if(e.isTrusted)stop('user-interaction');};guards.set(d,h);for(const type of ['click','keydown','input'])d.addEventListener(type,h,true);d.addEventListener('submit',blockSubmit,true);}}
- function frame(region,label){const own=fields(region);return {region,label,queue:[...names[label].map(name=>({kind:'lookup',label:name})),...(label==='machine'&&!reselect?sections.map(name=>({kind:'form',label:name})):[])],values:new Map(own.map(x=>[x.element,value(x.element)]))};}
+ function frame(region,label){const own=fields(region);return {region,label,queue:[...names[label].map(name=>({kind:'lookup',label:name})),...(label==='machine'&&!reselect&&!diagnose?sections.map(name=>({kind:'form',label:name})):[])],values:new Map(own.map(x=>[x.element,value(x.element)]))};}
  function changed(f){return Array.from(f.values).some(([e,v])=>!e.isConnected||value(e)!==v);}
  function safe(e,kind){
   if(!visible(e)||e.disabled||e.getAttribute('aria-disabled')==='true')return false;
@@ -97,6 +98,42 @@ function stepGdhFormTour(command, sessionId, options) {
   const controls=Array.from(row.querySelectorAll('button[type="button"],input[type="button"]')).filter(e=>e.closest('tr')===row&&safe(e,'reselect'));
   return controls.length===1?{button:controls[0]}:{status:'skipped-control'};
  }
+ // Read DOM structure only. Raw text, IDs, selectors, URLs and handler
+ // source never leave this function. Unknown headings become a fixed label.
+ function inspectLookup(dialog,label,current){
+  const allowed=[...names.machine,'NCシリーズ名','機種名','制御ユニット','表示ユニット','NCモデルID','工作機械ID','工作機械シリアル番号','機械メーカー','機械メーカーID','サービスセンター名','国コード'];
+  const heading=e=>allowed.find(x=>norm(x)===norm(e.textContent))||'unknown';
+  const tables=all('table',dialog).filter(visible),results=[];
+  const cap=500;
+  let truncated=tables.length>12;
+  for(const table of tables.slice(0,12)){
+   const rows=Array.from(table.rows).filter(r=>r.closest('table')===table);
+   const headers=Array.from(table.querySelectorAll('th,[role="columnheader"]')).filter(c=>c.closest('table')===table);
+   const wrapper=table.closest('.ui-jqgrid');
+   const siblingHeads=wrapper?Array.from(wrapper.querySelectorAll('.ui-jqgrid-hdiv th')).filter(c=>c.closest('.ui-jqgrid')===wrapper):[];
+   const body=rows.filter(r=>visible(r)&&!Array.from(r.cells).some(c=>c.tagName==='TH')&&!r.classList.contains('jqgfirstrow'));
+   const sample=body.slice(0,cap);
+   truncated=truncated||body.length>cap||headers.length>40||siblingHeads.length>40;
+   const ownColumns=headers.slice(0,40).map(heading),splitColumns=siblingHeads.slice(0,40).map(heading);
+   const columns=ownColumns.length?ownColumns:splitColumns;
+   const indices=columns.map((x,i)=>x===label?i:-1).filter(i=>i>=0);
+   let matchingRows=0,selectedRows=0,buttonRows=0,clickRows=0,doubleClickRows=0,linkRows=0;
+   for(const row of sample){
+    if(current&&indices.length===1&&row.cells[indices[0]]?.textContent.trim()===current)matchingRows++;
+    if(row.getAttribute('aria-selected')==='true'||row.querySelector('input[type="radio"]:checked'))selectedRows++;
+    if(Array.from(row.querySelectorAll('button,input[type="button"]')).some(e=>norm(e.textContent||e.value)==='選択'))buttonRows++;
+    if(row.hasAttribute('onclick')||row.querySelector('[onclick]'))clickRows++;
+    if(row.hasAttribute('ondblclick')||row.querySelector('[ondblclick]'))doubleClickRows++;
+    if(row.querySelector('a'))linkRows++;
+   }
+   results.push({index:results.length,layout:wrapper?'jqgrid':'table',headerColumns:ownColumns,splitHeaderColumns:splitColumns,
+    visibleRows:body.length,inspectedRows:sample.length,columnCounts:[...new Set(sample.map(r=>r.cells.length))].slice(0,40),
+    matchingColumnCount:indices.length,matchingRows,selectedRows,selectionButtonRows:buttonRows,inlineClickRows:clickRows,inlineDoubleClickRows:doubleClickRows,linkRows,
+    headerAndBodySeparated:!!wrapper&&headers.length===0&&siblingHeads.length>0});
+  }
+  return {label,currentValueAvailable:!!current,tableCount:tables.length,tables:results,truncated,
+   selectionMechanism:'unconfirmed',notes:['DOMの構造と件数のみ。実値・実ID・URL・HTML・処理コードは含みません。','イベントの有無は手掛かりであり、選択方法や保存の有無を確定しません。動的なイベント登録は未調査です。']};
+ }
  function openForm(label){
   const heads=exact(label),buttons=all('button,input[type="button"],a,[role="button"]').filter(e=>visible(e)&&norm(e.value||e.textContent)==='新規登録'&&safe(e,'form'));
   if(heads.length!==1)return null;
@@ -120,7 +157,7 @@ function stepGdhFormTour(command, sessionId, options) {
   for(let p=e.parentElement;p&&p!==dialog;p=p.parentElement){const inputs=all('input:not([type="hidden"]),select,textarea',p);if(inputs.length)return inputs.some(visible)?null:e;}
   return null;
  }
- function response(extra={}){return {ok:true,status:reason,log:log.slice(),actions,...extra};}
+ function response(extra={}){return {ok:true,status:reason,log:log.slice(),lookupDiagnostics:lookupDiagnostics.slice(),actions,...extra};}
  function step(childDone,childPending){
   lastCall=Date.now();if(!active)return response();
   if(Date.now()-started>600000){stop('time-limit');return response();}
@@ -150,7 +187,8 @@ function stepGdhFormTour(command, sessionId, options) {
    if(!exact('一覧選択画面',dialog).length){stop('unexpected-dialog');return response();}
    if(!waiting.expanded){waiting.expanded=true;const control=detail(dialog);if(control){if(!click(control,'detail'))stop('detail-unrecognized');waiting.captureAt=Date.now()+1200;return response();}waiting.captureAt=Date.now()+1200;}
    if(Date.now()<waiting.captureAt)return response();
-   if(!waiting.sourceCaptured){waiting.sourceCaptured=true;return response({captureSource:true,label:waiting.label});}
+   if(diagnose&&!waiting.structureCaptured){waiting.structureCaptured=true;lookupDiagnostics.push(inspectLookup(dialog,waiting.label,waiting.current));add('diagnostic',waiting.label,'structure-collected');}
+   if(!diagnose&&!waiting.sourceCaptured){waiting.sourceCaptured=true;return response({captureSource:true,label:waiting.label});}
    if(reselect){
     const candidate=currentCandidate(dialog,waiting.label,waiting.current);
     if(candidate.button){
@@ -162,22 +200,22 @@ function stepGdhFormTour(command, sessionId, options) {
     add('selection',waiting.label,candidate.status);
    }
    const count=fields(dialog).filter(x=>!x.field.hidden).length;
-   add('lookup',waiting.label,count?'collected':'no-recognized-fields');
+   add('lookup',waiting.label,diagnose?(lookupDiagnostics.at(-1)?.tableCount?'collected':'no-recognized-list'):(count?'collected':'no-recognized-fields'));
    const close=closeButton(dialog);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}
    waiting={kind:'close',dialog,at:Date.now()};return response();
   }
   const action=f.queue.shift();
   if(!action){
    if(stack.length>1){const close=closeButton(f.region);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}f.values.clear();stack.pop();waiting={kind:'close',dialog:f.region,at:Date.now()};return response();}
-   stop(log.some(x=>x.status==='unrecognized'||x.status==='no-recognized-fields'||x.status.startsWith('skipped-'))?'partial':'completed');return response();
+   stop(log.some(x=>x.status==='no-recognized-list'||x.status==='unrecognized'||x.status==='no-recognized-fields'||x.status.startsWith('skipped-'))?'partial':'completed');return response();
   }
   const button=action.kind==='form'?openForm(action.label):lookup(f,action.label);
   if(!button){add(action.kind,action.label,'unrecognized');return response();}
   let current;
-  if(reselect){
+  if(reselect||diagnose){
    const own=fields(f.region).filter(x=>!x.field.hidden&&x.field.label===action.label&&x.field.type==='text');
-   if(own.length!==1||!value(own[0].element).trim()){add('selection',action.label,'skipped-empty');return response();}
-   current=value(own[0].element);
+   if(reselect&&(own.length!==1||!value(own[0].element).trim())){add('selection',action.label,'skipped-empty');return response();}
+   current=own.length===1?value(own[0].element):'';
   }
   waiting={...action,current,at:Date.now()};add(action.kind,action.label,'opening');
   if(!click(button,action.kind)){stop('control-unrecognized');return response();}
