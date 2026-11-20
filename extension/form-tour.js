@@ -18,6 +18,7 @@ function stepGdhFormTour(command, sessionId, options) {
  const sections=['契約情報','販売情報','出荷情報','設置先情報'];
  const scope=options.scope==='machine'?'machine':sections.includes(options.scope)?options.scope:null;
  const diagnose=options.diagnoseLookup===true;
+ const searchCurrent=diagnose&&options.searchCurrent===true;
  const reselect=!diagnose&&options.reselectCurrent===true;
  if((reselect||diagnose)&&scope!=='machine')return {ok:false,code:'WRONG_SCREEN'};
  if(!scope)return {ok:false,code:'WRONG_SCREEN'};
@@ -43,7 +44,7 @@ function stepGdhFormTour(command, sessionId, options) {
  let active=true,reason='running',waiting=null,actions=0,lastCall=Date.now();
  const started=Date.now(),lookupDiagnostics=[],log=[],guards=new Map(),stack=[];
  function add(kind,label,status){log.push({ms:Date.now()-started,kind,label,status});}
- function stop(why){active=false;reason=why;clearInterval(watchdog);for(const [d,h] of guards){d.removeEventListener('click',h,true);d.removeEventListener('keydown',h,true);d.removeEventListener('input',h,true);d.removeEventListener('submit',blockSubmit,true);}guards.clear();for(const f of stack)f.values.clear();}
+ function stop(why){active=false;reason=why;clearInterval(watchdog);for(const [d,h] of guards){d.removeEventListener('click',h,true);d.removeEventListener('keydown',h,true);d.removeEventListener('input',h,true);d.removeEventListener('submit',blockSubmit,true);}guards.clear();waiting?.searchObserver?.disconnect();for(const f of stack)f.values.clear();}
  function blockSubmit(event){event.preventDefault();event.stopImmediatePropagation();stop('submit-blocked');}
  function protect(){for(const d of docs())if(!guards.has(d)){const h=e=>{if(e.isTrusted)stop('user-interaction');};guards.set(d,h);for(const type of ['click','keydown','input'])d.addEventListener(type,h,true);d.addEventListener('submit',blockSubmit,true);}}
  function frame(region,label){const own=fields(region);return {region,label,queue:[...names[label].map(name=>({kind:'lookup',label:name})),...(label==='machine'&&!reselect&&!diagnose?sections.map(name=>({kind:'form',label:name})):[])],values:new Map(own.map(x=>[x.element,value(x.element)]))};}
@@ -134,6 +135,23 @@ function stepGdhFormTour(command, sessionId, options) {
   return {label,currentValueAvailable:!!current,tableCount:tables.length,tables:results,truncated,
    selectionMechanism:'unconfirmed',notes:['DOMの構造と件数のみ。実値・実ID・URL・HTML・処理コードは含みません。','イベントの有無は手掛かりであり、選択方法や保存の有無を確定しません。動的なイベント登録は未調査です。']};
  }
+ // Search only inside the lookup dialog, outside grid/pager controls.
+ function searchControls(dialog){
+  const buttons=all('button[type="button"],input[type="button"],a,[role="button"]',dialog).filter(e=>visible(e)&&norm(e.textContent||e.value)==='検索'&&safe(e,'search')&&!e.closest('.ui-jqgrid'));
+  if(buttons.length!==1)return null;
+  const button=buttons[0];
+  for(let p=button.parentElement;p&&inside(dialog,p);p=p.parentElement){
+   const inputs=all('input:not([type]),input[type="text"],input[type="search"]',p).filter(e=>visible(e)&&!e.disabled&&!e.readOnly&&!e.closest('.ui-jqgrid'));
+   if(inputs.length>1)return null;
+   if(inputs.length===1)return {button,input:inputs[0]};
+   if(p===dialog)break;
+  }
+  return null;
+ }
+ function searchState(dialog){
+  const tables=all('.ui-jqgrid-bdiv table',dialog).filter(visible);
+  return {tables};
+ }
  function openForm(label){
   const heads=exact(label),buttons=all('button,input[type="button"],a,[role="button"]').filter(e=>visible(e)&&norm(e.value||e.textContent)==='新規登録'&&safe(e,'form'));
   if(heads.length!==1)return null;
@@ -185,9 +203,41 @@ function stepGdhFormTour(command, sessionId, options) {
     stack.push(frame(dialog,waiting.label));add('form',waiting.label,'opened');waiting=null;return response();
    }
    if(!exact('一覧選択画面',dialog).length){stop('unexpected-dialog');return response();}
+   if(searchCurrent&&!waiting.searchDone){
+    if(!waiting.searchStarted){
+     waiting.searchStarted=true;
+     const controls=searchControls(dialog),state=searchState(dialog);
+     if(!waiting.current||!controls||!state.tables.length){
+      waiting.searchDone=true;waiting.searchStatus=!waiting.current?'skipped-empty':'search-unrecognized';
+      add('search',waiting.label,waiting.searchStatus);
+     }else{
+      waiting.searchAt=Date.now();waiting.lastMutation=Date.now();waiting.searchChanged=false;
+      const task=waiting;
+      waiting.searchObserver=new MutationObserver(()=>{task.searchChanged=true;task.lastMutation=Date.now();});
+      for(const table of state.tables)waiting.searchObserver.observe(table.parentElement,{childList:true,subtree:true,characterData:true});
+      const win=controls.input.ownerDocument.defaultView;
+      const setter=Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype,'value').set;
+      setter.call(controls.input,waiting.current);
+      controls.input.dispatchEvent(new win.Event('input',{bubbles:true}));
+      controls.input.dispatchEvent(new win.Event('change',{bubbles:true}));
+      if(!active||changed(f)){stop('form-changed');return response();}
+      add('search',waiting.label,'searching-current');
+      if(!click(controls.button,'search'))stop('control-unrecognized');
+      return response();
+     }
+    }else{
+     const busy=all('.loading,[aria-busy="true"]',dialog).some(visible);
+     if(!waiting.searchChanged||busy||Date.now()-waiting.lastMutation<1200){
+      if(Date.now()-waiting.searchAt>8000){waiting.searchObserver.disconnect();add('search',waiting.label,'search-timeout');stop('search-timeout');}
+      return response();
+     }
+     waiting.searchObserver.disconnect();waiting.searchDone=true;waiting.searchStatus='search-results-observed';
+     add('search',waiting.label,waiting.searchStatus);
+    }
+   }
    if(!waiting.expanded){waiting.expanded=true;const control=detail(dialog);if(control){if(!click(control,'detail'))stop('detail-unrecognized');waiting.captureAt=Date.now()+1200;return response();}waiting.captureAt=Date.now()+1200;}
    if(Date.now()<waiting.captureAt)return response();
-   if(diagnose&&!waiting.structureCaptured){waiting.structureCaptured=true;lookupDiagnostics.push(inspectLookup(dialog,waiting.label,waiting.current));add('diagnostic',waiting.label,'structure-collected');}
+   if(diagnose&&!waiting.structureCaptured){waiting.structureCaptured=true;lookupDiagnostics.push({...inspectLookup(dialog,waiting.label,waiting.current),searchStatus:waiting.searchStatus||'not-requested'});add('diagnostic',waiting.label,'structure-collected');}
    if(!diagnose&&!waiting.sourceCaptured){waiting.sourceCaptured=true;return response({captureSource:true,label:waiting.label});}
    if(reselect){
     const candidate=currentCandidate(dialog,waiting.label,waiting.current);
@@ -207,7 +257,7 @@ function stepGdhFormTour(command, sessionId, options) {
   const action=f.queue.shift();
   if(!action){
    if(stack.length>1){const close=closeButton(f.region);if(!close||!click(close,'close')){stop('close-unrecognized');return response();}f.values.clear();stack.pop();waiting={kind:'close',dialog:f.region,at:Date.now()};return response();}
-   stop(log.some(x=>x.status==='no-recognized-list'||x.status==='unrecognized'||x.status==='no-recognized-fields'||x.status.startsWith('skipped-'))?'partial':'completed');return response();
+   stop(log.some(x=>x.status==='no-recognized-list'||x.status==='unrecognized'||x.status==='no-recognized-fields'||x.status==='search-unrecognized'||x.status.startsWith('skipped-'))?'partial':'completed');return response();
   }
   const button=action.kind==='form'?openForm(action.label):lookup(f,action.label);
   if(!button){add(action.kind,action.label,'unrecognized');return response();}
