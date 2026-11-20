@@ -7,12 +7,12 @@ const path=require('node:path');
  try{
  const page=await browser.newPage();
  await page.route('https://global-service.fa-cnc.idc-t.melco.co.jp/**',r=>r.fulfill({contentType:'text/html',body:'<h1>機械情報 登録／更新</h1>'}));
- for(const scenario of ['same','duplicate','unmarked','absent','empty','changed','timeout','stop','manual']){
+ for(const scenario of ['same','duplicate','unmarked','absent','empty','changed','timeout','stop','manual','diag-split','diag-empty','diag-cap','diag-stop']){
   await page.goto('https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/test');
   await page.evaluate(scenario=>{
    const labels=['NCシステム型名','工作機械モデル番号','サービスセンター'];
    window.selected=0;window.writes=0;
-   document.body.innerHTML='<h1>機械情報 登録／更新</h1><form><table>'+['NCシリアル番号',...labels].map((label,i)=>`<tr><th>${label}</th><td><input readonly value="${scenario==='empty'?'':'PRIVATE-'+i}">${i?'<button type="button" class="lookup" title="検索">参照</button>':''}</td></tr>`).join('')+'</table><button type="submit">保存</button></form>';
+   document.body.innerHTML='<h1>機械情報 登録／更新</h1><form><table>'+['NCシリアル番号',...labels].map((label,i)=>`<tr><th>${label}</th><td><input readonly value="${['empty','diag-empty'].includes(scenario)?'':'PRIVATE-'+i}">${i?'<button type="button" class="lookup" title="検索">参照</button>':''}</td></tr>`).join('')+'</table><button type="submit">保存</button></form>';
    document.querySelector('form').onsubmit=e=>{e.preventDefault();writes++};
    for(const b of document.querySelectorAll('.lookup'))b.onclick=()=>{
     const label=b.closest('tr').querySelector('th').textContent;
@@ -22,24 +22,44 @@ const path=require('node:path');
     d.innerHTML='<h2>一覧選択画面</h2><button type="button" title="閉じる">閉じる</button><table><tr><th>'+label+'</th><th>操作</th></tr>'+row+(scenario==='duplicate'?row:'')+'</table>';
     d.querySelector('[title]').onclick=()=>d.remove();
     for(const choose of d.querySelectorAll('.choose'))choose.onclick=()=>{selected++;if(scenario==='changed')document.querySelector('input').value='PRIVATE-CHANGED';if(scenario!=='timeout')d.remove();};
+    if(scenario.startsWith('diag-')){
+     const old=d.querySelector('table');const grid=document.createElement('div');grid.className='ui-jqgrid';
+     grid.innerHTML='<div class="ui-jqgrid-hdiv"><table><tr><th>'+label+'</th><th>PRIVATE-UNKNOWN-HEADER</th></tr></table></div><div class="ui-jqgrid-bdiv"><table><tr class="jqgfirstrow"><td></td><td></td></tr>'+Array.from({length:scenario==='diag-cap'?510:1},()=>'<tr aria-selected="true" id="PRIVATE-ID" onclick="window.writes++"><td>'+input.value+'</td><td><a href="https://private.invalid/?token=PRIVATE-TOKEN">PRIVATE-CUSTOMER</a><button type="button">選択</button></td></tr>').join('')+'</table></div>';
+     old.replaceWith(grid);
+    }
     document.body.append(d);
    };
   },scenario);
   await page.addScriptTag({path:path.resolve('extension/form-investigation.js')});
   await page.addScriptTag({path:path.resolve('extension/form-tour.js')});
-  const id='synthetic-session-123456';
+  const id='synthetic-session-123456';const diagnostic=scenario.startsWith('diag-');
   assert((await page.evaluate(id=>observeGdhRegistration('start',id,'machine'),id)).ok);
-  assert((await page.evaluate(id=>stepGdhFormTour('start',id,{scope:'machine',reselectCurrent:true}),id)).ok);
+  assert((await page.evaluate(({id,diagnostic})=>stepGdhFormTour('start',id,{scope:'machine',reselectCurrent:true,diagnoseLookup:diagnostic}),{id,diagnostic})).ok);
   let result;const end=Date.now()+25000;
   do{
    result=await page.evaluate(id=>stepGdhFormTour('step',id,{expiresAt:Date.now()+2500}),id);
-   if(scenario==='stop'&&result.actions===1)await page.evaluate(id=>stepGdhFormTour('stop',id),id);
+   if((scenario==='stop'||scenario==='diag-stop')&&result.actions===1)await page.evaluate(id=>stepGdhFormTour('stop',id),id);
    if(scenario==='manual'&&result.actions===1)await page.locator('h1').click();
    if(result.status!=='running')break;
    await page.waitForTimeout(100);
   }while(Date.now()<end);
   const selected=await page.evaluate(()=>selected);
-  if(scenario==='same'){assert.equal(result.status,'completed');assert.equal(selected,3);assert.equal(result.log.filter(x=>x.status==='same-value-observed').length,3);}
+  if(diagnostic){
+   assert.equal(selected,0);
+   if(scenario==='diag-stop'){assert.equal(result.status,'stopped');assert.equal(result.lookupDiagnostics.length,0);}
+   else{
+    assert.equal(result.status,'completed');assert.equal(result.lookupDiagnostics.length,3);
+    for(const d of result.lookupDiagnostics){
+     const body=d.tables.find(t=>t.headerAndBodySeparated);
+     assert(body,'split header detected');assert.equal(body.matchingColumnCount,1);
+     assert.equal(body.inlineClickRows,scenario==='diag-cap'?500:1);
+     assert.equal(body.matchingRows,scenario==='diag-empty'?0:scenario==='diag-cap'?500:1);
+     assert.equal(d.truncated,scenario==='diag-cap');
+     assert(body.splitHeaderColumns.includes('unknown'));
+    }
+   }
+  }
+  else if(scenario==='same'){assert.equal(result.status,'completed');assert.equal(selected,3);assert.equal(result.log.filter(x=>x.status==='same-value-observed').length,3);}
   else if(scenario==='changed'){assert.equal(result.status,'form-changed');assert.equal(selected,1);}
   else if(scenario==='timeout'){assert.equal(result.status,'selection-timeout');assert.equal(selected,1);}
   else if(scenario==='stop'){assert.equal(result.status,'stopped');assert.equal(selected,0);}
