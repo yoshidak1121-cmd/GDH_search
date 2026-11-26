@@ -12,7 +12,7 @@ const root=path.resolve(__dirname,'..');
  await page.goto(pathToFileURL(path.join(root,'index.html')).href);
  const count=n=>page.waitForFunction(n=>document.querySelector('#resultTitle').textContent===n+'件',n);
  const load=async buffer=>{await page.locator('#csvFile').setInputFiles({name:'synthetic-seven.csv',mimeType:'text/csv',buffer});await page.waitForFunction(()=>!document.getElementById('fileBtn').disabled);await count(5);};
- const search=async n=>{await page.locator('#searchBtn').click();await count(n);};
+ const search=async n=>{await page.locator('#searchBtn').click();await count(n);await page.locator('#toggleFilters').click();};
  const card=name=>page.locator('.facet-card[data-field="'+name+'"]');
  const clear=async()=>{await page.locator('#resetBtn').click();await count(5);await page.locator('#advancedToggle').check();};
  await load(bytes());await page.locator('#advancedToggle').check();assert.equal(await page.locator('#facetFields .facet-card').count(),7);assert.equal(await page.locator('#keyword').isVisible(),false);
@@ -27,7 +27,7 @@ const root=path.resolve(__dirname,'..');
  await card('機械メーカー').getByRole('combobox').fill('Maker A');await card('機械メーカー').getByRole('option',{name:'Maker A（3件）',exact:true}).click();await search(2);
  await card('輸入国').getByRole('combobox').fill('US');await card('輸入国').getByRole('option',{name:'US（3件）',exact:true}).click();await search(1);
  await clear();await card('工作機械シリアル番号').getByRole('searchbox').fill('DEMO001');await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA2/);
- await clear();await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).fill('株式会社あおぞら');await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).press('Enter');await count(3);assert.match(await card('エンドユーザー').locator('.facet-values').innerText(),/含む/);assert.equal(await card('エンドユーザー').locator('.facet-values button').count(),1);
+ await clear();await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).fill('株式会社あおぞら');await card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true}).press('Enter');await count(3);await page.locator('#toggleFilters').click();assert.match(await card('エンドユーザー').locator('.facet-values').innerText(),/含む/);assert.equal(await card('エンドユーザー').locator('.facet-values button').count(),1);
  await card('NCシリアル番号').getByRole('searchbox').fill('QA1');await search(1);
  await clear();const input=card('エンドユーザー').getByRole('combobox',{name:'エンドユーザー',exact:true});await input.fill('株式会社あおぞら');await card('エンドユーザー').getByRole('option',{name:'㈱アオゾラ（1件）',exact:true}).waitFor();await input.press('ArrowDown');assert.ok(await input.getAttribute('aria-activedescendant'));await card('エンドユーザー').getByRole('option',{name:'㈱アオゾラ（1件）',exact:true}).click();await search(1);assert.match(await page.locator('#resultsBody').innerText(),/QA2/);assert.match(await card('エンドユーザー').locator('.facet-values').innerText(),/元の表記/);
  await clear();await input.fill('株式会社あおぞら');await card('エンドユーザー').getByRole('option',{name:/株式会社あおそら.*類似候補/}).waitFor();await search(3); // Similar candidates are not automatically included.

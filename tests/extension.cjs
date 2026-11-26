@@ -29,17 +29,18 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   page.on('pageerror',e=>errors.push(e.message));let accept=true;const dialogs=[];page.on('dialog',async d=>{dialogs.push(d.message());await(accept?d.accept():d.dismiss());});
   assert.match(page.url(),/^chrome-extension:\/\/[^/]+\/viewer.html/);
   await page.locator('#csvFile').setInputFiles(path.join(root,'tests/synthetic.csv'));await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+ const fetchCSV=async()=>{if(await page.locator('#loadEditor').isHidden())await page.locator('#toggleLoad').click();await page.locator('#fetchBtn').click();};
   const pageCount=context.pages().length;await source.locator('#gdh-search-extension-button').click();assert.equal(context.pages().length,pageCount);
   // Cancellation does not navigate or post, and loaded CSV stays usable.
-  accept=false;await page.locator('#fetchBtn').click();await page.locator('#fetchStatus.err').waitFor();assert.equal(posts.length,0);assert.equal(loads,0);accept=true;
-  let downloadPromise=page.waitForEvent('download');await page.locator('#fetchBtn').click();let download=await downloadPromise.catch(async error=>{console.error('CSV status:',await page.locator('#fetchStatus').textContent());throw error;});
+  accept=false;await fetchCSV();await page.locator('#fetchStatus.err').waitFor();assert.equal(posts.length,0);assert.equal(loads,0);accept=true;
+  let downloadPromise=page.waitForEvent('download');await fetchCSV();let download=await downloadPromise.catch(async error=>{console.error('CSV status:',await page.locator('#fetchStatus').textContent());throw error;});
   assert.deepEqual(fs.readFileSync(await download.path()),fixture);await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();assert.equal(loads,1);assert.equal(posts.length,1);
   assert.equal(posts[0].method,'POST');assert.equal(posts[0].fields.get('iszip'),'false');assert.deepEqual(posts[0].fields.getAll('keyword'),['first','second']);
   await source.reload();await source.locator('#gdh-search-extension-button').waitFor();assert.equal(posts.length,1);assert.match(await page.locator('#resultTitle').textContent(),/3件/);
   await source.locator('#gdh-search-extension-button').click();assert.equal(context.pages().length,pageCount);
-  downloadPromise=page.waitForEvent('download');await page.locator('#fetchBtn').click();await downloadPromise;await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();assert.equal(posts.length,2);
-  mode='error';await page.locator('#fetchBtn').click();await page.locator('#fetchStatus.err').waitFor();assert.match(await page.locator('#resultTitle').textContent(),/3件/);mode='english';
-  downloadPromise=page.waitForEvent('download');await page.locator('#fetchBtn').click();assert.deepEqual(fs.readFileSync(await(await downloadPromise).path()),englishFixture);await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
+  downloadPromise=page.waitForEvent('download');await fetchCSV();await downloadPromise;await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();assert.equal(posts.length,2);
+  mode='error';await fetchCSV();await page.locator('#fetchStatus.err').waitFor();assert.match(await page.locator('#resultTitle').textContent(),/3件/);mode='english';
+  downloadPromise=page.waitForEvent('download');await fetchCSV();assert.deepEqual(fs.readFileSync(await(await downloadPromise).path()),englishFixture);await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();
   const exported=page.waitForEvent('download');await page.locator('#exportResults').click();assert.ok(fs.readFileSync(await(await exported).path(),'utf8').startsWith('\ufeff'+require('./english-headers.json').map(h=>'"'+h+'"').join(',')));
   await page.locator('[data-menu=dashboard]').click();await page.locator('#dashBody tr[data-dashboard-index]').first().waitFor();assert.equal(await page.locator('#dashBody tr[data-dashboard-index]').count(),3);
   await page.locator('[data-menu=search]').click();await page.locator('#languageSelect').selectOption('en');assert.match(await page.locator('#fetchBtn').textContent(),/Get data from GDH/);await page.locator('#languageSelect').selectOption('ja');
@@ -66,12 +67,12 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   // Large CSV transfer uses bounded packets and keeps byte-for-byte contents.
   const columns=Array(33).fill('');columns[0]='SYNTHETIC-SCALE';columns[4]='M800V';columns[21]='架空'.repeat(45);
   largeFixture=Buffer.from(fixture.toString('utf8').split(/\r?\n/)[0]+'\n'+(columns.join(',')+'\n').repeat(192836));assert(largeFixture.length>50*1024*1024);mode='large';
-  downloadPromise=page.waitForEvent('download',{timeout:180000});await page.locator('#fetchBtn').click();download=await downloadPromise;assert.deepEqual(fs.readFileSync(await download.path()),largeFixture);await page.locator('#resultTitle').filter({hasText:'192,836件'}).waitFor({timeout:120000});
+  downloadPromise=page.waitForEvent('download',{timeout:180000});await fetchCSV();download=await downloadPromise;assert.deepEqual(fs.readFileSync(await download.path()),largeFixture);await page.locator('#resultTitle').filter({hasText:'192,836件'}).waitFor({timeout:120000});
   const worker=context.serviceWorkers()[0];const storage=await worker.evaluate(()=>chrome.storage.session.get(null));assert(!Object.keys(storage).some(x=>x.startsWith('gdhTabExport:')));assert(!JSON.stringify(storage).includes('SYNTHETIC-SCALE'));
   // An unbound extension page and a web page cannot borrow the viewer's source.
   const unattached=await context.newPage();await unattached.goto(page.url());const rejected=await unattached.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_VIEWER_EXPORT_START',confirmed:true}));assert.equal(rejected.ok,false);await unattached.close();
   const beforeForgery=posts.length;await source.evaluate(()=>window.postMessage({type:'GDH_VIEWER_EXPORT_START',confirmed:true},location.origin));assert.equal(posts.length,beforeForgery);
-  await source.close();await page.locator('#fetchBtn').click();await page.locator('#fetchStatus.err').waitFor();assert.match(await page.locator('#resultTitle').textContent(),/192,836件/);
+  await source.close();await fetchCSV();await page.locator('#fetchStatus.err').waitFor();assert.match(await page.locator('#resultTitle').textContent(),/192,836件/);
   assert.deepEqual(errors,[]);assert.deepEqual(blocked,[]);assert(dialogs.includes('CSVファイルを出力します。よろしいですか？'));
   console.log('PASS: separate/reused viewer tab, original form and session, navigation/resume once, cancel/failure retention, English CSV, dashboard, isolated registration mock, MAZAK dependency, service filters/sort, >50MB bounded transfer, unbound/forged request rejection, source-closed retention');
  }finally{await context.close();}
