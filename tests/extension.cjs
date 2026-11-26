@@ -47,6 +47,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   // Registration is isolated, packaged and has no server write path.
   const beforeMock=posts.length;await page.locator('[data-menu=registration]').click();await page.locator('#registrationView').waitFor();
   const registration=page.frameLocator('#registrationFrame');await registration.locator('#maker').waitFor();
+  const frameBox=await page.locator('#registrationFrame').boundingBox();assert(frameBox.y+frameBox.height<=page.viewportSize().height,'Registration controls must fit within the outer viewport');
   assert.match(await registration.locator('.mock-notice').textContent(),/開発中・モックアップのみ/);assert.equal(await registration.locator('#mazakOption').isVisible(),false);
   await registration.locator('#mazakDemo').click();assert.equal(await registration.locator('#mazakOption').isVisible(),true);
   await registration.locator('[name=customerMode][value=mazak]').check();await registration.locator('#mazakCompany').selectOption({label:'マザック現地拠点A（サンプル）'});
