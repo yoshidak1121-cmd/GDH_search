@@ -30,6 +30,8 @@ const root=path.resolve(__dirname,'..');
   const overview=await page.locator('.intro').boundingBox(),metadata=await page.locator('.header-summary').boundingBox();
   assert(metadata.x>overview.x+overview.width,'Source metadata is to the right of the page title');
   assert.match(await page.locator('.header-summary #totalCount').innerText(),/3.*件/);
+  for(const id of ['totalCount','loadTime','filename'])assert(await page.locator('.header-summary #'+id).isVisible(),id+' must be visible');
+  assert.match(await page.locator('.header-summary #loadTime').innerText(),/\d{4}\/\d{2}\/\d{2}.*\d{2}:\d{2}/);
   assert.equal(await page.locator('#sourceKind').innerText(),'PCのCSVファイル');
   assert.match(await page.locator('.source-note').innerText(),/更新日時は取得していません/);
   assert.equal(await page.locator('#sortOrder option:checked').textContent(),'読み込んだ順');
@@ -92,7 +94,11 @@ const root=path.resolve(__dirname,'..');
    });
   });
   for(const {selector,ratio} of contrast)assert(ratio>=4.5,selector+' contrast '+ratio);
-  if(process.env.TEST_SCREENSHOT)await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});
+  if(process.env.TEST_SCREENSHOT){
+   await page.locator('#searchBtn').click();
+   await page.locator('#searchEditor').waitFor({state:'hidden'});
+   await page.screenshot({path:process.env.TEST_SCREENSHOT,fullPage:true});
+  }
   assert.deepEqual(errors,[]);console.log('PASS: onboarding, source actions, disclosure/keyboard, bilingual metadata, reload rollback, mobile/zoom and key text contrast');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
