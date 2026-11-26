@@ -138,7 +138,7 @@ The BAT only prepares files. It does NOT install, register, or enable the extens
 5. 貼り付けた先が、末尾に「GDH_Search\Extension」と付くフォルダーであることを確認します。
 6. 右下の「フォルダーの選択」（表示によっては「フォルダーを選択」）をクリックします。
 7. 管理画面に「GDH 機械情報 拡張検索」が追加され、スイッチがオンになっていることを確認します。
-8. GDHの機械情報検索ページへ戻る → ページを再読み込み → 右下の「拡張検索」をクリックします。
+8. GDHの機械情報検索ページへ戻る → ページを再読み込み → 「拡張ツールを新しいタブで開く」をクリックします。
 
 First-time setup: exactly where to click
 1. Edge: top-right ... (Settings and more) > Extensions > Manage extensions.
@@ -151,7 +151,7 @@ First-time setup: exactly where to click
 5. Check that the destination ends in GDH_Search\Extension.
 6. Click Select Folder at the bottom right (the wording may vary).
 7. Confirm that GDH 機械情報 拡張検索 is listed and its switch is on.
-8. Return to the GDH machine information search page, reload it, then click the extension search button at the bottom right.
+8. Return to the GDH machine information search page, reload it, then click the Open in a new tab button.
 
 ### BAT実行後の詳しい設定 / Detailed steps after running the BAT
 
@@ -207,7 +207,7 @@ First-time setup: exactly where to click
 - 手順1で選んだブラウザーの、普段使うプロファイルでGDHにログインします。別のブラウザーや別のプロファイルには登録されません。
 - GDHの「機械情報検索」画面を開きます。
 - すでに開いていた場合も、画面上部の丸い矢印、またはCtrl+Rでページを再読み込みします。
-- GDHページ右下の「拡張検索」を押します。検索用の追加画面が開けば設定完了です。
+- GDHページ「拡張ツールを新しいタブで開く」を押します。検索用の追加画面が開けば設定完了です。
 - 「GDHからデータ取得」でGDHのデータを取得します。「CSVファイルを出力します。よろしいですか？」の確認では内容を確認して決定します。
 - PCに保存済みのCSVを使う場合は「PCのCSVファイルを読み込む」を押し、CSVを選びます。
 - 取得が終わったら条件を選び、「この条件で検索」を押します。
@@ -219,14 +219,14 @@ First-time setup: exactly where to click
 - 新しい版へ更新するときだけ、新しいZIPをすべて展開してInstall.batを実行します。
 - 同じブラウザーを選び、管理画面にある「GDH 機械情報 拡張検索」の再読み込みボタン（丸い矢印）を押します。
 - 初回と同じ配置先から登録済みなら、「展開して読み込み」で追加し直す必要はありません。
-- GDHのページも再読み込みしてから「拡張検索」を開いてください。読み込んでいたCSVや入力条件は再読み込みで失われるため、再取得してください。
+- GDHのページも再読み込みしてから「拡張ツールを新しいタブで開く」を押してください。拡張ツール自体を更新・再読み込みした場合はCSVを再取得してください。
 
 **うまくいかないとき**
 
 - 管理画面が開かない：ブラウザーのアドレス欄へEdgeは edge://extensions/、Chromeは chrome://extensions/ を入力します。
 - フォルダーが見つからない：BATの画面に「配置完了」と出ているか確認してください。エラーの場合は表示内容を確認します。
 - 「マニフェストが見つからない」などの表示：フォルダーの選択先が違う可能性があります。手順4のExtensionフォルダーを選び直します。
-- 右下にボタンがない：同じブラウザー／プロファイルで開いているか、拡張機能がオンか、GDHの機械情報検索画面かを確認し、GDHページを再読み込みします。
+- 起動ボタンがない：同じブラウザー／プロファイルで開いているか、拡張機能がオンか、GDHの機械情報検索画面かを確認し、GDHページを再読み込みします。
 - 会社の制限で実行・登録できない：設定を無理に変更せず、NC戦略 吉田へ表示内容と使用ブラウザーを連絡してください。
 
 Detailed steps after double-clicking Install.bat
@@ -266,7 +266,7 @@ After Step 6 and the final checks, return to the console and press Enter to disp
 
 Log in to GDH using the browser and profile you selected. Installation does not apply to other browsers or profiles.
 Open the GDH machine information search page. Reload it using the circular arrow button or Ctrl+R, even if it was already open.
-Click the extension search button at the bottom right of the GDH page. The added search screen should open.
+Click the Open in a new tab button of the GDH page. The added search screen should open.
 Choose Get data from GDH and accept the CSV export confirmation after checking it. Alternatively, choose Open CSV from this PC and select a saved CSV file.
 After loading, set your filters and click the search button. The Language selector at the top right switches the search screen between Japanese and English.
 
@@ -291,7 +291,7 @@ Blocked by company restrictions: do not force a settings change. Contact Yoshida
 次の項目を上から順に確認してください。
 □ 1. 拡張機能管理画面に「GDH 機械情報 拡張検索」があり、スイッチがオンになっている。
 □ 2. GDHを使うブラウザー・プロファイルに登録されている。
-□ 3. GDHの機械情報検索ページを再読み込みすると、右下に「拡張検索」が表示される。
+□ 3. GDHの機械情報検索ページを再読み込みすると、「拡張ツールを新しいタブで開く」が表示される。
 □ 4. 「拡張検索」を押すと検索画面が開き、閉じてからもう一度開ける。
 
 ここまで確認できれば、拡張機能の登録と画面表示の設定は完了です。
@@ -318,8 +318,8 @@ Final check: confirm that setup worked
 Check each item in order:
 [ ] 1. GDH 機械情報 拡張検索 is listed on the browser extension management page and its switch is on.
 [ ] 2. It is registered in the browser and profile you use for GDH.
-[ ] 3. Reloading the GDH machine information search page shows the extension search button at the bottom right.
-[ ] 4. The button opens the search screen; you can close it and open it again.
+[ ] 3. Reloading the GDH machine information search page shows the Open in a new tab button.
+[ ] 4. The button opens the tools in a new tab; clicking it again returns to the same tab.
 
 If items 1–4 pass, registration and screen setup are complete. Next, check basic operation with real data:
 
@@ -353,8 +353,8 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` を開くと確認が表示され、「はい」でホーム上に拡張検索を開きます。検索画面への移動はありません。取得ボタンから指定の機械情報検索画面（`ZGDS0130vBASE?getDataOnInit=false`）へ移動し、GDH画面のload完了・描画・CSVフォームの準備後にCSV出力を確認して取得・表示します。取得元の事前登録は不要です。権限・フォームを確認できない場合は停止します。
 
 1. GDHにログインし、**機械情報検索画面を開いて再読み込み**します。
-2. ページ右下の **「拡張検索」**をクリックすると、検索画面が開きます。
-3. ブラウザー右上の **拡張機能マーク（パズルの形）→ GDH 拡張検索 →「拡張検索を開く／閉じる」**からも開けます。
+2. GDH画面の **「拡張ツールを新しいタブで開く」**をクリックすると、検索画面が開きます。
+3. ブラウザー右上の **拡張機能マーク（パズルの形）→ GDH 拡張検索 →「新しいタブで開く」**からも開けます。
 4. **「GDHからデータ取得」**でGDHのCSVを取得するか、**「PCのCSVファイルを読み込む」**でPCに保存済みのCSVを選びます。
 
 ボタンが表示されない場合は、拡張機能が有効か確認し、GDHの機械情報検索画面を再読み込みしてください。対象のGDH画面以外では開けません。
