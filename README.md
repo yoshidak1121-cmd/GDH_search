@@ -99,7 +99,7 @@ GDH画面の「拡張ツールを新しいタブで開く」、または拡張�
 
 ### 導入支援BATを使う（Windows）
 
-[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/tag/v1.20.17)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
+[導入支援パッケージ](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest)の **GDH_Search_Setup.zip** を「すべて展開」し、**Install.bat** をダブルクリックします。Edge／Chromeを自動選択し、拡張機能を `%LOCALAPPDATA%\GDH_Search\Extension` に配置し、読み込み先のパスをコピーして拡張機能管理画面を開きます。
 
 自動更新ヘルパーが未登録の場合は、[最新版Setup ZIP](https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/GDH_Search_Setup.zip)を展開し、Install.batを実行して更新ヘルパーを登録します。開発者モードをオンにして本拡張機能を再読み込みし、GDHでF5してください。追加権限の確認が出る場合は内容を確認します。
 

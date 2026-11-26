@@ -39,7 +39,7 @@ for(const k of ['ncModel','config','seller','ncDate','maker'])autoField(k,autoKe
 for(const k of ['installCompany','installSite','installCountry','installPref','installCity'])autoField(k,s.installMode==='same',s.installMode==='same');
 $('installHistoryWrap').hidden=s.installMode!=='history';$('installSourceHint').hidden=s.installMode!=='same';
 autoField('serviceCenter',s.serviceMode==='auto',s.serviceMode==='auto');
-$('coverageNote').textContent=!s.installCountry?'設置国を選択してください。':!result.coverage?.service?'対応表に担当サービス拠点の記載がありません。「選択」で指定できます。':result.coverage.condition?'対応表の条件：'+result.coverage.condition:'対応表の記載：'+result.coverage.service;
+$('coverageNote').textContent=!s.installCountry?'設置国を選択してください。':result.coverage?.availability==='unavailable'?'対応表ではサービス対応不可（登録のみ）です。会社・サービス拠点一覧の条件・備考を確認してください。':!result.coverage?.service?'対応表に担当サービス拠点の記載がありません。「選択」で指定できます。':result.coverage.condition?'対応表の条件：'+result.coverage.condition:'対応表の記載：'+result.coverage.service;
 autoField('contractStart',s.startMode==='same',s.startMode==='same',s.startMode==='same'?'機械引渡日から自動入力':'開始日を入力してください。');
 $('startWarning').hidden=!result.warning;$('field-contractStart').classList.toggle('warning-field',result.warning);$('contractEnd').value='未算定';
 $('mazakOption').hidden=!result.isMazak;$('mazakCompanyWrap').hidden=s.customerMode!=='mazak';$('customerHistoryWrap').hidden=s.customerMode!=='history';$('customerInputWrap').hidden=s.customerMode!=='new';

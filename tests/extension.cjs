@@ -53,13 +53,13 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   await registration.locator('#maker').fill('Synthetic Maker');assert.equal(await registration.locator('#mazakOption').isVisible(),false);assert.equal(await registration.locator('[name=customerMode][value=maker]').isChecked(),true);
   await registration.locator('#shipCountry').selectOption('ID');assert.equal(await registration.locator('#serviceCenter').inputValue(),'MEIN');assert.equal(await registration.locator('#outsourcer').inputValue(),'MEIN');
   await registration.locator('#masterButton').click();await registration.locator('[data-service=MEIN]').click();assert.match(await registration.locator('#masterCount').textContent(),/MEIN：1件/);
+  await page.screenshot({path:'dist/usability-review-registration.png'});
   await registration.locator('#unavailableCountries').click();assert.match(await registration.locator('#masterCount').textContent(),/143件/);assert.equal(await registration.locator('#masterRows tr').count(),143);assert(!await registration.locator('#masterRows').textContent().then(x=>x.includes('南極')));
   await registration.locator('[data-service=all]').click();await registration.locator('#masterSort').selectOption('code');const ascending=await registration.locator('#masterRows tr td:nth-child(2)').allTextContents();await registration.locator('#masterDirection').click();const descending=await registration.locator('#masterRows tr td:nth-child(2)').allTextContents();assert.deepEqual(descending,[...ascending].reverse());
   await registration.locator('#masterSearch').fill('ZZZ-no-country');assert.match(await registration.locator('#masterCount').textContent(),/0件/);
   await registration.locator('[data-close=masterDialog]').click();await registration.locator('#saveDraft').click();assert.match(await registration.locator('#toast').textContent(),/ブラウザに保存/);
   await page.locator('[data-menu=search]').click();await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.locator('[data-menu=registration]').click();assert.equal(await registration.locator('#maker').inputValue(),'Synthetic Maker');assert.equal(posts.length,beforeMock);
   await page.locator('[data-menu=search]').click();
-  await page.screenshot({path:'dist/usability-review-registration.png'});
   console.log('PASS: registration mock, MAZAK condition, service filters and sorting');
   // Large CSV transfer uses bounded packets and keeps byte-for-byte contents.
   const columns=Array(33).fill('');columns[0]='SYNTHETIC-SCALE';columns[4]='M800V';columns[21]='架空'.repeat(45);
