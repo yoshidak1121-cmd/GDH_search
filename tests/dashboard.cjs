@@ -177,11 +177,11 @@ async function browserTests(){
   await p.locator('#salesClear').click();await salesTotal(5);assert.equal(await p.evaluate(()=>salesState.result.loaded),6);
   await salesUpload(csv(exportHeads,monthlyRows));await salesTotal(78);
   const periods=p.locator('#salesCharts [data-chart=month] .shipment-plot li span');
-  assert.deepEqual(await periods.allTextContents(),monthlyRows.reduce((values,row)=>{
-   const month=row[1].slice(0,7);
-   if(month>='2025-03'&&!values.includes(month))values.push(month);
-   return values;
-  },[]));
+  const displayedMonths=Array.from({length:10},(_,i)=>'2025-'+String(i+3).padStart(2,'0'));
+  assert.deepEqual(await periods.allTextContents(),displayedMonths);
+  const bars=p.locator('#salesCharts [data-chart=month] .shipment-plot i');
+  assert((await bars.first().boundingBox()).height<(await bars.last().boundingBox()).height,'Bar height reflects the record count');
+  if(process.env.CI)await p.locator('#salesCharts').screenshot({path:'dist/usability-review-shipments.png'});
   console.log('PASS export UI: renamed title/menu, split country options, immediate KPI/chart/list filtering, date range, deduplicated rows, reset, existing tabs/search/load and source details');
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   console.log('PASS UI: AC-02/07–14, draft/apply/drilldown, detail, tabs/pages, stale replies, load/retrieval rollback, ja/en, 320px, keyboard, escaped CSV, no HTTP');
