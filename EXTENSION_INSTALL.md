@@ -1,5 +1,8 @@
 # GDH Machine Search - Manual installation / 手動導入
 
+v1.21.0：GDH画面の「拡張ツールを新しいタブで開く」で起動します。「登録（モック）」は開発中・モックアップのみです。本番への登録・更新は行いません。
+
+
 Windows one-time setup: extract the latest Setup ZIP, run **Install.bat**, keep Developer mode enabled, reload the extension and press F5 on GDH. This registers the per-user native update helper. Later startup prompts need only **Yes**. **Updates and setup** provides Edge/Chrome instructions. No desktop files are created.
 
 Windows：今回だけ最新版Setup ZIPの **Install.bat** でヘルパー登録 → 開発者モードをオン → 拡張機能の ↻ → GDHでF5。次回からは起動時の確認で **はい** を選ぶと自動更新・再読み込みまで行います。**更新・設定** からブラウザー別の案内を確認できます。デスクトップへの配置はありません。
@@ -13,7 +16,7 @@ For guided file preparation, use `GDH_Search_Setup.zip` and read `START_HERE.txt
 2. Open `edge://extensions/` or `chrome://extensions/` in the browser/profile you use for GDH.
 3. Enable **Developer mode**, click **Load unpacked**, and select the folder containing `manifest.json`.
 4. Confirm that **GDH 機械情報 拡張検索** is enabled. Its registered name is Japanese.
-5. Reload the GDH machine information search page and click **Search** / **拡張検索** at the bottom right.
+5. Reload the GDH machine information search page and click **拡張ツールを新しいタブで開く** to open the tools in a new tab.
 6. Select English in the search screen. Use **Get data from GDH** or **Open CSV from this PC**, then **Search**.
 
 Updates: replace files in the same folder, click **Reload** for the extension, check the version,
@@ -42,7 +45,7 @@ Windows用の導入支援パッケージも提供します。`GDH_Search_Setup.z
 2. Edgeは `edge://extensions`、Chromeは `chrome://extensions` を開き、開発者モード（デベロッパーモード）を有効にします。
 3. 「展開して読み込み」または「パッケージ化されていない拡張機能を読み込む」で、`manifest.json` がある `GDH_Search_Extension` フォルダーを選択します。
 4. ログイン済みのGDH機械情報検索画面を再読み込みします。
-5. 右下の「拡張検索」を押します。ツールバーの拡張機能からも開閉できます。
+5. GDH画面の「拡張ツールを新しいタブで開く」を押します。拡張機能ポップアップの「新しいタブで開く」からも起動できます。
 6. 「GDHからデータ取得」を押し、「CSVファイルを出力します。よろしいですか？」を確認します。圧縮なしのCSVをダウンロードし、検索へ反映します。
 
 ZIPをそのまま選択するのではなく、展開したフォルダーを指定してください。アンインストールはブラウザの拡張機能管理画面から行えます。
@@ -70,17 +73,17 @@ GDHのCSVは「GDHからデータ取得」、このPCのCSVファイルは「PC�
 ## 動作範囲
 
 - 提供された `global-service.fa-cnc.idc-t.melco.co.jp` の `/cncservice/` 配下だけで動作します。
-- GDH本体へのファイル設置は不要です。閲覧中のページに拡張検索ボタンと検索画面を追加します。
+- GDH本体へのファイル設置は不要です。閲覧中のページに起動ボタンを追加し、検索画面を別タブで開きます。
 - 機械情報検索フォーム `#frmmain` がある画面で使います。GDH側の現在の検索条件でCSVを出力します。
 - ZIP選択は圧縮なしに固定し、CSV出力確認だけを表示します。
-- CSVはブラウザ内で処理します。localStorage、IndexedDB、外部サーバーへ保存しません。
-- 「閉じる」またはGDHページの再読み込みで取り込んだデータは破棄されます。ダウンロードしたCSVは通常のダウンロード先に残ります。
-- CSV取得中は閉じる操作を抑止します。取得失敗時は既存の検索データを維持します。
+- 検索CSVはブラウザ内で処理し、localStorage、IndexedDB、外部サーバーへ保存しません。登録モックの下書き・登録データは、このブラウザのlocalStorageに保存します。
+- 元のGDHページを再読み込みしても検索データは残ります。拡張ツールのタブを閉じるか再読み込みすると検索データは破棄されます。ダウンロードしたCSVは通常のダウンロード先に残ります。
+- CSV取得中は元のGDHタブと拡張ツールのタブを開いたままにしてください。取得失敗時は既存の検索データを維持します。
 - Webストアへの登録・署名配布は行っていません。導入先のブラウザへの読み込みと本番接続確認が必要です。
 
 ## 検証
 
-Edge 156の独立したテストプロファイルに実際のManifest V3パッケージを読み込み、模擬GDHページで取得・検索・ダウンロードを検証しました。192,836行・約59MBの架空CSVの受け渡しも確認しています。GDH本番に通信するテストは行っていません。
+テスト用Chromiumの独立したプロファイルに実際のManifest V3パッケージを読み込み、模擬GDHページで取得・検索・ダウンロードを検証しました。192,836行・50MB超の架空CSVの受け渡しも確認しています。GDH本番に通信するテストは行っていません。
 
 ## 開発者向けビルド
 

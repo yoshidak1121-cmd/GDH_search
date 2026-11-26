@@ -10,7 +10,7 @@ const path=require('node:path');
  try{
   const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/?embedded=1`);
-  const menu=page.locator('.menu-tree');assert.equal(await menu.locator('[data-menu]').count(),3);
+  const menu=page.locator('.menu-tree');assert.equal(await menu.locator('[data-menu]').count(),4);
   for(const width of [1440,390]){
    await page.setViewportSize({width,height:900});
    for(const view of ['stats','sales','quality','search']){

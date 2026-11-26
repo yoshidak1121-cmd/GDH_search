@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="G-DataHub NC・機械情報登録の開発中・モックアップのみアップ">
+<title>G-DataHub｜登録画面モックアップ</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="#">G-DataHub<span>GLOBAL CNC SERVICE</span></a><span class="top-current">登録</span><button class="quiet" id="masterButton">会社・サービス拠点一覧</button><span class="demo-badge">開発中・モックアップのみ</span></header>
+<div class="app-layout">
+<aside><div class="nav-label">登録する情報</div><nav id="sectionNav"></nav><div class="legend"><b>項目の見方</b><span><i class="swatch priority"></i>入力優先度：高</span><span><i class="swatch auto"></i>自動入力</span><span><i class="swatch"></i>入力・選択</span><small>黄色は入力の優先度です。</small></div><div class="aside-note">このモックでは、保存内容はこのブラウザ内に保持されます。</div></aside>
+<main>
+<div class="page-heading"><div><span class="eyebrow">REGISTRATION / MOCKUP</span><h1>NC・機械情報の登録</h1><p class="mock-notice" role="note"><strong>開発中・モックアップのみ</strong><br>画面・入力操作の確認用です。GDH本番への登録・更新は行いません。保存とCSV取込はこのブラウザ内のモックデータが対象です。</p></div><span id="saveState" class="save-state">未保存</span></div>
+<div class="demo-toolbar"><span>入力例を試す</span><button id="standardDemo">一般機</button><button id="mazakDemo">MAZAK機</button><button id="newDemo">新規・空欄</button><span class="demo-help">MTBを切り替えると、契約者の選択肢が変わります。</span></div>
+<div class="tabs" role="tablist" aria-label="登録方法"><button role="tab" aria-selected="true" id="manualTab" aria-controls="manualPanel">手入力</button><button role="tab" aria-selected="false" id="csvTab" aria-controls="csvPanel">CSV取込</button></div>
+<div id="manualPanel" role="tabpanel" aria-labelledby="manualTab"><form id="registrationForm" novalidate></form></div>
+<div id="csvPanel" role="tabpanel" aria-labelledby="csvTab" hidden>
+<section class="card"><div class="card-heading"><span class="section-letter">1</span><div><h2>CSVファイルを選択</h2><p>列の対応付けと差分を確認してから取り込みます。</p></div></div><div class="card-body"><div class="csv-actions"><button id="downloadTemplate">テンプレート</button><button id="downloadSample">サンプルCSV</button><button id="exportRecords">モック内データをCSV出力</button></div><div class="upload-area"><label for="csvFile">CSVを選択</label><input type="file" id="csvFile" accept=".csv,text/csv"><label for="encoding">文字コード</label><select id="encoding"><option value="utf-8">UTF-8</option><option value="shift_jis">Shift JIS</option></select></div><p class="hint">空欄・未指定の列では既存値を削除しません。モック内のデータを対象に照合します。</p><label class="checkline"><input type="checkbox" id="allowTemporaryCsv">NCシリアル不明の行を、仮番号で新規登録する</label><div id="csvMessage" role="status"></div></div></section>
+<section id="mappingCard" class="card" hidden><div class="card-heading"><span class="section-letter">2</span><h2>列の対応付け</h2></div><div class="card-body"><div id="columnMapping" class="mapping-grid"></div><button id="previewCsv" class="primary">照合して取込内容を確認</button></div></section>
+<section id="previewCard" class="card" hidden><div class="card-heading"><span class="section-letter">3</span><h2>取込内容の確認</h2></div><div class="card-body"><div id="csvSummary" class="summary-pills"></div><div class="table-wrap"><table><thead><tr><th>行</th><th>NCシリアル番号</th><th>判定</th><th>変更内容・確認事項</th></tr></thead><tbody id="csvPreviewBody"></tbody></table></div><label class="checkline"><input type="checkbox" id="confirmOverwrite">変更前・変更後を確認し、既存値の変更を適用する</label><label class="checkline"><input type="checkbox" id="validOnly">エラー行を除き、正常行のみ取り込む</label><div class="button-row"><button id="applyCsv" class="primary">モック内に取り込む</button><button id="csvResultDownload" hidden>結果CSVをダウンロード</button></div></div></section>
+</div>
+</main></div>
+<footer id="footerBar"><span id="footerNote">途中でも下書き保存できます</span><div><button id="discardChanges">保存時に戻す</button><button id="saveDraft">下書き保存（モック）</button><button id="reviewSave" class="primary">登録内容を確認</button></div></footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="reviewDialog"><div class="dialog-head"><h2>登録内容の確認</h2><button data-close="reviewDialog" aria-label="閉じる">×</button></div><div id="reviewContent"></div><div class="dialog-actions"><button data-close="reviewDialog">入力に戻る</button><button id="commitSave" class="primary">モック内に保存する</button></div></dialog>
+<dialog id="masterDialog"><div class="dialog-head"><h2>会社・サービス拠点一覧</h2><button id="unavailableCountries" aria-pressed="false">サービス対応不可の国</button><button data-close="masterDialog" aria-label="閉じる">×</button></div><div id="masterContent"></div></dialog>
+<datalist id="makers"><option value="サンプル工作機械"><option value="MAZAK"></datalist><datalist id="models"><option value="M800V"><option value="M80V"><option value="M700V"></datalist><datalist id="salesCompanies"><option value="当社関係会社A"><option value="当社関係会社B"></datalist><datalist id="companies"><option value="サンプル精密工業"><option value="サンプル製作所"><option value="サンプル工作機械"></datalist><datalist id="sites"><option value="第一工場"><option value="本社工場"><option value="第二工場"></datalist><datalist id="prefs"><option value="千葉県"><option value="東京都"><option value="大阪府"><option value="California"><option value="Bangkok"></datalist><datalist id="cities"><option value="船橋市"><option value="千葉市"><option value="港区"><option value="大阪市"><option value="Los Angeles"></datalist>
+<script src="coverage.js"></script><script src="model.js"></script><script src="app.js"></script>
+</body></html>

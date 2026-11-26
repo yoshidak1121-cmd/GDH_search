@@ -7,7 +7,7 @@ document.getElementById('popupLanguage').addEventListener('change',event=>{
  language=event.target.value;document.documentElement.lang=language;
  document.querySelector('h1').textContent=language==='en'?'GDH Search':'GDH 拡張検索';
  document.querySelector('h1+p').textContent=language==='en'?'Use this on the GDH home or machine search page.':'GDHのホームまたは機械情報検索画面で使用します。';
- document.getElementById('open').textContent=language==='en'?'Open / close search':'拡張検索を開く／閉じる';document.getElementById('status').textContent='';
+ document.getElementById('open').textContent=language==='en'?'Open tools in a new tab':'新しいタブで開く';document.getElementById('status').textContent='';
 });
 document.getElementById('open').addEventListener('click',async()=>{
  const status=document.getElementById('status');
