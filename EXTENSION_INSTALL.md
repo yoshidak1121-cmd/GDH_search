@@ -1,5 +1,8 @@
 # GDH Machine Search - Manual installation / 手動導入
 
+v1.21.0：GDH画面の「拡張ツールを新しいタブで開く」で起動します。「登録（モック）」は開発中・モックアップのみです。本番への登録・更新は行いません。
+
+
 Windows one-time setup: extract the latest Setup ZIP, run **Install.bat**, keep Developer mode enabled, reload the extension and press F5 on GDH. This registers the per-user native update helper. Later startup prompts need only **Yes**. **Updates and setup** provides Edge/Chrome instructions. No desktop files are created.
 
 Windows：今回だけ最新版Setup ZIPの **Install.bat** でヘルパー登録 → 開発者モードをオン → 拡張機能の ↻ → GDHでF5。次回からは起動時の確認で **はい** を選ぶと自動更新・再読み込みまで行います。**更新・設定** からブラウザー別の案内を確認できます。デスクトップへの配置はありません。

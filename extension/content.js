@@ -1,86 +1,72 @@
-/* Runs only on the supplied GDH host, in the extension's isolated world. */
+/* GDH stays the source of the current authenticated CSV form; the viewer is a separate tab. */
 (function(){
  'use strict';
  const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
  if(location.origin!==allowed||!location.pathname.startsWith('/cncservice/'))return;
- let panel=null,frame=null,channel=null,exportCsv=null,busy=false,closeButton=null,titleElement=null,uiLang='ja',autoFetch=false;
- const isHome=location.pathname==='/cncservice/home'||location.pathname==='/cncservice/home/';
- const extensionOrigin='chrome-extension://'+chrome.runtime.id;
+ const isHome=['/cncservice/home','/cncservice/home/'].includes(location.pathname);
+ let uiLang='ja',job=null,opening=false;
  function sourceForm(){const form=document.getElementById('frmmain');return form instanceof HTMLFormElement&&form.querySelector('[name="dataview_cd"]')?form:null;}
  function csvFormReady(){
   const form=sourceForm(),label=(document.title+' '+(document.querySelector('h1')?.textContent||'')).replace(/\s/g,'');
-  if(!form||!/機械情報検索|machineinformationsearch|machinesearch/i.test(label)||location.pathname!==window.GDH_CSV_SEARCH_PATH)return;
-  if(!['dataview_cd','iszip','pdf','downloadToken','form_submit'].every(name=>form.querySelector('[name="'+name+'"]')))return;
-  return true;
+  return !!(form&&/機械情報検索|machineinformationsearch|machinesearch/i.test(label)&&location.pathname===window.GDH_CSV_SEARCH_PATH&&['dataview_cd','iszip','pdf','downloadToken','form_submit'].every(name=>form.querySelector('[name="'+name+'"]')));
  }
- function close(){if(busy)return false;panel?.remove();panel=null;frame=null;channel=null;exportCsv=null;return true;}
- function setHostLanguage(language){
-  if(!['ja','en'].includes(language))return;uiLang=language;
-  if(titleElement)titleElement.textContent=uiLang==='en'?'GDH Search':'GDH 拡張ツール';
-  if(closeButton){closeButton.textContent=uiLang==='en'?'Close':'閉じる';closeButton.setAttribute('aria-label',uiLang==='en'?'Close search':'拡張ツールを閉じる');}
-  if(panel)panel.setAttribute('aria-label',uiLang==='en'?'GDH Search':'GDH 拡張ツール');
-  if(frame)frame.title=uiLang==='en'?'CNC Machine Viewer':'CNC機械情報ビューア';
-  const button=document.getElementById('gdh-search-extension-button');if(button)button.textContent=uiLang==='en'?'✦ Tools →':'✦ 拡張ツール →';
+ function clear(){if(job)clearTimeout(job.timer);job=null;}
+ async function open(language){
+  if(['ja','en'].includes(language))uiLang=language;
+  if(opening)return {ok:false,error:'画面を開いています。'};
+  if(!sourceForm()&&!isHome)return {ok:false,error:'GDHのホームまたは機械情報検索画面で使用してください。'};
+  opening=true;
+  try{return await chrome.runtime.sendMessage({type:'GDH_VIEWER_OPEN',language:uiLang});}
+  catch{return {ok:false,error:'拡張ツールを開けませんでした。GDH画面を再読み込みしてください。'};}
+  finally{opening=false;}
  }
- function toggle(language){if(['ja','en'].includes(language))setHostLanguage(language);
-  if(panel)return close()?{ok:true}:{ok:false,error:uiLang==='en'?'CSV retrieval is in progress. Close after it finishes.':'CSV取得中です。完了後に閉じてください。'};
-  const form=sourceForm();if(!form&&!isHome)return {ok:false,error:uiLang==='en'?'Use this on the GDH machine search page.':'GDHの機械情報検索画面で使用してください。'};
-  const confirmExport=()=>window.confirm(uiLang==='en'?'Export a CSV file?':'CSVファイルを出力します。よろしいですか？');
-  const directExport=form?window.createGdhCsvExportAdapter({form,confirmExport}):null;
-  const navigateExport=window.createGdhHomeCsvExportAdapter({language:()=>uiLang});let resumeOnce=autoFetch;
-  exportCsv=()=>{if(resumeOnce){resumeOnce=false;return directExport();}return isHome||location.pathname===window.GDH_CSV_SEARCH_PATH?navigateExport():directExport();};channel=crypto.randomUUID();
-  panel=document.createElement('div');panel.id='gdh-search-extension-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','GDH 拡張ツール');
-  panel.style.cssText='position:fixed;inset:12px;z-index:2147483646;background:#fff;border:1px solid #cbd6e5;border-radius:10px;box-shadow:0 8px 40px #0005;display:flex;flex-direction:column;overflow:hidden;';
-  const bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#14243c;color:white;font:14px sans-serif;';
-  const title=document.createElement('span');titleElement=title;title.textContent='GDH 拡張ツール';closeButton=document.createElement('button');closeButton.textContent='閉じる';closeButton.setAttribute('aria-label','拡張ツールを閉じる');closeButton.style.cssText='padding:6px 14px;cursor:pointer;';closeButton.addEventListener('click',close);bar.append(title,closeButton);
-  frame=document.createElement('iframe');frame.title='CNC機械情報ビューア';frame.style.cssText='width:100%;flex:1;min-height:0;border:0;background:white;';
-  const url=new URL(chrome.runtime.getURL('viewer.html'));url.searchParams.set('lang',uiLang);url.hash=new URLSearchParams({channel,hostOrigin:location.origin,home:isHome?'1':'0',autoFetch:autoFetch?'1':'0'});frame.src=url.href;
-  panel.append(bar,frame);document.body.appendChild(panel);setHostLanguage(uiLang);return {ok:true};
+ function start(message){
+  if(message.confirmed!==true||typeof message.requestId!=='string'||message.requestId.length>100)return {ok:false,code:'INVALID_REQUEST'};
+  if(job?.status==='reading')return {ok:false,code:'BUSY'};
+  if(!message.resume&&(isHome||location.pathname===window.GDH_CSV_SEARCH_PATH))return {ok:true,navigate:true};
+  const form=sourceForm();if(!form||message.resume&&!csvFormReady())return {ok:false,code:'FORM_UNAVAILABLE'};
+  clear();const current={id:message.requestId,status:'reading',blob:null,error:null,offset:0};job=current;
+  current.timer=setTimeout(()=>{if(job===current)clear();},180000);
+  // The viewer has already shown the same CSV confirmation before requesting this export.
+  const exporter=window.createGdhCsvExportAdapter({form,confirmExport:()=>true});
+  exporter().then(result=>{if(job!==current)return;current.blob=result.blob;current.fileName=result.fileName;current.status='ready';},error=>{if(job!==current)return;current.error=String(error?.message||'GDHからの取得に失敗しました。');current.status='error';});
+  return {ok:true};
  }
- window.addEventListener('message',async event=>{
-  const m=event.data;
-  if(!frame||event.source!==frame.contentWindow||event.origin!==extensionOrigin||m?.channel!==channel)return;
-  if(m.type==='GDH_SEARCH_LANGUAGE'){setHostLanguage(m.language);return;}
-  if(m.type==='GDH_SEARCH_CLOSE'){close();return;}
-  if(m.type!=='GDH_SEARCH_EXPORT'||typeof m.requestId!=='string'||m.requestId.length>100)return;
-  const target=frame.contentWindow,currentChannel=channel;
-  const send=data=>target.postMessage({type:'GDH_SEARCH_RESULT',channel:currentChannel,requestId:m.requestId,...data},extensionOrigin,data.buffer?[data.buffer]:[]);
-  if(busy){send({error:'CSV取得中です。完了までお待ちください。'});return;}
-  busy=true;closeButton.disabled=true;
-  try{const result=await exportCsv();if(result?.navigating)return;const buffer=await result.blob.arrayBuffer();send({buffer,fileName:result.fileName});}
-  catch(error){send({error:error?.message||'GDHからの取得に失敗しました。'});}
-  finally{busy=false;if(closeButton)closeButton.disabled=false;}
+ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
+  if(sender.id!==chrome.runtime.id||sender.tab)return;
+  if(message?.type==='GDH_SEARCH_TOGGLE'){open(message.language).then(respond);return true;}
+  if(!['GDH_TAB_EXPORT_START','GDH_TAB_EXPORT_STATUS','GDH_TAB_EXPORT_CHUNK','GDH_TAB_EXPORT_CLEAR'].includes(message?.type))return;
+  (async()=>{
+   if(message.type==='GDH_TAB_EXPORT_START')return start(message);
+   if(!job||message.requestId!==job.id)return {ok:false,code:'REQUEST_LOST'};
+   if(message.type==='GDH_TAB_EXPORT_CLEAR'){clear();return {ok:true};}
+   if(message.type==='GDH_TAB_EXPORT_STATUS')return {ok:true,status:job.status,error:job.error,size:job.blob?.size,fileName:job.fileName};
+   if(job.status!=='ready'||message.offset!==job.offset)return {ok:false,code:'INVALID_CHUNK'};
+   const current=job,bytes=new Uint8Array(await current.blob.slice(current.offset,current.offset+512*1024).arrayBuffer());
+   if(job!==current)return {ok:false,code:'REQUEST_LOST'};
+   let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+   current.offset+=bytes.length;return {ok:true,data:btoa(binary),nextOffset:current.offset};
+  })().then(respond,error=>respond({ok:false,code:'EXPORT_FAILED',error:String(error.message)}));return true;
  });
- chrome.runtime.onMessage.addListener((message,_sender,respond)=>{if(message?.type==='GDH_SEARCH_TOGGLE'){try{respond(toggle(message.language));}catch(error){respond({ok:false,error:error.message});}}});
- document.addEventListener('keydown',event=>{if(event.key==='Escape'&&panel)close();});
  function addButton(){
-  const form=sourceForm();if(!form&&!isHome)return;if(document.getElementById('gdh-search-extension-button'))return;
-  const toolbar=document.createElement('div');toolbar.id='gdh-search-extension-toolbar';toolbar.style.cssText='display:flex;justify-content:flex-start;clear:both;position:relative;box-sizing:border-box;width:100%;padding:8px 12px;';
-  const button=document.createElement('button');button.id='gdh-search-extension-button';button.type='button';button.textContent='✦ 拡張ツール →';button.style.cssText='position:relative;flex:0 1 auto;white-space:normal;padding:12px 20px;border:0;border-radius:8px;background:linear-gradient(135deg,#2586f5,#1454c4);color:white;font:700 14px sans-serif;box-shadow:0 3px 14px #0003;cursor:pointer;';button.addEventListener('click',toggle);const style=document.createElement('style');style.textContent='#gdh-search-extension-button{transition:filter .15s,transform .15s;max-width:calc(100vw - 36px)}#gdh-search-extension-button:hover{filter:brightness(1.12);transform:translateY(-2px)}#gdh-search-extension-button:focus-visible{outline:3px solid #75baff;outline-offset:3px}@media(prefers-reduced-motion:reduce){#gdh-search-extension-button{transition:none}#gdh-search-extension-button:hover{transform:none}}';document.head.appendChild(style);toolbar.appendChild(button);if(form)form.before(toolbar);else document.body.prepend(toolbar);
+  const form=sourceForm();if(!form&&!isHome||document.getElementById('gdh-search-extension-button'))return;
+  const toolbar=document.createElement('div');toolbar.id='gdh-search-extension-toolbar';toolbar.style.cssText='display:flex;clear:both;padding:8px 12px;';
+  const button=document.createElement('button');button.id='gdh-search-extension-button';button.type='button';button.textContent='✦ 拡張ツールを新しいタブで開く ↗';button.style.cssText='max-width:100%;padding:12px 20px;border:0;border-radius:8px;background:#1768dc;color:white;font:700 14px sans-serif;cursor:pointer;';
+  const status=document.createElement('span');status.setAttribute('role','status');
+  button.addEventListener('click',async()=>{const result=await open();status.textContent=result?.ok?'':result?.error||'画面を開けませんでした。再度お試しください。';});
+  toolbar.append(button,status);if(form)form.before(toolbar);else document.body.prepend(toolbar);
  }
  addButton();
  (async()=>{
-  let loaded=document.readyState==='complete';
-  if(!loaded)loaded=await new Promise(resolve=>{
-   const done=()=>{clearTimeout(timer);resolve(true);};
-   const timer=setTimeout(()=>{window.removeEventListener('load',done);resolve(false);},30000);
-   window.addEventListener('load',done,{once:true});
+  if(document.readyState!=='complete')await new Promise(resolve=>{const timer=setTimeout(resolve,30000);window.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});});
+  let ready=document.readyState==='complete'&&csvFormReady();
+  if(!ready&&location.pathname===window.GDH_CSV_SEARCH_PATH)ready=await new Promise(resolve=>{
+   const timer=setTimeout(()=>{observer.disconnect();resolve(false);},10000);
+   const observer=new MutationObserver(()=>{if(csvFormReady()){clearTimeout(timer);observer.disconnect();resolve(true);}});observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   });
-  let ready=loaded&&!!csvFormReady();
-  if(loaded&&!ready&&location.pathname===window.GDH_CSV_SEARCH_PATH){
-   ready=await new Promise(resolve=>{
-    const timer=setTimeout(()=>{observer.disconnect();resolve(false);},10000);
-    const observer=new MutationObserver(()=>{if(csvFormReady()){clearTimeout(timer);observer.disconnect();resolve(true);}});
-    observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});
-   });
-  }
   if(ready)await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const result=await chrome.runtime.sendMessage({type:'GDH_CSV_NAVIGATION_RESUME',ready});
-  if(result?.start){autoFetch=true;toggle(result.language);autoFetch=false;}
-  else if(result?.ok===false&&result.code!=='BUSY'){
-   const notice=document.createElement('p');notice.setAttribute('role','alert');notice.textContent='CSV自動取得を停止しました。ログイン状態と機械情報検索画面を確認し、取得ボタンからやり直してください。';document.body.prepend(notice);
-  }
+  await chrome.runtime.sendMessage({type:'GDH_TAB_SOURCE_READY',ready});
  })().catch(()=>{});
- if(isHome&&window.confirm(uiLang==='en'?'Open GDH Search?':'拡張検索を開きますか？'))toggle();
+ // Opening the viewer is always an explicit click, including on the GDH home page.
  const observer=new MutationObserver(addButton);observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>observer.disconnect(),15000);
 })();

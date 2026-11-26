@@ -25,8 +25,8 @@ const extension=path.resolve('dist/GDH_Search_Extension'),manifestFile=path.join
   assert.equal(await developerMode.evaluate(element=>element.checked),true);
   const cdp=await context.browser().newBrowserCDPSession();const registered=await cdp.send('Extensions.loadUnpacked',{path:extension});
   const host=await context.newPage();await host.goto(origin+'/cncservice/synthetic-update');
-  await host.locator('#gdh-search-extension-button').click();
-  const frame=host.frameLocator('#gdh-search-extension-panel iframe');
+  const viewerPromise=context.waitForEvent('page');await host.locator('#gdh-search-extension-button').click();
+  const frame=await viewerPromise;await frame.waitForLoadState();
   await frame.locator('.gdh-update-check').filter({hasText:'HTTP 403'}).waitFor();
   assert.equal(await frame.locator('.gdh-update-banner').count(),0);
   await frame.locator('body').evaluate(()=>chrome.storage.local.set({gdhReleaseInfo:{checkedAt:Date.now(),version:chrome.runtime.getManifest().version}}));

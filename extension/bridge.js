@@ -1,36 +1,35 @@
-/* Extension viewer <-> isolated content script; CSV bytes never use runtime messaging. */
+/* Small bounded messages carry CSV chunks only inside this installed extension. */
 'use strict';
 {
- const params=new URLSearchParams(location.hash.slice(1));
- const channel=params.get('channel'), hostOrigin=params.get('hostOrigin');
- const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
- const pending=new Map();
- if(channel && hostOrigin===allowed && window.parent!==window){
-  if(params.get('home')==='1'){
-   const note=document.createElement('p');note.id='gdh-home-csv-note';note.setAttribute('role','status');
-   const translate=()=>{note.textContent=document.documentElement.lang==='en'?'Opens the GDH machine search page. Confirm CSV export there to load the data.':'機械情報検索画面へ移動します。CSV出力確認で「決定」を選ぶと、この画面にデータを読み込みます。';};
-   document.getElementById('fetchGuidance')?.replaceWith(note);translate();window.addEventListener('gdh-language-changed',translate);
-  }
-
-  if(params.get('autoFetch')==='1')window.addEventListener('load',()=>document.getElementById('fetchBtn')?.click(),{once:true});
-  window.GDH_CSV_EXPORT_ADAPTER=()=>new Promise((resolve,reject)=>{
-   const requestId=crypto.randomUUID();
-   const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('GDHとの接続がタイムアウトしました。'));},125000);
-   pending.set(requestId,{resolve,reject,timer});
-   window.parent.postMessage({type:'GDH_SEARCH_EXPORT',channel,requestId},hostOrigin);
-  });
-  window.addEventListener('message',event=>{
-   const m=event.data;
-   if(event.source!==window.parent||event.origin!==hostOrigin||m?.channel!==channel)return;
-   if(m.type==='GDH_SEARCH_LANGUAGE'&&['ja','en'].includes(m.language)){window.setUiLanguage?.(m.language);return;}
-   if(m.type!=='GDH_SEARCH_RESULT')return;
-   const request=pending.get(m.requestId);if(!request)return;
-   clearTimeout(request.timer);pending.delete(m.requestId);
-   if(m.error)request.reject(Error(String(m.error)));
-   else if(m.buffer instanceof ArrayBuffer)request.resolve({blob:new Blob([m.buffer],{type:'text/csv'}),fileName:m.fileName||'GDH_machine_export.csv'});
-   else request.reject(Error('GDHからCSVデータを受け取れませんでした。'));
-  });
-  window.addEventListener('gdh-language-changed',event=>{if(['ja','en'].includes(event.detail))window.parent.postMessage({type:'GDH_SEARCH_LANGUAGE',channel,language:event.detail},hostOrigin);});
-  window.addEventListener('keydown',event=>{if(event.key==='Escape')window.parent.postMessage({type:'GDH_SEARCH_CLOSE',channel},hostOrigin);});
- }
+ const tr=(ja,en)=>document.documentElement.lang==='en'?en:ja;
+ const send=message=>chrome.runtime.sendMessage(message);
+ const failure=result=>Error(result?.error||tr('元のGDH画面との接続を確認してください。GDH画面を開き直し、拡張ツールのボタンから起動してください。','Check the original GDH tab. Reopen GDH and launch the tools from its button.')+' ('+(result?.code||'SOURCE_UNAVAILABLE')+')');
+ let busy=false;
+ window.GDH_CSV_EXPORT_ADAPTER=async()=>{
+  if(busy)throw Error(tr('CSV取得中です。','CSV retrieval is in progress.'));
+  if(!window.confirm(tr('CSVファイルを出力します。よろしいですか？','Export a CSV file?')))throw Error(tr('CSV出力を取り消しました。','CSV export cancelled.'));
+  busy=true;let started=false;
+  try{
+   const start=await send({type:'GDH_VIEWER_EXPORT_START',confirmed:true,language:document.documentElement.lang});
+   if(!start?.ok)throw failure(start);started=true;
+   const deadline=Date.now()+180000;let status;
+   do{
+    if(Date.now()>deadline)throw Error(tr('GDHとの接続がタイムアウトしました。','GDH connection timed out.'));
+    status=await send({type:'GDH_VIEWER_EXPORT_STATUS'});if(!status?.ok)throw failure(status);
+    if(status.status==='error')throw failure(status);
+    if(status.status!=='ready')await new Promise(resolve=>setTimeout(resolve,250));
+   }while(status.status!=='ready');
+   if(!Number.isSafeInteger(status.size)||status.size<=0)throw Error('INVALID_CSV_SIZE');
+   const chunks=[];let offset=0;
+   while(offset<status.size){
+    if(Date.now()>deadline)throw Error('CSV_TRANSFER_TIMEOUT');
+    const chunk=await send({type:'GDH_VIEWER_EXPORT_CHUNK',offset});if(!chunk?.ok)throw failure(chunk);
+    if(typeof chunk.data!=='string'||chunk.data.length>710000)throw Error('INVALID_CHUNK');
+    const binary=atob(chunk.data),bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+    if(!bytes.length||chunk.nextOffset!==offset+bytes.length||chunk.nextOffset>status.size)throw Error('INVALID_CHUNK');
+    chunks.push(bytes);offset=chunk.nextOffset;
+   }
+   return {blob:new Blob(chunks,{type:'text/csv'}),fileName:status.fileName||'GDH_machine_export.csv'};
+  }finally{if(started)await send({type:'GDH_VIEWER_EXPORT_END'}).catch(()=>{});busy=false;}
+ };
 }

@@ -29,6 +29,7 @@
    yes.disabled=true;
    try{
     let tab=await chrome.tabs.getCurrent();if(!tab)[tab]=await chrome.tabs.query({active:true,currentWindow:true});
+    if(location.pathname==='/viewer.html'){const source=await chrome.runtime.sendMessage({type:'GDH_VIEWER_CONTEXT'});tab=source?.ok?{id:source.sourceTabId}:null;}
     const result=await chrome.runtime.sendMessage({type:'GDH_UPDATE_START',confirmed:true,version:latest,language:document.documentElement.lang==='en'?'en':'ja',tabId:tab?.id});
     if(!result?.ok){text.textContent=tr('取得・点検中は更新できません。完了後にお試しください。','Finish the current retrieval before updating.');yes.disabled=false;}
    }catch{text.textContent=tr('更新案内を開き直してください。','Reopen the update guide.');yes.disabled=false;}
