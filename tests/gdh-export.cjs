@@ -43,6 +43,7 @@ const root=path.resolve(__dirname,'..');
  assert.equal(r.fields.get('dataview_cd'),'synthetic-view');assert.equal(r.fields.get('iszip'),'false');assert.equal(r.fields.get('pdf'),'false');assert.match(r.fields.get('downloadToken'),/^\d+$/);
  assert.deepEqual(await page.evaluate(()=>['iszip','pdf','downloadToken'].map(n=>document.getElementById('frmmain').elements[n].value)),['original','original','original']);
  assert.equal(await page.evaluate(()=>lastPrompt),'CSVファイルを出力します。よろしいですか？');
+ await frame.locator('#toggleLoad').click();
  for(const mode of ['html','zip','empty','forbidden','redirect']){
   await page.evaluate(mode=>document.getElementById('frmmain').elements.mockMode.value=mode,mode);
   await frame.locator('#fetchBtn').click();await frame.locator('#fetchStatus.err').waitFor();assert.equal(await frame.locator('#resultTitle').textContent(),'3件');

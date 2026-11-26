@@ -17,10 +17,10 @@ for(let i=0;i<fields.length;i++){
  const card=page.locator('#referenceFields .facet-card[data-field="'+fields[i]+'"]');const input=card.locator('input[type=search]');await input.fill(values[i]);
  if(await input.getAttribute('role')==='combobox')await card.getByRole('option',{name:values[i]+'（1件）',exact:true}).click();
  await page.locator('#searchBtn').click();await page.waitForFunction(()=>document.querySelector('#resultTitle').textContent==='1件');assert.match(await page.locator('#resultsBody').innerText(),/NC0/);
- await page.locator('#resetBtn').click();await page.waitForFunction(()=>document.querySelector('#resultTitle').textContent==='3件');await page.locator('#advancedToggle').check();
+ await page.locator('#toggleFilters').click();await page.locator('#resetBtn').click();await page.waitForFunction(()=>document.querySelector('#resultTitle').textContent==='3件');await page.locator('#advancedToggle').check();
 }
 await page.locator('#referenceFields .facet-card[data-field="サービス拠点"] input[type=search]').fill('SITE-A');await page.getByRole('option',{name:'SITE-A（1件）',exact:true}).click();await page.locator('.facet-card[data-field="NCシリアル番号"] input[type=search]').fill('NC1');await page.locator('#searchBtn').click();await page.waitForFunction(()=>document.querySelector('#resultTitle').textContent==='0件');
-await page.locator('#resetBtn').click();await page.locator('#dashboardTab').evaluate(el=>el.click());await page.locator('#qualityTab').evaluate(el=>el.click());await page.waitForFunction(()=>!dashboardState.busy);
+await page.locator('#toggleFilters').click();await page.locator('#resetBtn').click();await page.locator('#dashboardTab').evaluate(el=>el.click());await page.locator('#qualityTab').evaluate(el=>el.click());await page.waitForFunction(()=>!dashboardState.busy);
 assert.equal(await page.locator('#blankRates tbody tr').count(),33);
 const row=name=>page.locator('#blankRates tbody tr').filter({has:page.locator('td:first-child',{hasText:name})});
 assert.match(await row('NCシステム型名').innerText(),/1 \/ 3.*33\.3%/);assert.match(await row('工作機械モデル番号').innerText(),/2 \/ 3.*66\.7%/);assert.match(await row('NCシリアル番号').innerText(),/0 \/ 3.*0\.0%/);
