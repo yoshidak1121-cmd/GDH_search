@@ -8,7 +8,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
  try{
   const fixture=fs.readFileSync(path.join(root,'tests/synthetic.csv'));let mode='csv',loads=0,largeFixture;const posts=[],blocked=[],errors=[];
   const englishFixture=Buffer.from(require('./english-headers.json').join(',')+'\n'+fixture.toString('utf8').trimEnd().split(/\r?\n/).slice(1).join('\n'));
-  const hostHtml=`<!doctype html><html><head><title>機械情報 検索</title><base href="${origin}/cncservice/"></head><body><h1>機械情報 検索</h1><form id="frmmain"><input name="dataview_cd" value="synthetic-view"><input name="iszip" value="original"><input name="pdf" value="original"><input name="downloadToken" value="original"><input name="form_submit" value="true"><input name="keyword" value="first"><input name="keyword" value="second"></form></body></html>`;
+  const hostHtml=`<!doctype html><html><head><title>機械情報 検索</title><base href="${origin}/cncservice/"></head><body><h1>機械情報 検索</h1><form id="frmmain" method="post"><input name="dataview_cd" value="synthetic-view"><input name="iszip" value="original"><input name="pdf" value="original"><input name="downloadToken" value="original"><input name="form_submit" value="true"><input name="keyword" value="first"><input name="keyword" value="second"></form></body></html>`;
   await context.route(/^https?:/,async route=>{
    const req=route.request(),url=new URL(req.url());
    if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
@@ -32,7 +32,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   const pageCount=context.pages().length;await source.locator('#gdh-search-extension-button').click();assert.equal(context.pages().length,pageCount);
   // Cancellation does not navigate or post, and loaded CSV stays usable.
   accept=false;await page.locator('#fetchBtn').click();await page.locator('#fetchStatus.err').waitFor();assert.equal(posts.length,0);assert.equal(loads,0);accept=true;
-  let downloadPromise=page.waitForEvent('download');await page.locator('#fetchBtn').click();let download=await downloadPromise;
+  let downloadPromise=page.waitForEvent('download');await page.locator('#fetchBtn').click();let download=await downloadPromise.catch(async error=>{console.error('CSV status:',await page.locator('#fetchStatus').textContent());throw error;});
   assert.deepEqual(fs.readFileSync(await download.path()),fixture);await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();assert.equal(loads,1);assert.equal(posts.length,1);
   assert.equal(posts[0].method,'POST');assert.equal(posts[0].fields.get('iszip'),'false');assert.deepEqual(posts[0].fields.getAll('keyword'),['first','second']);
   await source.reload();await source.locator('#gdh-search-extension-button').waitFor();assert.equal(posts.length,1);assert.match(await page.locator('#resultTitle').textContent(),/3件/);
@@ -43,6 +43,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   const exported=page.waitForEvent('download');await page.locator('#exportResults').click();assert.ok(fs.readFileSync(await(await exported).path(),'utf8').startsWith('\ufeff'+require('./english-headers.json').map(h=>'"'+h+'"').join(',')));
   await page.locator('[data-menu=dashboard]').click();await page.locator('#dashBody tr[data-dashboard-index]').first().waitFor();assert.equal(await page.locator('#dashBody tr[data-dashboard-index]').count(),3);
   await page.locator('[data-menu=search]').click();await page.locator('#languageSelect').selectOption('en');assert.match(await page.locator('#fetchBtn').textContent(),/Get data from GDH/);await page.locator('#languageSelect').selectOption('ja');
+  console.log('PASS: separate tab, source navigation, CSV retry and dashboard');
   // Registration is isolated, packaged and has no server write path.
   const beforeMock=posts.length;await page.locator('[data-menu=registration]').click();await page.locator('#registrationView').waitFor();
   const registration=page.frameLocator('#registrationFrame');await registration.locator('#maker').waitFor();
@@ -58,6 +59,8 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   await registration.locator('[data-close=masterDialog]').click();await registration.locator('#saveDraft').click();assert.match(await registration.locator('#toast').textContent(),/ブラウザに保存/);
   await page.locator('[data-menu=search]').click();await page.locator('#resultTitle').filter({hasText:'3件'}).waitFor();await page.locator('[data-menu=registration]').click();assert.equal(await registration.locator('#maker').inputValue(),'Synthetic Maker');assert.equal(posts.length,beforeMock);
   await page.locator('[data-menu=search]').click();
+  await page.screenshot({path:'dist/usability-review-registration.png'});
+  console.log('PASS: registration mock, MAZAK condition, service filters and sorting');
   // Large CSV transfer uses bounded packets and keeps byte-for-byte contents.
   const columns=Array(33).fill('');columns[0]='SYNTHETIC-SCALE';columns[4]='M800V';columns[21]='架空'.repeat(45);
   largeFixture=Buffer.from(fixture.toString('utf8').split(/\r?\n/)[0]+'\n'+(columns.join(',')+'\n').repeat(192836));assert(largeFixture.length>50*1024*1024);mode='large';
