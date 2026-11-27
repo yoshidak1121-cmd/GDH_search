@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GDH 機械情報 拡張検索",
-  "version": "1.21.2",
+  "version": "1.21.3",
   "description": "GDHの機械情報CSVを取り込み、AND・ORの複合条件で検索します。",
   "permissions": [
     "storage",
@@ -15,9 +15,11 @@
   "content_scripts": [
     {
       "matches": [
-        "https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*"
+        "https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*",
+        "https://global-service-dev.fa-cnc.idc-t.melco.co.jp/cncservice/*"
       ],
       "js": [
+        "search-origins.js",
         "gdh-export.js",
         "home-csv.js",
         "content.js"
@@ -38,7 +40,8 @@
         "update.css"
       ],
       "matches": [
-        "https://global-service.fa-cnc.idc-t.melco.co.jp/*"
+        "https://global-service.fa-cnc.idc-t.melco.co.jp/*",
+        "https://global-service-dev.fa-cnc.idc-t.melco.co.jp/*"
       ]
     }
   ],
@@ -47,6 +50,7 @@
   },
   "host_permissions": [
     "https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/*",
+    "https://global-service-dev.fa-cnc.idc-t.melco.co.jp/cncservice/*",
     "https://github.com/yoshidak1121-cmd/GDH_search/releases/*",
     "https://release-assets.githubusercontent.com/*"
   ],
