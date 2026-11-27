@@ -1,8 +1,7 @@
 /* GDH stays the source of the current authenticated CSV form; the viewer is a separate tab. */
 (function(){
  'use strict';
- const allowed='https://global-service.fa-cnc.idc-t.melco.co.jp';
- if(location.origin!==allowed||!location.pathname.startsWith('/cncservice/'))return;
+ if(!GDH_SEARCH_ORIGINS.has(location.origin)||!location.pathname.startsWith('/cncservice/'))return;
  const isHome=['/cncservice/home','/cncservice/home/'].includes(location.pathname);
  let uiLang='ja',job=null,opening=false;
  function sourceForm(){const form=document.getElementById('frmmain');return form instanceof HTMLFormElement&&form.querySelector('[name="dataview_cd"]')?form:null;}
@@ -22,6 +21,7 @@
  }
  function start(message){
   if(message.confirmed!==true||typeof message.requestId!=='string'||message.requestId.length>100)return {ok:false,code:'INVALID_REQUEST'};
+  if(message.origin!==location.origin)return {ok:false,code:'SOURCE_UNAVAILABLE'};
   if(job?.status==='reading')return {ok:false,code:'BUSY'};
   if(!message.resume&&(isHome||location.pathname===window.GDH_CSV_SEARCH_PATH))return {ok:true,navigate:true};
   const form=sourceForm();if(!form||message.resume&&!csvFormReady())return {ok:false,code:'FORM_UNAVAILABLE'};

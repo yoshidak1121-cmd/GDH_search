@@ -1,8 +1,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),extensionPath=path.join(root,'dist/GDH_Search_Extension');
-const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservice/viewcreator/dataview/list/ZGDS0130vBASE';
+const origin=process.env.TEST_GDH_ENV==='dev'?'https://global-service-dev.fa-cnc.idc-t.melco.co.jp':'https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservice/viewcreator/dataview/list/ZGDS0130vBASE';
 (async()=>{
+ const otherOrigin=origin.includes('global-service-dev.')?origin.replace('global-service-dev.','global-service.'):origin.replace('global-service.','global-service-dev.');
  const context=await chromium.launchPersistentContext('',{channel:process.env.TEST_EXTENSION_CHANNEL||'chromium',headless:true,...(process.env.TEST_BROWSER_EXECUTABLE?{executablePath:process.env.TEST_BROWSER_EXECUTABLE}:{}),args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  context.setDefaultTimeout(15000);
  try{
@@ -12,7 +13,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   await context.route(/^https?:/,async route=>{
    const req=route.request(),url=new URL(req.url());
    if(url.href==='https://github.com/yoshidak1121-cmd/GDH_search/releases/latest/download/gdh-release.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({tag_name:'v0.0.0',draft:false,prerelease:false,assets:[]})});
-   if(url.origin===origin&&url.pathname==='/cncservice/home')return route.fulfill({contentType:'text/html',body:'<!doctype html><h1>GDH home fixture</h1>'});
+   if([origin,otherOrigin].includes(url.origin)&&url.pathname==='/cncservice/home')return route.fulfill({contentType:'text/html',body:'<!doctype html><h1>GDH home fixture</h1>'});
    if(url.origin===origin&&url.pathname===search){assert.equal(url.searchParams.get('getDataOnInit'),'false');loads++;return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml+'<img src="/cncservice/load-barrier">'});}
    if(url.origin===origin&&url.pathname==='/cncservice/load-barrier'){await new Promise(resolve=>setTimeout(resolve,100));return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg"/>'});}
    if(url.origin===origin&&url.pathname==='/cncservice/mock')return route.fulfill({contentType:'text/html; charset=utf-8',body:hostHtml});
@@ -23,7 +24,7 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
    }
    blocked.push(req.url());return route.abort();
   });
-  const source=await context.newPage();await source.goto(origin+'/cncservice/home');await source.locator('#gdh-search-extension-button').waitFor();
+  const source=await context.newPage();await source.goto(origin+'/cncservice/home?');await source.locator('#gdh-search-extension-button').waitFor();
   assert.equal(await source.locator('#gdh-search-extension-panel').count(),0);
   const opened=context.waitForEvent('page');await source.locator('#gdh-search-extension-button').click();const page=await opened;await page.waitForLoadState();
   page.on('pageerror',e=>errors.push(e.message));let accept=true;const dialogs=[];page.on('dialog',async d=>{dialogs.push(d.message());await(accept?d.accept():d.dismiss());});
@@ -72,6 +73,9 @@ const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',search='/cncservi
   // An unbound extension page and a web page cannot borrow the viewer's source.
   const unattached=await context.newPage();await unattached.goto(page.url());const rejected=await unattached.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_VIEWER_EXPORT_START',confirmed:true}));assert.equal(rejected.ok,false);await unattached.close();
   const beforeForgery=posts.length;await source.evaluate(()=>window.postMessage({type:'GDH_VIEWER_EXPORT_START',confirmed:true},location.origin));assert.equal(posts.length,beforeForgery);
+  await source.goto(otherOrigin+'/cncservice/home?');await source.locator('#gdh-search-extension-button').waitFor();
+  const switched=await page.evaluate(()=>chrome.runtime.sendMessage({type:'GDH_VIEWER_EXPORT_START',confirmed:true}));
+  assert.equal(switched.code,'SOURCE_UNAVAILABLE');assert.equal(posts.length,beforeForgery);
   await source.close();await fetchCSV();await page.locator('#fetchStatus.err').waitFor();assert.match(await page.locator('#resultTitle').textContent(),/192,836件/);
   assert.deepEqual(errors,[]);assert.deepEqual(blocked,[]);assert(dialogs.includes('CSVファイルを出力します。よろしいですか？'));
   console.log('PASS: separate/reused viewer tab, original form and session, navigation/resume once, cancel/failure retention, English CSV, dashboard, isolated registration mock, MAZAK dependency, service filters/sort, >50MB bounded transfer, unbound/forged request rejection, source-closed retention');

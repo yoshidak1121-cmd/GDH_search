@@ -1,4 +1,4 @@
-# CNC機械情報ビューア / GDH拡張検索 v1.21.2
+# CNC機械情報ビューア / GDH拡張検索 v1.21.3
 
 GDHのCSVをブラウザ内で検索するツールです。Chrome / Edge向け拡張機能、単独HTML、架空データ入りの操作デモを提供します。
 
@@ -356,7 +356,7 @@ If a check fails, contact Yoshida, NC Strategy, with the item number, extension 
 
 ### 拡張検索画面を開く
 
-GDHホーム `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?` を開くと確認が表示され、「はい」でホーム上に拡張検索を開きます。検索画面への移動はありません。取得ボタンから指定の機械情報検索画面（`ZGDS0130vBASE?getDataOnInit=false`）へ移動し、GDH画面のload完了・描画・CSVフォームの準備後にCSV出力を確認して取得・表示します。取得元の事前登録は不要です。権限・フォームを確認できない場合は停止します。
+運用環境のGDHホーム（`https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/home?`）または検証環境のGDHホーム（`https://global-service-dev.fa-cnc.idc-t.melco.co.jp/cncservice/home?`）で「拡張ツールを新しいタブで開く」を押します。CSVは起動元の環境から取得します。取得ボタンから指定の機械情報検索画面（`ZGDS0130vBASE?getDataOnInit=false`）へ移動し、GDH画面のload完了・描画・CSVフォームの準備後にCSV出力を確認して取得・表示します。取得元の事前登録は不要です。権限・フォームを確認できない場合は停止します。
 
 1. GDHにログインし、**機械情報検索画面を開いて再読み込み**します。
 2. GDH画面の **「拡張ツールを新しいタブで開く」**をクリックすると、検索画面が開きます。

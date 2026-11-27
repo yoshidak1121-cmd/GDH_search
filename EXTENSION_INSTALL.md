@@ -22,7 +22,7 @@ For guided file preparation, use `GDH_Search_Setup.zip` and read `START_HERE.txt
 Updates: replace files in the same folder, click **Reload** for the extension, check the version,
 then reload GDH and retrieve the data again. Downloading the ZIP alone does not update it.
 
-Supported environment: `https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/`.
+Supported search environments are production (`https://global-service.fa-cnc.idc-t.melco.co.jp/cncservice/`) and staging (`https://global-service-dev.fa-cnc.idc-t.melco.co.jp/cncservice/`).
 Separate regional GDH URLs are not supported. GDH access is required; company policies may restrict installation.
 CSV values are not translated. CSV data is processed locally; downloaded CSV files remain on the PC.
 This is a personally developed beta extension, not a standard GDH feature. No guarantee of operation or support is provided.
@@ -72,7 +72,7 @@ GDHのCSVは「GDHからデータ取得」、このPCのCSVファイルは「PC�
 
 ## 動作範囲
 
-- 提供された `global-service.fa-cnc.idc-t.melco.co.jp` の `/cncservice/` 配下だけで動作します。
+- 拡張検索は運用環境（`global-service.fa-cnc.idc-t.melco.co.jp`）と検証環境（`global-service-dev.fa-cnc.idc-t.melco.co.jp`）の `/cncservice/` 配下で使えます。CSVは起動元と同じ環境から取得します。
 - GDH本体へのファイル設置は不要です。閲覧中のページに起動ボタンを追加し、検索画面を別タブで開きます。
 - 機械情報検索フォーム `#frmmain` がある画面で使います。GDH側の現在の検索条件でCSVを出力します。
 - ZIP選択は圧縮なしに固定し、CSV出力確認だけを表示します。

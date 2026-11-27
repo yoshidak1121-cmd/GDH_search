@@ -5,8 +5,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  const origin='https://global-service.fa-cnc.idc-t.melco.co.jp',path='/cncservice/viewcreator/dataview/list/ZGDS0130vBASE';
  class Clock extends Date{static now(){return now;}}
  const chrome={runtime:{id:'fixture',onMessage:{addListener:fn=>listener=fn}},storage:{session:{get:async key=>({[key]:data[key]}),set:async values=>Object.assign(data,values),remove:async key=>{delete data[key];}}},tabs:{update:async(id,options)=>{if(fail)throw Error();moves.push({id,...options});},onRemoved:{addListener:fn=>removed=fn}}};
- vm.runInNewContext(fs.readFileSync('extension/csv-navigation.js','utf8'),{chrome,URL,Date:Clock,Set});
- const sender=url=>({id:'fixture',frameId:0,tab:{id:1},url:origin+url});
+ vm.runInNewContext(fs.readFileSync('extension/search-origins.js','utf8')+'\n'+fs.readFileSync('extension/csv-navigation.js','utf8'),{chrome,URL,Date:Clock,Set});
+ const devOrigin=origin.replace('global-service.','global-service-dev.');
+ const sender=(url,base=origin)=>({id:'fixture',frameId:0,tab:{id:1},url:base+url});
  const call=(message,from=sender('/cncservice/home'))=>new Promise(resolve=>{const result=listener(message,from,resolve);if(result!==true)resolve(undefined);});
  const start=()=>call({type:'GDH_CSV_NAVIGATE',path,language:'en'});
  assert.equal(await call({type:'GDH_CSV_NAVIGATE',path},{...sender('/cncservice/home'),frameId:1}),undefined);
@@ -22,6 +23,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  await start();assert.equal((await call({type:'GDH_CSV_NAVIGATION_RESUME',ready:true},sender(path+'?getDataOnInit=true'))).code,'FORM_UNAVAILABLE');
  fail=true;assert.equal((await start()).code,'NAVIGATION_FAILED');assert.equal(Object.keys(data).length,0);fail=false;
  await start();removed(1);await Promise.resolve();assert.equal(Object.keys(data).length,0);
+ const devHome=sender('/cncservice/home?',devOrigin);
+ const ready={type:'GDH_CSV_NAVIGATION_RESUME',ready:true};
+ const navigateDev=()=>call({type:'GDH_CSV_NAVIGATE',path},devHome);
+ assert.equal((await navigateDev()).ok,true);
+ assert.equal(moves.at(-1).url,devOrigin+path+'?getDataOnInit=false');
+ assert.equal((await call(ready,sender(path+'?getDataOnInit=false'))).code,'FORM_UNAVAILABLE');
+ assert.equal((await navigateDev()).ok,true);
+ assert.equal((await call(ready,sender(path+'?getDataOnInit=false',devOrigin))).start,true);
  assert(!JSON.stringify(data).includes('csrf'));
  console.log('PASS: trusted top-frame sender, allowed source path, per-tab duplicate guard, one-time resume, expiry, wrong page/form, navigation failure and closed-tab cleanup');
 })().catch(error=>{console.error(error);process.exitCode=1;});
